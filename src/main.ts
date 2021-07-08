@@ -1,8 +1,7 @@
 import CONFIG from './config/config';
 import Client from './Client';
 import { ethers } from 'ethers';
-
-const liquidityMiningCampaignABI = require('./abi/LiquidityMiningCampaign.json');
+import { LiquidityMiningCampaign__factory } from './abi/index';
 
 (async function () {
   // Init client
@@ -15,12 +14,11 @@ const liquidityMiningCampaignABI = require('./abi/LiquidityMiningCampaign.json')
   const userWallet = new ethers.Wallet(CONFIG.privateKey, client.provider);
 
   // Get contract
-  const stakingRewardsContract = new ethers.Contract(
+  const stakingRewardsContract = LiquidityMiningCampaign__factory.connect(
     '0x44e29f82cee755488d42296e6a9c9a6037696483',
-    liquidityMiningCampaignABI,
     userWallet,
   );
 
-  // Log contract data
-  console.log(stakingRewardsContract);
+  const totalStaked = await stakingRewardsContract.totalStaked();
+  console.log(ethers.utils.formatEther(totalStaked));
 })();

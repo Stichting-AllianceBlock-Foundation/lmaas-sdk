@@ -25,11 +25,19 @@ export default CONFIG;
 ```
 
 ## VSCode setup
+
 Make sure you have Prettier installed and following rule added in `settings.json`
-``` json
+
+```json
 "editor.codeActionsOnSave": {
   "source.fixAll.eslint": true
 }
+```
+
+## Generate typings
+
+```bash
+npx typechain --target ethers-v5 --out-dir app/contracts './src/abi/*.json'
 ```
 
 ## Run prject
@@ -40,5 +48,5 @@ yarn start
 
 Open `index.html` file and open console.
 
-ℹ️  For more info regarding project template and build procedures see here:
+ℹ️ For more info regarding project template and build procedures see here:
 https://github.com/metachris/typescript-boilerplate.git
