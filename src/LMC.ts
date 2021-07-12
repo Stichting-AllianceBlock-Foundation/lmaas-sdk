@@ -7,7 +7,7 @@ interface RewardsInfo {
 }
 
 class LMC {
-  stakingRewardsContract;
+  liquidityMiningCampaign;
   address: string;
   wallet: ethers.Wallet;
   totalStaked: ethers.BigNumber = ethers.BigNumber.from(0);
@@ -20,41 +20,41 @@ class LMC {
   constructor(wallet: ethers.Wallet, address: string) {
     this.wallet = wallet;
     this.address = address;
-    this.stakingRewardsContract = LiquidityMiningCampaign__factory.connect(address, wallet);
+    this.liquidityMiningCampaign = LiquidityMiningCampaign__factory.connect(address, wallet);
   }
 
   async stake(lockSchemeAddress: string, amountToStake: string) {
     const amountToStakeBN = ethers.utils.parseEther(amountToStake);
-    const transaction = await this.stakingRewardsContract.stakeAndLock(amountToStakeBN, lockSchemeAddress);
+    const transaction = await this.liquidityMiningCampaign.stakeAndLock(amountToStakeBN, lockSchemeAddress);
 
     return transaction;
   }
 
   async claimRewards() {
-    const transaction = await this.stakingRewardsContract.claim();
+    const transaction = await this.liquidityMiningCampaign.claim();
 
     return transaction;
   }
 
   async withdraw() {
-    let transaction = await this.stakingRewardsContract.exitAndUnlock();
+    let transaction = await this.liquidityMiningCampaign.exitAndUnlock();
 
     return transaction;
   }
 
-  async exitAndStake(stakerPoolAddress: string) {
-    let transaction = await this.stakingRewardsContract.exitAndStake(stakerPoolAddress);
+  async exitAndStake(stakingPoolCampaignAddress: string) {
+    let transaction = await this.liquidityMiningCampaign.exitAndStake(stakingPoolCampaignAddress);
 
     return transaction;
   }
 
   async getCampaignData(provider: any) {
     const allPromise = Promise.all([
-      this.stakingRewardsContract.totalStaked(),
-      this.stakingRewardsContract.balanceOf(await this.wallet.getAddress()),
-      this.stakingRewardsContract.getRewardTokensCount(),
-      this.stakingRewardsContract.hasStakingStarted(),
-      this.stakingRewardsContract.endBlock(),
+      this.liquidityMiningCampaign.totalStaked(),
+      this.liquidityMiningCampaign.balanceOf(await this.wallet.getAddress()),
+      this.liquidityMiningCampaign.getRewardTokensCount(),
+      this.liquidityMiningCampaign.hasStakingStarted(),
+      this.liquidityMiningCampaign.endBlock(),
     ]);
 
     try {
@@ -82,7 +82,7 @@ class LMC {
     let totalStaked = ethers.BigNumber.from(0);
 
     try {
-      totalStaked = await this.stakingRewardsContract.totalStaked();
+      totalStaked = await this.liquidityMiningCampaign.totalStaked();
     } catch (error) {
       console.error(error.message);
     }
@@ -94,7 +94,7 @@ class LMC {
     let userBallance = ethers.BigNumber.from(0);
 
     try {
-      userBallance = await this.stakingRewardsContract.balanceOf(await this.wallet.getAddress());
+      userBallance = await this.liquidityMiningCampaign.balanceOf(await this.wallet.getAddress());
     } catch (error) {
       console.error(error.message);
     }
@@ -106,7 +106,7 @@ class LMC {
     let rewardsCount = 0;
 
     try {
-      rewardsCount = await (await this.stakingRewardsContract.getRewardTokensCount()).toNumber();
+      rewardsCount = await (await this.liquidityMiningCampaign.getRewardTokensCount()).toNumber();
     } catch (error) {
       console.error(error.message);
     }
@@ -118,7 +118,7 @@ class LMC {
     let hasStakingStarted = false;
 
     try {
-      hasStakingStarted = await this.stakingRewardsContract.hasStakingStarted();
+      hasStakingStarted = await this.liquidityMiningCampaign.hasStakingStarted();
     } catch (error) {
       console.error(error.message);
     }
@@ -130,7 +130,7 @@ class LMC {
     let endBlock = ethers.BigNumber.from(0);
 
     try {
-      endBlock = await this.stakingRewardsContract.endBlock();
+      endBlock = await this.liquidityMiningCampaign.endBlock();
     } catch (error) {
       console.error(error.message);
     }
@@ -152,7 +152,7 @@ class LMC {
   }
 
   async getRewardInfo() {
-    const { rewardsTokens, rewardPerBlock } = this.stakingRewardsContract;
+    const { rewardsTokens, rewardPerBlock } = this.liquidityMiningCampaign;
 
     if (this.rewardsCount > 0) {
       for (let i = 0; i < this.rewardsCount; i++) {
