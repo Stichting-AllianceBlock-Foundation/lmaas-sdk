@@ -57,84 +57,49 @@ class LMC {
       this.liquidityMiningCampaign.endBlock(),
     ]);
 
-    try {
-      const values = await allPromise;
-      this.totalStaked = values[0];
-      this.userBallance = values[1];
-      this.rewardsCount = values[2].toNumber();
-      this.hasStakingStarted = values[3];
-      const endBlock = values[4];
+    const values = await allPromise;
+    this.totalStaked = values[0];
+    this.userBallance = values[1];
+    this.rewardsCount = values[2].toNumber();
+    this.hasStakingStarted = values[3];
+    const endBlock = values[4];
 
-      // Get current block
-      const currentBlock = await provider.getBlock('latest');
-      const delta = endBlock.sub(currentBlock.number);
+    // Get current block
+    const currentBlock = await provider.getBlock('latest');
+    const delta = endBlock.sub(currentBlock.number);
 
-      this.hasStakingEnded = delta.lt(0);
+    this.hasStakingEnded = delta.lt(0);
 
-      // Get Reward info
-      this.getRewardInfo();
-    } catch (error) {
-      console.log(error.message);
-    }
+    // Get Reward info
+    this.getRewardInfo();
   }
 
   async getTotalStaked(): Promise<ethers.BigNumber> {
-    let totalStaked = ethers.BigNumber.from(0);
-
-    try {
-      totalStaked = await this.liquidityMiningCampaign.totalStaked();
-    } catch (error) {
-      console.error(error.message);
-    }
+    const totalStaked = await this.liquidityMiningCampaign.totalStaked();
 
     return totalStaked;
   }
 
   async getStakingTokensBalance(): Promise<ethers.BigNumber> {
-    let userBallance = ethers.BigNumber.from(0);
-
-    try {
-      userBallance = await this.liquidityMiningCampaign.balanceOf(await this.wallet.getAddress());
-    } catch (error) {
-      console.error(error.message);
-    }
+    const userBallance = await this.liquidityMiningCampaign.balanceOf(await this.wallet.getAddress());
 
     return userBallance;
   }
 
   async getRewardsCount(): Promise<number> {
-    let rewardsCount = 0;
-
-    try {
-      rewardsCount = await (await this.liquidityMiningCampaign.getRewardTokensCount()).toNumber();
-    } catch (error) {
-      console.error(error.message);
-    }
+    const rewardsCount = await (await this.liquidityMiningCampaign.getRewardTokensCount()).toNumber();
 
     return rewardsCount;
   }
 
   async hasCampaingStarted(): Promise<boolean> {
-    let hasStakingStarted = false;
-
-    try {
-      hasStakingStarted = await this.liquidityMiningCampaign.hasStakingStarted();
-    } catch (error) {
-      console.error(error.message);
-    }
+    const hasStakingStarted = await this.liquidityMiningCampaign.hasStakingStarted();
 
     return hasStakingStarted;
   }
 
   async hasCampaignEnded(currentBlockNumber: number): Promise<boolean> {
-    let endBlock = ethers.BigNumber.from(0);
-
-    try {
-      endBlock = await this.liquidityMiningCampaign.endBlock();
-    } catch (error) {
-      console.error(error.message);
-    }
-
+    const endBlock = await this.liquidityMiningCampaign.endBlock();
     const delta = endBlock.sub(currentBlockNumber);
 
     return delta.lt(0);
