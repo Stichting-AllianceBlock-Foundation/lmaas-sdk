@@ -42,6 +42,12 @@ class LMC {
     return transaction;
   }
 
+  async exitAndStake(stakerPoolAddress: string) {
+    let transaction = await this.stakingRewardsContract.exitAndStake(stakerPoolAddress);
+
+    return transaction;
+  }
+
   async getCampaignData(provider: any) {
     const allPromise = Promise.all([
       this.stakingRewardsContract.totalStaked(),
@@ -54,7 +60,6 @@ class LMC {
     try {
       const values = await allPromise;
       this.totalStaked = values[0];
-      this.userBallance = values[1];
       this.userBallance = values[1];
       this.rewardsCount = values[2].toNumber();
       this.hasStakingStarted = values[3];
@@ -73,27 +78,77 @@ class LMC {
     }
   }
 
-  async getTotalStaked() {
-    this.totalStaked = await this.stakingRewardsContract.totalStaked();
+  async getTotalStaked(): Promise<ethers.BigNumber> {
+    let totalStaked = ethers.BigNumber.from(0);
+
+    try {
+      totalStaked = await this.stakingRewardsContract.totalStaked();
+    } catch (error) {
+      console.error(error.message);
+    }
+
+    return totalStaked;
   }
 
-  async getStakingTokensBalance() {
-    this.userBallance = await this.stakingRewardsContract.balanceOf(await this.wallet.getAddress());
+  async getStakingTokensBalance(): Promise<ethers.BigNumber> {
+    let userBallance = ethers.BigNumber.from(0);
+
+    try {
+      userBallance = await this.stakingRewardsContract.balanceOf(await this.wallet.getAddress());
+    } catch (error) {
+      console.error(error.message);
+    }
+
+    return userBallance;
   }
 
-  async getRewardsCount() {
-    this.rewardsCount = await (await this.stakingRewardsContract.getRewardTokensCount()).toNumber();
+  async getRewardsCount(): Promise<number> {
+    let rewardsCount = 0;
+
+    try {
+      rewardsCount = await (await this.stakingRewardsContract.getRewardTokensCount()).toNumber();
+    } catch (error) {
+      console.error(error.message);
+    }
+
+    return rewardsCount;
   }
 
-  async hasCampaingStarted() {
-    this.hasStakingStarted = await this.stakingRewardsContract.hasStakingStarted();
+  async hasCampaingStarted(): Promise<boolean> {
+    let hasStakingStarted = false;
+
+    try {
+      hasStakingStarted = await this.stakingRewardsContract.hasStakingStarted();
+    } catch (error) {
+      console.error(error.message);
+    }
+
+    return hasStakingStarted;
   }
 
-  async hasCampaignEnded(currentBlockNumber: number) {
-    const endBlock = await this.stakingRewardsContract.endBlock();
+  async hasCampaignEnded(currentBlockNumber: number): Promise<boolean> {
+    let endBlock = ethers.BigNumber.from(0);
+
+    try {
+      endBlock = await this.stakingRewardsContract.endBlock();
+    } catch (error) {
+      console.error(error.message);
+    }
 
     const delta = endBlock.sub(currentBlockNumber);
-    this.hasStakingEnded = delta.lt(0);
+
+    return delta.lt(0);
+  }
+
+  calculateStakingPoolPercentage(): number {
+    let poolSharePercentage = ethers.BigNumber.from(0);
+
+    if (this.totalStaked.gt(0) && this.userBallance.gt(0)) {
+      const poolShare = this.totalStaked.div(this.userBallance);
+      poolSharePercentage = poolShare.mul(100);
+    }
+
+    return poolSharePercentage.toNumber();
   }
 
   async getRewardInfo() {
