@@ -2,9 +2,3 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { LiquidityMiningCampaign } from "./LiquidityMiningCampaign";
-export type { LockScheme } from "./LockScheme";
-export type { StakingRewards } from "./StakingRewards";
-
-export { LiquidityMiningCampaign__factory } from "./factories/LiquidityMiningCampaign__factory";
-export { LockScheme__factory } from "./factories/LockScheme__factory";
-export { StakingRewards__factory } from "./factories/StakingRewards__factory";
