@@ -1,3 +1,4 @@
+import { FunctionFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 
@@ -34,7 +35,7 @@ export class SDKLm {
    * @param {string} contractAddress - Address of the camapaign contracts
    * @return {object} transaction object
    */
-  public async withdraw(contractAddress: string) {
+  public async withdraw(contractAddress: string): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
     const stakingRewardsContract = new Contract(
       contractAddress,
@@ -42,7 +43,7 @@ export class SDKLm {
       signer
     );
 
-    let transaction = await stakingRewardsContract.exitAndUnlock();
+    const transaction = await stakingRewardsContract.exitAndUnlock();
 
     return transaction;
   }
