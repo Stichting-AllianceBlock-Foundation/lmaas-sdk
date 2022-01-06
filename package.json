@@ -35,7 +35,7 @@
   "name": "@stichting-allianceblock-foundation/lmaas-sdk",
   "repository": {
     "type": "git",
-    "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk-typescript.git"
+    "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk.git"
   },
   "author": "Martin Dobrev",
   "module": "dist/ts-sdk.esm.js",
