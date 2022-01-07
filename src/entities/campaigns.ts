@@ -12,11 +12,21 @@ export interface CampaingData {
   hasWalletStakeLimit: boolean;
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
-  campaingnRewards: CampaignRewards[];
+  campaignRewards: CampaignRewards[];
+}
+export interface UserData {
+  userStakedAmount: BigNumberish;
+  hasUserStaked: boolean;
+  userRewards: UserRewards[];
 }
 
 export interface CampaignRewards {
   tokenAddress: string;
   rewardPerBlock: BigNumberish;
   totalRewards: BigNumberish;
+}
+
+export interface UserRewards {
+  tokenAddress: string;
+  currentAmount: BigNumberish;
 }

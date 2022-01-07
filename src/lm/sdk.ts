@@ -2,7 +2,7 @@ import { FunctionFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 
-import { CampaingData, checkMaxStakingLimit, NetworkEnum } from '..';
+import { CampaingData, checkMaxStakingLimit, NetworkEnum, UserData } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
 
 export class SDKLm {
@@ -18,7 +18,7 @@ export class SDKLm {
   /**
    * Get campaign data
    * @public
-   * @param {string} contractAddress - Address of the camapaign contracts
+   * @param {string} contractAddress - Address of the camapaign contract
    * @return {CampaingData} CampaingData object
    */
   public async getCampaignData(campaignAddress: string): Promise<CampaingData> {
@@ -44,7 +44,7 @@ export class SDKLm {
     const deltaExpirationBlocks = campaignEndBlock.sub(currentBlockNumber);
     const deltaDurationBlocks = campaignEndBlock.sub(campaignStartBlock);
 
-    const campaingnRewards = [];
+    const campaignRewards = [];
 
     // Get rewards info
     for (let i = 0; i < rewardsCount.toNumber(); i++) {
@@ -52,7 +52,7 @@ export class SDKLm {
       const rewardPerBlock = await campaignContract.rewardPerBlock(i);
       const totalRewards = rewardPerBlock.mul(deltaDurationBlocks);
 
-      campaingnRewards.push({
+      campaignRewards.push({
         tokenAddress,
         rewardPerBlock,
         totalRewards,
@@ -75,14 +75,54 @@ export class SDKLm {
       hasWalletStakeLimit,
       deltaExpirationBlocks,
       deltaDurationBlocks,
-      campaingnRewards,
+      campaignRewards,
+    };
+  }
+
+  /**
+   * Get user data
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @return {UserData} UserData object
+   */
+  public async getUserData(campaignAddress: string): Promise<UserData> {
+    const signer = this.provider.getSigner();
+    const walletAddress = await signer.getAddress();
+
+    const campaignContract = new Contract(campaignAddress, LiquidityMiningCampaignABI, signer);
+
+    // Get raw user data
+    const userStakedAmount = await campaignContract.balanceOf(walletAddress);
+    const rewardsCount = await campaignContract.getRewardTokensCount();
+
+    const hasUserStaked = userStakedAmount.gt(0);
+
+    const userRewards = [];
+
+    // Get rewards info
+    if (hasUserStaked) {
+      for (let i = 0; i < rewardsCount.toNumber(); i++) {
+        const tokenAddress = await campaignContract.rewardsTokens(i);
+        const currentAmount = await campaignContract.getUserAccumulatedReward(walletAddress, i);
+
+        userRewards.push({
+          tokenAddress,
+          currentAmount,
+        });
+      }
+    }
+
+    return {
+      userStakedAmount,
+      hasUserStaked,
+      userRewards,
     };
   }
 
   /**
    * Withdraw from campaign
    * @public
-   * @param {string} contractAddress - Address of the camapaign contracts
+   * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
   public async withdraw(contractAddress: string): Promise<FunctionFragment> {
