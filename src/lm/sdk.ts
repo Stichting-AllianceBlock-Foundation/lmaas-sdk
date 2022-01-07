@@ -1,6 +1,7 @@
 import { FunctionFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
+import { parseEther } from '@ethersproject/units';
 
 import { CampaingData, checkMaxStakingLimit, NetworkEnum, UserData } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
@@ -120,6 +121,25 @@ export class SDKLm {
   }
 
   /**
+   * Stake in campaign
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @param {string} amountToStake - Amount to stake
+   * @return {object} transaction object
+   */
+  public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
+    const signer = this.provider.getSigner();
+
+    const campaignAddress = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+
+    const amountToStakeParsed = parseEther(amountToStake);
+
+    const transaction = await campaignAddress.stake(amountToStakeParsed);
+
+    return transaction;
+  }
+
+  /**
    * Withdraw from campaign
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
@@ -127,6 +147,7 @@ export class SDKLm {
    */
   public async withdraw(contractAddress: string): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
+
     const stakingRewardsContract = new Contract(
       contractAddress,
       LiquidityMiningCampaignABI,
