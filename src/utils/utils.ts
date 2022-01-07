@@ -1,3 +1,5 @@
+import { BigNumber, constants } from 'ethers';
+
 // CONSTANTS
 const BLOCKS_PER_DAY_ETH = 6646;
 const BLOCKS_PER_DAY_BSC = 28800;
@@ -25,4 +27,12 @@ export const BLOCKS_COUNT = {
     PER_WEEK: BLOCKS_PER_DAY_AVAX * 7,
     PER_30_DAYS: BLOCKS_PER_DAY_AVAX * 30,
   },
+};
+
+export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
+  const tenBN = BigNumber.from(10);
+  const tenPow18BN = tenBN.pow(18);
+  const maxAmount = constants.MaxUint256.div(tenPow18BN);
+
+  return limit.div(tenPow18BN).eq(maxAmount);
 };

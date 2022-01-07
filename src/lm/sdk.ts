@@ -2,11 +2,11 @@ import { FunctionFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 
-import { CampaingData, NetworkEnum } from '..';
+import { CampaingData, checkMaxStakingLimit, NetworkEnum } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
 
 export class SDKLm {
-  // Get network by provider (build patterns, async) !!
+  // TODO: Get network by provider (build pattern, async) !!
   protected protocol: NetworkEnum;
   protected provider: Web3Provider;
 
@@ -15,17 +15,67 @@ export class SDKLm {
     this.protocol = protocol;
   }
 
+  /**
+   * Get campaign data
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contracts
+   * @return {CampaingData} CampaingData object
+   */
   public async getCampaignData(campaignAddress: string): Promise<CampaingData> {
-    const stakingRewardsContract = new Contract(
+    const campaignContract = new Contract(
       campaignAddress,
       LiquidityMiningCampaignABI,
       this.provider
     );
 
-    const totalStaked = await stakingRewardsContract.totalStaked();
+    // Get current block
+    const currentBlockNumber = (await this.provider.getBlock('latest')).number;
+
+    // Get raw contract data
+    const totalStaked = await campaignContract.totalStaked();
+    const campaignStartBlock = await campaignContract.startBlock();
+    const campaignEndBlock = await campaignContract.endBlock();
+    const hasCampaignStarted = await campaignContract.hasStakingStarted();
+    const contractStakeLimit = await campaignContract.contractStakeLimit();
+    const walletStakeLimit = await campaignContract.stakeLimit();
+    const rewardsCount = await campaignContract.getRewardTokensCount();
+
+    // Get deltas in blocks
+    const deltaExpirationBlocks = campaignEndBlock.sub(currentBlockNumber);
+    const deltaDurationBlocks = campaignEndBlock.sub(campaignStartBlock);
+
+    const campaingnRewards = [];
+
+    // Get rewards info
+    for (let i = 0; i < rewardsCount.toNumber(); i++) {
+      const tokenAddress = await campaignContract.rewardsTokens(i);
+      const rewardPerBlock = await campaignContract.rewardPerBlock(i);
+      const totalRewards = rewardPerBlock.mul(deltaDurationBlocks);
+
+      campaingnRewards.push({
+        tokenAddress,
+        rewardPerBlock,
+        totalRewards,
+      });
+    }
+
+    const hasCampaignEnded = deltaExpirationBlocks.lt(0);
+    const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
+    const hasWalletStakeLimit = !checkMaxStakingLimit(walletStakeLimit);
 
     return {
       totalStaked,
+      hasCampaignStarted,
+      hasCampaignEnded,
+      campaignStartBlock,
+      campaignEndBlock,
+      contractStakeLimit,
+      walletStakeLimit,
+      hasContractStakeLimit,
+      hasWalletStakeLimit,
+      deltaExpirationBlocks,
+      deltaDurationBlocks,
+      campaingnRewards,
     };
   }
 
