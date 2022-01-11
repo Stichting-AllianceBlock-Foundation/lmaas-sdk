@@ -1,4 +1,5 @@
 import { FunctionFragment } from '@ethersproject/abi';
+import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
@@ -29,38 +30,41 @@ export class SDKLm {
       this.provider
     );
 
-    // Get current block
-    const currentBlockNumber = (await this.provider.getBlock('latest')).number;
+    // Get now in seconds and convert to BN
+    const now = Math.floor(Date.now() / 1000);
+    const nowBN = BigNumber.from(now);
 
     // Get raw contract data
     const totalStaked = await campaignContract.totalStaked();
-    const campaignStartBlock = await campaignContract.startBlock();
-    const campaignEndBlock = await campaignContract.endBlock();
+    const campaignStartTimestamp = await campaignContract.startTimestamp();
+    const campaignEndTimestamp = await campaignContract.endTimestamp();
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
     const contractStakeLimit = await campaignContract.contractStakeLimit();
     const walletStakeLimit = await campaignContract.stakeLimit();
-    const rewardsCount = await campaignContract.getRewardTokensCount();
 
-    // Get deltas in blocks
-    const deltaExpirationBlocks = campaignEndBlock.sub(currentBlockNumber);
-    const deltaDurationBlocks = campaignEndBlock.sub(campaignStartBlock);
+    // This needs to be taken from contracts
+    const rewardsCount = 1;
+
+    // Get deltas in seconds
+    const deltaExpiration = campaignEndTimestamp.sub(nowBN);
+    const deltaDuration = campaignEndTimestamp.sub(campaignStartTimestamp);
 
     const campaignRewards = [];
 
     // Get rewards info
-    for (let i = 0; i < rewardsCount.toNumber(); i++) {
+    for (let i = 0; i < rewardsCount; i++) {
       const tokenAddress = await campaignContract.rewardsTokens(i);
-      const rewardPerBlock = await campaignContract.rewardPerBlock(i);
-      const totalRewards = rewardPerBlock.mul(deltaDurationBlocks);
+      const rewardPerSecond = await campaignContract.rewardPerSecond(i);
+      const totalRewards = rewardPerSecond.mul(deltaDuration);
 
       campaignRewards.push({
         tokenAddress,
-        rewardPerBlock,
+        rewardPerSecond,
         totalRewards,
       });
     }
 
-    const hasCampaignEnded = deltaExpirationBlocks.lt(0);
+    const hasCampaignEnded = campaignEndTimestamp < now;
     const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     const hasWalletStakeLimit = !checkMaxStakingLimit(walletStakeLimit);
 
@@ -68,14 +72,14 @@ export class SDKLm {
       totalStaked,
       hasCampaignStarted,
       hasCampaignEnded,
-      campaignStartBlock,
-      campaignEndBlock,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       contractStakeLimit,
       walletStakeLimit,
       hasContractStakeLimit,
       hasWalletStakeLimit,
-      deltaExpirationBlocks,
-      deltaDurationBlocks,
+      deltaExpiration,
+      deltaDuration,
       campaignRewards,
     };
   }
@@ -94,17 +98,23 @@ export class SDKLm {
 
     // Get raw user data
     const userStakedAmount = await campaignContract.balanceOf(walletAddress);
-    const rewardsCount = await campaignContract.getRewardTokensCount();
+    const rewardsCount = 1;
 
     const hasUserStaked = userStakedAmount.gt(0);
 
     const userRewards = [];
+    const now = Date.now() / 1000;
+    const nowParsed = parseEther(now.toString());
 
     // Get rewards info
     if (hasUserStaked) {
-      for (let i = 0; i < rewardsCount.toNumber(); i++) {
+      for (let i = 0; i < rewardsCount; i++) {
         const tokenAddress = await campaignContract.rewardsTokens(i);
-        const currentAmount = await campaignContract.getUserAccumulatedReward(walletAddress, i);
+        const currentAmount = await campaignContract.getUserAccumulatedReward(
+          walletAddress,
+          i,
+          nowParsed
+        );
 
         userRewards.push({
           tokenAddress,
@@ -129,9 +139,7 @@ export class SDKLm {
    */
   public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
-
     const campaignAddress = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
-
     const amountToStakeParsed = parseEther(amountToStake);
 
     const transaction = await campaignAddress.stake(amountToStakeParsed);
@@ -147,7 +155,6 @@ export class SDKLm {
    */
   public async withdraw(contractAddress: string): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
-
     const stakingRewardsContract = new Contract(
       contractAddress,
       LiquidityMiningCampaignABI,

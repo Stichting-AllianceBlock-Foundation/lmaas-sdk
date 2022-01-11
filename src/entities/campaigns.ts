@@ -2,12 +2,12 @@ import { BigNumberish } from 'ethers';
 
 export interface CampaingData {
   totalStaked: BigNumberish;
-  campaignStartBlock: BigNumberish;
-  campaignEndBlock: BigNumberish;
+  campaignStartTimestamp: BigNumberish;
+  campaignEndTimestamp: BigNumberish;
   contractStakeLimit: BigNumberish;
   walletStakeLimit: BigNumberish;
-  deltaExpirationBlocks: BigNumberish;
-  deltaDurationBlocks: BigNumberish;
+  deltaExpiration: BigNumberish;
+  deltaDuration: BigNumberish;
   hasContractStakeLimit: boolean;
   hasWalletStakeLimit: boolean;
   hasCampaignStarted: boolean;
@@ -22,7 +22,7 @@ export interface UserData {
 
 export interface CampaignRewards {
   tokenAddress: string;
-  rewardPerBlock: BigNumberish;
+  rewardPerSecond: BigNumberish;
   totalRewards: BigNumberish;
 }
 
