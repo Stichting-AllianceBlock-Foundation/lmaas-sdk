@@ -14,6 +14,11 @@ export interface CampaingData {
   hasCampaignEnded: boolean;
   campaignRewards: CampaignRewards[];
 }
+
+export interface CampaingStatusData {
+  hasCampaignStarted: boolean;
+  hasCampaignEnded: boolean;
+}
 export interface UserData {
   userStakedAmount: BigNumberish;
   hasUserStaked: boolean;

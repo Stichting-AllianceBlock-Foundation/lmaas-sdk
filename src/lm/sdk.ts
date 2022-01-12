@@ -4,7 +4,7 @@ import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 
-import { CampaingData, checkMaxStakingLimit, NetworkEnum, UserData } from '..';
+import { CampaingData, CampaingStatusData, checkMaxStakingLimit, NetworkEnum, UserData } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
 
 export class SDKLm {
@@ -64,7 +64,7 @@ export class SDKLm {
       });
     }
 
-    const hasCampaignEnded = campaignEndTimestamp < now;
+    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
     const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     const hasWalletStakeLimit = !checkMaxStakingLimit(walletStakeLimit);
 
@@ -81,6 +81,35 @@ export class SDKLm {
       deltaExpiration,
       deltaDuration,
       campaignRewards,
+    };
+  }
+
+  /**
+   * Get campaign data
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @return {CampaingStatusData} CampaingStatusData object
+   */
+  public async getCampaignStatus(campaignAddress: string): Promise<CampaingStatusData> {
+    const campaignContract = new Contract(
+      campaignAddress,
+      LiquidityMiningCampaignABI,
+      this.provider
+    );
+
+    // Get now in seconds and convert to BN
+    const now = Math.floor(Date.now() / 1000);
+    const nowBN = BigNumber.from(now);
+
+    // Get raw contract data
+    const campaignEndTimestamp = await campaignContract.endTimestamp();
+    const hasCampaignStarted = await campaignContract.hasStakingStarted();
+
+    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+
+    return {
+      hasCampaignStarted,
+      hasCampaignEnded,
     };
   }
 
@@ -139,29 +168,40 @@ export class SDKLm {
    */
   public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
-    const campaignAddress = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
     const amountToStakeParsed = parseEther(amountToStake);
 
-    const transaction = await campaignAddress.stake(amountToStakeParsed);
+    const transaction = await campaignContract.stake(amountToStakeParsed);
 
     return transaction;
   }
 
   /**
-   * Withdraw from campaign
+   * Exit from campaign (Claim & Withdraw)
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async withdraw(contractAddress: string): Promise<FunctionFragment> {
+  public async exit(contractAddress: string): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
-    const stakingRewardsContract = new Contract(
-      contractAddress,
-      LiquidityMiningCampaignABI,
-      signer
-    );
+    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
 
-    const transaction = await stakingRewardsContract.exitAndUnlock();
+    const transaction = await campaignContract.exit();
+
+    return transaction;
+  }
+
+  /**
+   * Claim rewards
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @return {object} transaction object
+   */
+  public async claim(contractAddress: string): Promise<FunctionFragment> {
+    const signer = this.provider.getSigner();
+    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+
+    const transaction = await campaignContract.claim();
 
     return transaction;
   }
