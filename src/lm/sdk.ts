@@ -132,8 +132,7 @@ export class SDKLm {
     const hasUserStaked = userStakedAmount.gt(0);
 
     const userRewards = [];
-    const now = Date.now() / 1000;
-    const nowParsed = parseEther(now.toString());
+    const now = Math.floor(Date.now() / 1000);
 
     // Get rewards info
     if (hasUserStaked) {
@@ -142,7 +141,7 @@ export class SDKLm {
         const currentAmount = await campaignContract.getUserAccumulatedReward(
           walletAddress,
           i,
-          nowParsed
+          now
         );
 
         userRewards.push({
