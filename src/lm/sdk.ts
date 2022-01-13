@@ -7,7 +7,7 @@ import { parseEther } from '@ethersproject/units';
 import { CampaingData, CampaingStatusData, checkMaxStakingLimit, NetworkEnum, UserData } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
 
-export class SDKLm {
+export class StakerLM {
   // TODO: Get network by provider (build pattern, async) !!
   protected protocol: NetworkEnum;
   protected provider: Web3Provider;
@@ -41,9 +41,7 @@ export class SDKLm {
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
     const contractStakeLimit = await campaignContract.contractStakeLimit();
     const walletStakeLimit = await campaignContract.stakeLimit();
-
-    // This needs to be taken from contracts
-    const rewardsCount = 1;
+    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
 
     // Get deltas in seconds
     const deltaExpiration = campaignEndTimestamp.sub(nowBN);
@@ -81,6 +79,7 @@ export class SDKLm {
       deltaExpiration,
       deltaDuration,
       campaignRewards,
+      rewardsCount,
     };
   }
 

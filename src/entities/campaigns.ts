@@ -13,6 +13,7 @@ export interface CampaingData {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
   campaignRewards: CampaignRewards[];
+  rewardsCount: number;
 }
 
 export interface CampaingStatusData {
