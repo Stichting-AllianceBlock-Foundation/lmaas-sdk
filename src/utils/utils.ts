@@ -1,4 +1,5 @@
 import { BigNumber, constants } from 'ethers';
+import { formatUnits } from 'ethers/lib/utils';
 
 // CONSTANTS
 const BLOCKS_PER_DAY_ETH = 6646;
@@ -35,4 +36,8 @@ export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
   const maxAmount = constants.MaxUint256.div(tenPow18BN);
 
   return limit.div(tenPow18BN).eq(maxAmount);
+};
+
+export const formatValuesToString = (values: BigNumber[], decimals: number = 18): string[] => {
+  return values.map(v => formatUnits(v.toString(), decimals));
 };
