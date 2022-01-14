@@ -38,6 +38,6 @@ export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
   return limit.div(tenPow18BN).eq(maxAmount);
 };
 
-export const formatValuesToString = (values: BigNumber[], decimals: number = 18): string[] => {
+export const formatValuesToString = (values: BigNumber[], decimals = 18): string[] => {
   return values.map(v => formatUnits(v.toString(), decimals));
 };
