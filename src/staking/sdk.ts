@@ -4,7 +4,14 @@ import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 
-import { CampaingData, CampaingStatusData, checkMaxStakingLimit, NetworkEnum, UserData } from '..';
+import {
+  CampaingData,
+  CampaingStatusData,
+  checkMaxStakingLimit,
+  NetworkEnum,
+  UserData,
+  UserRewards,
+} from '..';
 import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
 
 export class StakerSolo {
@@ -126,6 +133,7 @@ export class StakerSolo {
 
     // Get raw user data
     const userStakedAmount = await campaignContract.balanceOf(walletAddress);
+    const { exitStake, exitTimestamp } = await campaignContract.exitInfo(walletAddress);
     const rewardsCount = 1;
 
     const hasUserStaked = userStakedAmount.gt(0);
@@ -154,7 +162,64 @@ export class StakerSolo {
       userStakedAmount,
       hasUserStaked,
       userRewards,
+      exitStake,
+      exitTimestamp,
     };
+  }
+
+  /**
+   * Get user rewards data based on state
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @param {number} state - State of the campaign
+   * @return {UserRewards[]} UserRewards object array
+   */
+  public async getUserRewards(campaignAddress: string, state: number): Promise<UserRewards[]> {
+    const signer = this.provider.getSigner();
+    const walletAddress = await signer.getAddress();
+
+    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+
+    const rewardsCount = 1;
+
+    const userRewards = [];
+    const now = Math.floor(Date.now() / 1000);
+
+    for (let i = 0; i < rewardsCount; i++) {
+      const tokenAddress = await campaignContract.rewardsTokens(i);
+      const currentAmount =
+        state <= 1
+          ? await campaignContract.getUserAccumulatedReward(walletAddress, i, now)
+          : await campaignContract.getPendingReward(i);
+
+      userRewards.push({
+        tokenAddress,
+        currentAmount,
+      });
+    }
+
+    return userRewards;
+  }
+
+  /**
+   * Get user staked amount based on state
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @param {number} state - State of the campaign
+   * @return {BigNumber} Rewards amount in BigNumber
+   */
+  public async getUserStakedAmount(campaignAddress: string, state: number): Promise<BigNumber> {
+    const signer = this.provider.getSigner();
+    const walletAddress = await signer.getAddress();
+
+    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+
+    const { exitStake } = await campaignContract.exitInfo(walletAddress);
+    const userBalance = await campaignContract.balanceOf(walletAddress);
+
+    const userStakedAmount = state <= 1 ? userBalance : exitStake;
+
+    return userStakedAmount;
   }
 
   /**
@@ -175,7 +240,7 @@ export class StakerSolo {
   }
 
   /**
-   * Exit from campaign (Claim & Withdraw)
+   * Exit from campaign
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
@@ -185,21 +250,6 @@ export class StakerSolo {
     const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
 
     const transaction = await campaignContract.exit();
-
-    return transaction;
-  }
-
-  /**
-   * Claim rewards
-   * @public
-   * @param {string} contractAddress - Address of the camapaign contract
-   * @return {object} transaction object
-   */
-  public async claim(contractAddress: string): Promise<FunctionFragment> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
-
-    const transaction = await campaignContract.claim();
 
     return transaction;
   }

@@ -24,6 +24,8 @@ export interface UserData {
   userStakedAmount: BigNumberish;
   hasUserStaked: boolean;
   userRewards: UserRewards[];
+  exitStake?: BigNumberish;
+  exitTimestamp?: BigNumberish;
 }
 
 export interface CampaignRewards {
