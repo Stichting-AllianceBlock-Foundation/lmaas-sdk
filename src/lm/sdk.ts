@@ -4,7 +4,13 @@ import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 
-import { CampaingData, CampaingStatusData, checkMaxStakingLimit, NetworkEnum, UserData } from '..';
+import {
+  CampaingData,
+  CampaingStatusData,
+  checkMaxStakingLimit,
+  NetworkEnum,
+  UserDataLM,
+} from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
 
 export class StakerLM {
@@ -118,7 +124,7 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {UserData} UserData object
    */
-  public async getUserData(campaignAddress: string): Promise<UserData> {
+  public async getUserData(campaignAddress: string): Promise<UserDataLM> {
     const signer = this.provider.getSigner();
     const walletAddress = await signer.getAddress();
 

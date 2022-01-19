@@ -20,12 +20,23 @@ export interface CampaingStatusData {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
 }
-export interface UserData {
+
+export interface CampaingStatusDataActive {
+  hasCampaignStarted: boolean;
+  hasCampaignEnded: boolean;
+  exitTimestamp: BigNumberish;
+  exitStake: BigNumberish;
+}
+
+export interface UserDataLM {
   userStakedAmount: BigNumberish;
   hasUserStaked: boolean;
   userRewards: UserRewards[];
-  exitStake?: BigNumberish;
-  exitTimestamp?: BigNumberish;
+}
+
+export interface UserDataStaking {
+  exitTimestamp: BigNumberish;
+  exitStake: BigNumberish;
 }
 
 export interface CampaignRewards {

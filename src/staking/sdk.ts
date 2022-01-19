@@ -7,9 +7,10 @@ import { parseEther } from '@ethersproject/units';
 import {
   CampaingData,
   CampaingStatusData,
+  CampaingStatusDataActive,
   checkMaxStakingLimit,
   NetworkEnum,
-  UserData,
+  UserDataStaking,
   UserRewards,
 } from '..';
 import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
@@ -120,50 +121,54 @@ export class StakerSolo {
   }
 
   /**
+   * Get campaign data for connected user
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @return {CampaingStatusData} CampaingStatusData object
+   */
+  public async getCampaignStatusActive(campaignAddress: string): Promise<CampaingStatusDataActive> {
+    const signer = this.provider.getSigner();
+    const walletAddress = await signer.getAddress();
+
+    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
+
+    // Get now in seconds and convert to BN
+    const now = Math.floor(Date.now() / 1000);
+    const nowBN = BigNumber.from(now);
+
+    // Get raw contract data
+    const campaignEndTimestamp = await campaignContract.endTimestamp();
+    const hasCampaignStarted = await campaignContract.hasStakingStarted();
+
+    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+
+    return {
+      hasCampaignStarted,
+      hasCampaignEnded,
+      exitTimestamp,
+      exitStake,
+    };
+  }
+
+  /**
    * Get user data
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {UserData} UserData object
    */
-  public async getUserData(campaignAddress: string): Promise<UserData> {
+  public async getUserData(campaignAddress: string): Promise<UserDataStaking> {
     const signer = this.provider.getSigner();
     const walletAddress = await signer.getAddress();
 
     const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
 
     // Get raw user data
-    const userStakedAmount = await campaignContract.balanceOf(walletAddress);
-    const { exitStake, exitTimestamp } = await campaignContract.exitInfo(walletAddress);
-    const rewardsCount = 1;
-
-    const hasUserStaked = userStakedAmount.gt(0);
-
-    const userRewards = [];
-    const now = Math.floor(Date.now() / 1000);
-
-    // Get rewards info
-    if (hasUserStaked) {
-      for (let i = 0; i < rewardsCount; i++) {
-        const tokenAddress = await campaignContract.rewardsTokens(i);
-        const currentAmount = await campaignContract.getUserAccumulatedReward(
-          walletAddress,
-          i,
-          now
-        );
-
-        userRewards.push({
-          tokenAddress,
-          currentAmount,
-        });
-      }
-    }
+    const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
 
     return {
-      userStakedAmount,
-      hasUserStaked,
-      userRewards,
-      exitStake,
       exitTimestamp,
+      exitStake,
     };
   }
 
