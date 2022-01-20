@@ -11,7 +11,6 @@ import {
   checkMaxStakingLimit,
   NetworkEnum,
   UserDataStaking,
-  UserRewards,
 } from '..';
 import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
 
@@ -131,7 +130,6 @@ export class StakerSolo {
     const walletAddress = await signer.getAddress();
 
     const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
-    const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
@@ -140,6 +138,7 @@ export class StakerSolo {
     // Get raw contract data
     const campaignEndTimestamp = await campaignContract.endTimestamp();
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
+    const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
 
     const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
 
@@ -161,41 +160,28 @@ export class StakerSolo {
     const signer = this.provider.getSigner();
     const walletAddress = await signer.getAddress();
 
+    // Get now in seconds and convert to BN
+    const now = Math.floor(Date.now() / 1000);
+    const zeroBN = BigNumber.from(0);
+
     const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
 
     // Get raw user data
     const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
+    const userBalance = await campaignContract.balanceOf(walletAddress);
 
-    return {
-      exitTimestamp,
-      exitStake,
-    };
-  }
+    const hasUserInitiatedWithdraw = exitTimestamp.gt(zeroBN);
 
-  /**
-   * Get user rewards data based on state
-   * @public
-   * @param {string} contractAddress - Address of the camapaign contract
-   * @param {number} state - State of the campaign
-   * @return {UserRewards[]} UserRewards object array
-   */
-  public async getUserRewards(campaignAddress: string, state: number): Promise<UserRewards[]> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
-
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const userStakedAmount = hasUserInitiatedWithdraw ? exitStake : userBalance;
 
     const rewardsCount = 1;
-
     const userRewards = [];
-    const now = Math.floor(Date.now() / 1000);
 
     for (let i = 0; i < rewardsCount; i++) {
       const tokenAddress = await campaignContract.rewardsTokens(i);
-      const currentAmount =
-        state <= 1
-          ? await campaignContract.getUserAccumulatedReward(walletAddress, i, now)
-          : await campaignContract.getPendingReward(i);
+      const currentAmount = !hasUserInitiatedWithdraw
+        ? await campaignContract.getUserAccumulatedReward(walletAddress, i, now)
+        : await campaignContract.getPendingReward(i);
 
       userRewards.push({
         tokenAddress,
@@ -203,28 +189,12 @@ export class StakerSolo {
       });
     }
 
-    return userRewards;
-  }
-
-  /**
-   * Get user staked amount based on state
-   * @public
-   * @param {string} contractAddress - Address of the camapaign contract
-   * @param {number} state - State of the campaign
-   * @return {BigNumber} Rewards amount in BigNumber
-   */
-  public async getUserStakedAmount(campaignAddress: string, state: number): Promise<BigNumber> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
-
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
-
-    const { exitStake } = await campaignContract.exitInfo(walletAddress);
-    const userBalance = await campaignContract.balanceOf(walletAddress);
-
-    const userStakedAmount = state <= 1 ? userBalance : exitStake;
-
-    return userStakedAmount;
+    return {
+      exitTimestamp,
+      exitStake,
+      userStakedAmount,
+      userRewards,
+    };
   }
 
   /**

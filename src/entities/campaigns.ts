@@ -37,6 +37,8 @@ export interface UserDataLM {
 export interface UserDataStaking {
   exitTimestamp: BigNumberish;
   exitStake: BigNumberish;
+  userStakedAmount: BigNumberish;
+  userRewards: UserRewards[];
 }
 
 export interface CampaignRewards {
