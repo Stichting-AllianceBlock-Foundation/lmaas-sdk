@@ -47,6 +47,7 @@ export class StakerLM {
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
     const contractStakeLimit = await campaignContract.contractStakeLimit();
     const walletStakeLimit = await campaignContract.stakeLimit();
+    const extensionDuration = await campaignContract.extensionDuration();
     const rewardsCount = Number(await campaignContract.getRewardTokensCount());
 
     // Get deltas in seconds
@@ -86,6 +87,7 @@ export class StakerLM {
       deltaDuration,
       campaignRewards,
       rewardsCount,
+      extensionDuration,
     };
   }
 
