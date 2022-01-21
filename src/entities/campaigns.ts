@@ -19,6 +19,7 @@ export interface CampaingData {
 export interface CampaingStatusData {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
+  hasUserStaked: boolean;
 }
 
 export interface CampaingStatusDataActive {

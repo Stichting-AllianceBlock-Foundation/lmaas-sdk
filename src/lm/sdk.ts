@@ -95,7 +95,10 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {CampaingStatusData} CampaingStatusData object
    */
-  public async getCampaignStatus(campaignAddress: string): Promise<CampaingStatusData> {
+  public async getCampaignStatus(
+    campaignAddress: string,
+    active: boolean
+  ): Promise<CampaingStatusData> {
     const campaignContract = new Contract(
       campaignAddress,
       LiquidityMiningCampaignABI,
@@ -112,9 +115,21 @@ export class StakerLM {
 
     const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
 
+    let hasUserStaked = false;
+
+    if (active) {
+      const signer = this.provider.getSigner();
+      const walletAddress = await signer.getAddress();
+
+      const userStakedAmount = await campaignContract.balanceOf(walletAddress);
+
+      hasUserStaked = userStakedAmount.gt(0);
+    }
+
     return {
       hasCampaignStarted,
       hasCampaignEnded,
+      hasUserStaked,
     };
   }
 
@@ -132,7 +147,7 @@ export class StakerLM {
 
     // Get raw user data
     const userStakedAmount = await campaignContract.balanceOf(walletAddress);
-    const rewardsCount = 1;
+    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
 
     const hasUserStaked = userStakedAmount.gt(0);
 
