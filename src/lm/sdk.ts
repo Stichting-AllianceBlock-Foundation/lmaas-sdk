@@ -226,4 +226,27 @@ export class StakerLM {
 
     return transaction;
   }
+
+  /**
+   * Extend campaign
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @param {number} duration - Duration of the campaign in seconds
+   * @param {string} rewardsPerSecond - Rewards per second in string
+   * @return {object} transaction object
+   */
+  public async extend(
+    contractAddress: string,
+    duration: number,
+    rewardsPerSecond: string
+  ): Promise<FunctionFragment> {
+    const signer = this.provider.getSigner();
+    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+
+    const rewardsPerSecondParsed = parseEther(rewardsPerSecond);
+
+    const transaction = await campaignContract.extend(duration, [rewardsPerSecondParsed]);
+
+    return transaction;
+  }
 }
