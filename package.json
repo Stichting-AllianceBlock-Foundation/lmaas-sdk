@@ -62,6 +62,6 @@
   },
   "dependencies": {
     "ethers": "^5.5.2",
-    "lmaas-contracts": "git+https://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:x-oauth-basic@github.com/Stichting-AllianceBlock-Foundation/lmaas-contracts.git#sdk-fixes"
+    "lmaas-contracts": "git+https://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:x-oauth-basic@github.com/Stichting-AllianceBlock-Foundation/lmaas-contracts.git#36f07351792c15aa07b12d609f9faa507857d08a"
   }
 }

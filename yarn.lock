@@ -8222,9 +8222,9 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-"lmaas-contracts@git+https://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:x-oauth-basic@github.com/Stichting-AllianceBlock-Foundation/lmaas-contracts.git#sdk-fixes":
+"lmaas-contracts@git+https://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:x-oauth-basic@github.com/Stichting-AllianceBlock-Foundation/lmaas-contracts.git#36f07351792c15aa07b12d609f9faa507857d08a":
   version "1.0.0"
-  resolved "git+https://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:x-oauth-basic@github.com/Stichting-AllianceBlock-Foundation/lmaas-contracts.git#2ea5763588f72865f23317fe8394e9fc501ff1c9"
+  resolved "git+https://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:x-oauth-basic@github.com/Stichting-AllianceBlock-Foundation/lmaas-contracts.git#36f07351792c15aa07b12d609f9faa507857d08a"
   dependencies:
     "@nomiclabs/hardhat-ethers" "^2.0.2"
     "@nomiclabs/hardhat-etherscan" "^2.1.7"

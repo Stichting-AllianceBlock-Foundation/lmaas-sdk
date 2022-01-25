@@ -3,7 +3,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 import { BigNumberish } from 'ethers';
-import { LiquidityMiningCampaign, LiquidityMiningCampaign__factory } from 'lmaas-contracts/typechain-types';
+import { LiquidityMiningCampaign, LiquidityMiningCampaign__factory } from 'lmaas-contracts/typechain';
 
 import {
   CampaingData,

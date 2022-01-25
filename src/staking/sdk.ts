@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
-import {NonCompoundingRewardsPool, NonCompoundingRewardsPool__factory} from 'lmaas-contracts/typechain-types';
+import {NonCompoundingRewardsPool, NonCompoundingRewardsPool__factory} from 'lmaas-contracts/typechain';
 
 import {
   CampaingData,
