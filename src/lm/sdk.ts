@@ -78,6 +78,7 @@ export class StakerLM {
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
     const contractStakeLimit = await campaignContract.contractStakeLimit();
     const walletStakeLimit = await campaignContract.stakeLimit();
+    const extensionDuration = await campaignContract.extensionDuration();
     const rewardsCount = Number(await campaignContract.getRewardTokensCount());
 
     // Get deltas in seconds
@@ -117,6 +118,7 @@ export class StakerLM {
       deltaDuration,
       campaignRewards,
       rewardsCount,
+      extensionDuration,
     };
   }
 
@@ -261,6 +263,28 @@ export class StakerLM {
     const campaignContract = this.getContract(contractAddress);
 
     const transaction = await campaignContract.transferOwnership(newOwner);
+
+    return transaction;
+  }
+
+  /**
+   * Extend campaign
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @param {number} duration - Duration of the campaign in seconds
+   * @param {string} rewardsPerSecond - Rewards per second in string
+   * @return {object} transaction object
+   */
+  public async extend(
+    contractAddress: string,
+    duration: number,
+    rewardsPerSecond: string
+  ): Promise<ContractTransaction> {
+    const campaignContract = this.getContract(contractAddress);
+
+    const rewardsPerSecondParsed = parseEther(rewardsPerSecond);
+
+    const transaction = await campaignContract.extend(duration, [rewardsPerSecondParsed]);
 
     return transaction;
   }
