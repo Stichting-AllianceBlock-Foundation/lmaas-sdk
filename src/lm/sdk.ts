@@ -44,6 +44,7 @@ export class StakerLM {
     contractStakeLimit: BigNumberish, 
     name: string
   ): Promise<string> {
+    // @ts-ignore: semantic error TS2345
     const factory = new LiquidityMiningCampaign__factory(this.provider.getSigner());
 
     const contract = await factory.deploy(

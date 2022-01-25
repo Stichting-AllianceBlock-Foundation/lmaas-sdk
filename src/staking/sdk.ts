@@ -48,6 +48,7 @@ export class StakerSolo {
     contractStakeLimit: BigNumberish, 
     name: string
   ): Promise<string> {
+    // @ts-ignore: semantic error TS2345
     const factory = new NonCompoundingRewardsPool__factory(this.provider.getSigner());
 
     const contract = await factory.deploy(
