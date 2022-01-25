@@ -1,8 +1,8 @@
-import { FunctionFragment } from '@ethersproject/abi';
-import { BigNumber } from '@ethersproject/bignumber';
-import { Contract } from '@ethersproject/contracts';
+import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import { ContractTransaction } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
+import {NonCompoundingRewardsPool, NonCompoundingRewardsPool__factory} from 'lmaas-contracts/typechain-types';
 
 import {
   CampaingData,
@@ -12,7 +12,6 @@ import {
   NetworkEnum,
   UserDataStaking,
 } from '..';
-import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
 
 export class StakerSolo {
   // TODO: Get network by provider (build pattern, async) !!
@@ -24,6 +23,46 @@ export class StakerSolo {
     this.protocol = protocol;
   }
 
+  protected getContract = (address: string): NonCompoundingRewardsPool => {
+    return NonCompoundingRewardsPool__factory.connect(address, this.provider);
+  }
+
+  /**
+   * Deploy a new pool
+   * @public
+   * @param {string} stakingToken - Address of the token to stake
+   * @param {string} rewardsTokens - Addresses of the reward tokens
+   * @param {string} stakeLimit - Staking limit per user
+   * @param {string} throttleRoundSeconds - Duration of throttling round in seconds
+   * @param {string} throttleRoundCap - Max withdrawal per throttling round
+   * @param {string} contractStakeLimit - Total staking limitcontract
+   * @param {string} name - Name of the pool
+   * @return {CampaingData} CampaingData object
+   */
+  public async deploy (
+    stakingToken: string, 
+    rewardsTokens: string[], 
+    stakeLimit: BigNumberish, 
+    throttleRoundSeconds: BigNumberish, 
+    throttleRoundCap: BigNumberish, 
+    contractStakeLimit: BigNumberish, 
+    name: string
+  ): Promise<string> {
+    const factory = new NonCompoundingRewardsPool__factory(this.provider.getSigner());
+
+    const contract = await factory.deploy(
+      stakingToken,
+      rewardsTokens,
+      stakeLimit,
+      throttleRoundSeconds,
+      throttleRoundCap,
+      contractStakeLimit,
+      name
+    );
+
+    return contract.address;
+  }
+
   /**
    * Get campaign data
    * @public
@@ -31,11 +70,7 @@ export class StakerSolo {
    * @return {CampaingData} CampaingData object
    */
   public async getCampaignData(campaignAddress: string): Promise<CampaingData> {
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPool,
-      this.provider
-    );
+    const campaignContract = this.getContract(campaignAddress);
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
@@ -97,11 +132,7 @@ export class StakerSolo {
    * @return {CampaingStatusData} CampaingStatusData object
    */
   public async getCampaignStatus(campaignAddress: string): Promise<CampaingStatusData> {
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPool,
-      this.provider
-    );
+    const campaignContract = this.getContract(campaignAddress);
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
@@ -129,7 +160,7 @@ export class StakerSolo {
     const signer = this.provider.getSigner();
     const walletAddress = await signer.getAddress();
 
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = this.getContract(campaignAddress);
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
@@ -164,7 +195,7 @@ export class StakerSolo {
     const now = Math.floor(Date.now() / 1000);
     const zeroBN = BigNumber.from(0);
 
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = this.getContract(campaignAddress);
 
     // Get raw user data
     const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
@@ -204,9 +235,9 @@ export class StakerSolo {
    * @param {string} amountToStake - Amount to stake
    * @return {object} transaction object
    */
-  public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+  public async stake(contractAddress: string, amountToStake: string): Promise<ContractTransaction> {
+    const campaignContract = this.getContract(contractAddress);
+
     const amountToStakeParsed = parseEther(amountToStake);
 
     const transaction = await campaignContract.stake(amountToStakeParsed);
@@ -220,11 +251,25 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async exit(contractAddress: string): Promise<FunctionFragment> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+  public async exit(contractAddress: string): Promise<ContractTransaction> {
+    const campaignContract = this.getContract(contractAddress);
 
     const transaction = await campaignContract.exit();
+
+    return transaction;
+  }
+
+  /**
+   * Transfer ownership
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @param {string} newOwner - Address of the new owner
+   * @return {object} transaction object
+   */
+  public async transferOwnership(contractAddress: string, newOwner: string): Promise<ContractTransaction> {
+    const campaignContract = this.getContract(contractAddress);
+
+    const transaction = await campaignContract.transferOwnership(newOwner);
 
     return transaction;
   }

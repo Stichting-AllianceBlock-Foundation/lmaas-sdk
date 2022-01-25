@@ -61,6 +61,7 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "ethers": "^5.5.2"
+    "ethers": "^5.5.2",
+    "lmaas-contracts": "file:../lmaas-contracts"
   }
 }
