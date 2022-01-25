@@ -123,6 +123,7 @@ export class StakerSolo {
       deltaDuration,
       campaignRewards,
       rewardsCount,
+      extensionDuration: 0
     };
   }
 
