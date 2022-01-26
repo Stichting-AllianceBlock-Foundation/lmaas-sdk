@@ -201,16 +201,18 @@ export class StakerSolo {
     const rewardsCount = 1;
     const userRewards = [];
 
-    for (let i = 0; i < rewardsCount; i++) {
-      const tokenAddress = await campaignContract.rewardsTokens(i);
-      const currentAmount = !hasUserInitiatedWithdraw
-        ? await campaignContract.getUserAccumulatedReward(walletAddress, i, now)
-        : await campaignContract.getPendingReward(i);
+    if (userStakedAmount.gt(zeroBN)) {
+      for (let i = 0; i < rewardsCount; i++) {
+        const tokenAddress = await campaignContract.rewardsTokens(i);
+        const currentAmount = !hasUserInitiatedWithdraw
+          ? await campaignContract.getUserAccumulatedReward(walletAddress, i, now)
+          : await campaignContract.getPendingReward(i);
 
-      userRewards.push({
-        tokenAddress,
-        currentAmount,
-      });
+        userRewards.push({
+          tokenAddress,
+          currentAmount,
+        });
+      }
     }
 
     return {
