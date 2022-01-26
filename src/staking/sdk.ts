@@ -254,4 +254,19 @@ export class StakerSolo {
 
     return transaction;
   }
+
+  /**
+   * Complete exit from campaign (take initial staking and rewards)
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @return {object} transaction object
+   */
+  public async completeExit(contractAddress: string): Promise<FunctionFragment> {
+    const signer = this.provider.getSigner();
+    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+
+    const transaction = await campaignContract.completeExit();
+
+    return transaction;
+  }
 }
