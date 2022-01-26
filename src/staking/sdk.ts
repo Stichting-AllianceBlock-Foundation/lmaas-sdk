@@ -42,13 +42,37 @@ export class StakerSolo {
     const nowBN = BigNumber.from(now);
 
     // Get raw contract data
-    const totalStaked = await campaignContract.totalStaked();
-    const campaignStartTimestamp = await campaignContract.startTimestamp();
-    const campaignEndTimestamp = await campaignContract.endTimestamp();
-    const hasCampaignStarted = await campaignContract.hasStakingStarted();
-    const contractStakeLimit = await campaignContract.contractStakeLimit();
-    const walletStakeLimit = await campaignContract.stakeLimit();
-    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
+    const {
+      totalStaked: totalStakedPR,
+      startTimestamp: startTimestampPR,
+      endTimestamp: endTimestampPR,
+      hasStakingStarted: hasStakingStartedPR,
+      contractStakeLimit: contractStakeLimitPR,
+      stakeLimit: stakeLimitPR,
+      getRewardTokensCount: getRewardTokensCountPR,
+    } = campaignContract;
+
+    const promiseArray = [
+      totalStakedPR(),
+      startTimestampPR(),
+      endTimestampPR(),
+      hasStakingStartedPR(),
+      contractStakeLimitPR(),
+      stakeLimitPR(),
+      getRewardTokensCountPR(),
+    ];
+
+    const [
+      totalStaked,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
+      hasCampaignStarted,
+      contractStakeLimit,
+      walletStakeLimit,
+      rewardsCount,
+    ] = await Promise.all(promiseArray);
+
+    const rewardsCountNum = Number(rewardsCount);
 
     // Get deltas in seconds
     const deltaExpiration = campaignEndTimestamp.sub(nowBN);
@@ -57,7 +81,7 @@ export class StakerSolo {
     const campaignRewards = [];
 
     // Get rewards info
-    for (let i = 0; i < rewardsCount; i++) {
+    for (let i = 0; i < rewardsCountNum; i++) {
       const tokenAddress = await campaignContract.rewardsTokens(i);
       const rewardPerSecond = await campaignContract.rewardPerSecond(i);
       const totalRewards = rewardPerSecond.mul(deltaDuration);
@@ -86,7 +110,7 @@ export class StakerSolo {
       deltaExpiration,
       deltaDuration,
       campaignRewards,
-      rewardsCount,
+      rewardsCount: rewardsCountNum,
     };
   }
 

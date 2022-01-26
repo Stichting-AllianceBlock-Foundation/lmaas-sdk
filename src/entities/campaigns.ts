@@ -8,7 +8,7 @@ export interface CampaingData {
   walletStakeLimit: BigNumberish;
   deltaExpiration: BigNumberish;
   deltaDuration: BigNumberish;
-  extensionDuration: BigNumberish;
+  extensionDuration?: BigNumberish;
   hasContractStakeLimit: boolean;
   hasWalletStakeLimit: boolean;
   hasCampaignStarted: boolean;
