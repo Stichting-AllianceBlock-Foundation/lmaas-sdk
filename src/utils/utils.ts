@@ -1,5 +1,10 @@
 import { BigNumber, constants } from 'ethers';
-import { formatUnits } from 'ethers/lib/utils';
+import { Contract } from '@ethersproject/contracts';
+import { formatUnits, parseEther } from '@ethersproject/units';
+import { FunctionFragment } from '@ethersproject/abi';
+
+import ERC20ABI from '../abi/ERC20.json';
+import { Web3Provider } from '@ethersproject/providers';
 
 // CONSTANTS
 const BLOCKS_PER_DAY_ETH = 6646;
@@ -40,4 +45,30 @@ export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
 
 export const formatValuesToString = (values: BigNumber[], decimals = 18): string[] => {
   return values.map(v => formatUnits(v.toString(), decimals));
+};
+
+export const approveToken = async (
+  wallet: Web3Provider,
+  tokenAddress: string,
+  spenderAddress: string,
+  amountToApprove?: string
+): Promise<FunctionFragment> => {
+  const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
+
+  const amountToApproveParsed = amountToApprove
+    ? parseEther(amountToApprove)
+    : constants.MaxUint256;
+
+  return tokenContract.approve(spenderAddress, amountToApproveParsed);
+};
+
+export const getAllowance = async (
+  wallet: Web3Provider,
+  tokenAddress: string,
+  spenderAddress: string
+): Promise<FunctionFragment> => {
+  const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
+  const walletAddress = await wallet._getAddress;
+
+  return tokenContract.allowance(walletAddress, spenderAddress);
 };
