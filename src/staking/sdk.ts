@@ -15,7 +15,6 @@ import {
 import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
 
 export class StakerSolo {
-  // TODO: Get network by provider (build pattern, async) !!
   protected protocol: NetworkEnum;
   protected provider: Web3Provider;
 
