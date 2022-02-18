@@ -1,11 +1,4 @@
-/node_modules/
-/build/
-/lib/
-/dist/
-/docs/
-.idea/*
-config.ts
-
-.DS_Store
-coverage
 *.log
+.DS_Store
+node_modules
+dist

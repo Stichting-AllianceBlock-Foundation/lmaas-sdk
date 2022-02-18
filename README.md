@@ -1,52 +1,33 @@
-# Lmaas SDK Typescript
+# ⛏ Liquidity Mining as a Service SDK (LMaaS)
 
-## Getting Started
+## ⚙️ Install dependencies
 
-```bash
-# Clone the repository
-git clone https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk-typescript
+Just run in console:
 
-# Install dependencies
-yarn install
-```
+`yarn`
 
-## Config
+## 📝 Available Scripts
 
-Create config folder with `config.ts` file with the following structure
+🚀 **To run the project:**
 
-```javascript
-const CONFIG = {
-  network: 1,
-  APIKey: '<INFURA_API_KEY>',
-  privateKey: '<WALLET_PRIVATE_KEY>',
-};
+`yarn start`
 
-export default CONFIG;
-```
+🔨 **To build the project:**
 
-## VSCode setup
+`yarn build`
 
-Make sure you have Prettier installed and following rule added in `settings.json`
+🔗 **To link the project(for testing purposed):**
 
-```json
-"editor.codeActionsOnSave": {
-  "source.fixAll.eslint": true
-}
-```
+`yarn link`
 
-## Generate typings
+Then go to project which need to consume the SDK and type:
 
-```bash
-npx typechain --target ethers-v5 --out-dir app/contracts './src/abi/*.json'
-```
+`yarn link "@stichting-allianceblock-foundation/lmaas-sdk"`
 
-## Run prject
+To import SDK classes:
 
-```bash
-yarn start
-```
+`import { StakerLM, StakerSolo } from '@stichting-allianceblock-foundation/lmaas-sdk';`
 
-Open `index.html` file and open console.
+## ⌨️ Development guidelines:
 
-ℹ️ For more info regarding project template and build procedures see here:
-https://github.com/metachris/typescript-boilerplate.git
+For best practices and guidelines, read more [here](https://allianceblockprotocol.atlassian.net/wiki/spaces/LMAAS/pages/201719809/Development+guidelines).
