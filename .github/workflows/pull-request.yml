@@ -1,0 +1,98 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+env:
+  CI: true
+  CACHE_TOKEN: 50001cff
+  NPM_REGISTRY: npm.pkg.github.com
+
+jobs:
+  version:
+    name: version check
+    runs-on: ubuntu-18.04
+    if: github.base_ref == 'main'
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12.x'
+
+      - name: Get local version
+        id: local_version
+        run: echo ::set-output name=value::$(cat ./package.json | jq --raw-output .version)
+
+      - name: Authenticate GPR
+        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> .npmrc
+
+      - name: Get registry version
+        id: registry_version
+        run: echo ::set-output name=value::$(npm view ${{ github.repository }} version)
+
+      - name: Validate version
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            const local_version = '${{ steps.local_version.outputs.value }}';
+            const registry_version = '${{ steps.registry_version.outputs.value }}';
+            core.info(`Repository version: ${local_version}`);
+            core.info(`Registry version: ${registry_version}`);
+            if (registry_version === local_version) {
+              core.setFailed('Please bump version before merging');
+            }
+
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12.x'
+
+      - name: Debug
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ env.CACHE_TOKEN }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Prepare .npmrc
+        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> .npmrc
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Build
+        run: yarn build
+
+      - name: Linting
+        run: yarn lint
+
+      # - name: Prettier
+      #   run: yarn format
+
+      # - name: Unit tests
+      #   run: yarn test:coverage
+
+      # - name: Upload coverage
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: test-reports
+      #     path: coverage/
