@@ -1,10 +1,10 @@
-import { BigNumber, constants } from 'ethers';
-import { Contract } from '@ethersproject/contracts';
-import { formatUnits, parseEther } from '@ethersproject/units';
 import { FunctionFragment } from '@ethersproject/abi';
+import { Contract } from '@ethersproject/contracts';
+import { Web3Provider } from '@ethersproject/providers';
+import { formatUnits, parseEther } from '@ethersproject/units';
+import { BigNumber, constants } from 'ethers';
 
 import ERC20ABI from '../abi/ERC20.json';
-import { Web3Provider } from '@ethersproject/providers';
 
 // CONSTANTS
 const BLOCKS_PER_DAY_ETH = 6646;
@@ -51,7 +51,7 @@ export const approveToken = async (
   wallet: Web3Provider,
   tokenAddress: string,
   spenderAddress: string,
-  amountToApprove?: string
+  amountToApprove?: string,
 ): Promise<FunctionFragment> => {
   const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
 
@@ -65,7 +65,7 @@ export const approveToken = async (
 export const getAllowance = async (
   wallet: Web3Provider,
   tokenAddress: string,
-  spenderAddress: string
+  spenderAddress: string,
 ): Promise<FunctionFragment> => {
   const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
   const walletAddress = await wallet._getAddress;
