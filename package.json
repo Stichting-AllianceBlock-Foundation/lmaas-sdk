@@ -1,8 +1,11 @@
 {
-  "version": "0.0.1",
+  "name": "@stichting-allianceblock-foundation/lmaas-sdk",
+  "author": "Martin Dobrev",
+  "version": "0.0.2",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "module": "dist/ts-sdk.esm.js",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -10,6 +13,10 @@
     "dist",
     "src"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk.git"
+  },
   "engines": {
     "node": ">=10"
   },
@@ -17,32 +24,46 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test",
-    "lint": "tsdx lint src",
-    "lint:fix": "tsdx lint src --fix",
+    "test:watch": "tsdx test --watch",
+    "test:coverage": "tsdx test --coverage",
+    "format": "prettier --check \"src/**/*.{js,jsx,ts,tsx,scss}\"",
+    "format:fix": "prettier --write \"src/**/*.{js,jsx,ts,tsx,scss}\"",
+    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
+    "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx}'",
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
-  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
     }
   },
-  "prettier": {
-    "printWidth": 100,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5",
-    "tabWidth": 2
+  "dependencies": {
+    "ethers": "^5.5.2"
   },
-  "name": "@stichting-allianceblock-foundation/lmaas-sdk",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk.git"
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^7.0.5",
+    "@typechain/ethers-v5": "^8.0.5",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-prettier": "^8.4.0",
+    "eslint-config-standard-react": "^11.0.1",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-react": "^7.28.0",
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "husky": "^7.0.4",
+    "prettier": "^2.5.1",
+    "size-limit": "^7.0.5",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.3.1",
+    "typechain": "^6.1.0",
+    "typescript": "^4.5.4"
   },
-  "author": "Martin Dobrev",
-  "module": "dist/ts-sdk.esm.js",
   "size-limit": [
     {
       "path": "dist/ts-sdk.cjs.production.min.js",
@@ -52,18 +73,5 @@
       "path": "dist/ts-sdk.esm.js",
       "limit": "10 KB"
     }
-  ],
-  "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.5",
-    "@typechain/ethers-v5": "^8.0.5",
-    "husky": "^7.0.4",
-    "size-limit": "^7.0.5",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.3.1",
-    "typechain": "^6.1.0",
-    "typescript": "^4.5.4"
-  },
-  "dependencies": {
-    "ethers": "^5.5.2"
-  }
+  ]
 }

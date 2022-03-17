@@ -2,7 +2,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IERC20Detailed",
+        "internalType": "contract IERC20",
         "name": "_stakingToken",
         "type": "address"
       },
@@ -80,6 +80,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "newStartTimestamp",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "newEndTimestamp",
         "type": "uint256"
       },
@@ -133,27 +139,27 @@
   },
   {
     "anonymous": false,
-    "inputs": [],
-    "name": "Started",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "uint256",
-        "name": "rewardsAmount",
+        "name": "startTimestamp",
         "type": "uint256"
       },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "endTimestamp",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "rewardsPerSecond",
+        "type": "uint256[]"
       }
     ],
-    "name": "WithdrawLPRewards",
+    "name": "Started",
     "type": "event"
   },
   {
@@ -222,6 +228,13 @@
   },
   {
     "inputs": [],
+    "name": "cancelExtension",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "claim",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -264,26 +277,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_stakePool",
-        "type": "address"
-      }
-    ],
-    "name": "exitAndStake",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
+        "name": "transferTo",
         "type": "address"
       }
     ],
     "name": "exitAndTransfer",
     "outputs": [],
-    "stateMutability": "pure",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -345,6 +345,19 @@
       }
     ],
     "name": "getAvailableBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPreviousCampaignsCount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -525,6 +538,30 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "previousCampaigns",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "startTimestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endTimestamp",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -635,7 +672,7 @@
     "name": "stakingToken",
     "outputs": [
       {
-        "internalType": "contract IERC20Detailed",
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -755,14 +792,27 @@
         "internalType": "address",
         "name": "_recipient",
         "type": "address"
+      }
+    ],
+    "name": "withdrawExcessRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_recipient",
+        "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_lpTokenContract",
+        "name": "_token",
         "type": "address"
       }
     ],
-    "name": "withdrawLPRewards",
+    "name": "withdrawTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

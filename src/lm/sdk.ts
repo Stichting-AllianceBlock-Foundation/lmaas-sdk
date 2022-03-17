@@ -32,7 +32,7 @@ export class StakerLM {
     const campaignContract = new Contract(
       campaignAddress,
       LiquidityMiningCampaignABI,
-      this.provider
+      this.provider,
     );
 
     // Get now in seconds and convert to BN
@@ -123,12 +123,12 @@ export class StakerLM {
    */
   public async getCampaignStatus(
     campaignAddress: string,
-    active: boolean
+    active: boolean,
   ): Promise<CampaingStatusData> {
     const campaignContract = new Contract(
       campaignAddress,
       LiquidityMiningCampaignABI,
-      this.provider
+      this.provider,
     );
 
     // Get now in seconds and convert to BN
@@ -187,7 +187,7 @@ export class StakerLM {
         const currentAmount = await campaignContract.getUserAccumulatedReward(
           walletAddress,
           i,
-          now
+          now,
         );
 
         userRewards.push({
@@ -262,7 +262,7 @@ export class StakerLM {
   public async extend(
     contractAddress: string,
     duration: number,
-    rewardsPerSecond: string
+    rewardsPerSecond: string,
   ): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);

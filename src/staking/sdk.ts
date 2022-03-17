@@ -33,7 +33,7 @@ export class StakerSolo {
     const campaignContract = new Contract(
       campaignAddress,
       NonCompoundingRewardsPool,
-      this.provider
+      this.provider,
     );
 
     // Get now in seconds and convert to BN
@@ -123,7 +123,7 @@ export class StakerSolo {
     const campaignContract = new Contract(
       campaignAddress,
       NonCompoundingRewardsPool,
-      this.provider
+      this.provider,
     );
 
     // Get now in seconds and convert to BN
