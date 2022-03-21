@@ -79,17 +79,19 @@ export class StakerSolo {
 
     const campaignRewards = [];
 
-    // Get rewards info
-    for (let i = 0; i < rewardsCountNum; i++) {
-      const tokenAddress = await campaignContract.rewardsTokens(i);
-      const rewardPerSecond = await campaignContract.rewardPerSecond(i);
-      const totalRewards = rewardPerSecond.mul(deltaDuration);
+    if (hasCampaignStarted) {
+      // Get rewards info
+      for (let i = 0; i < rewardsCountNum; i++) {
+        const tokenAddress = await campaignContract.rewardsTokens(i);
+        const rewardPerSecond = await campaignContract.rewardPerSecond(i);
+        const totalRewards = rewardPerSecond.mul(deltaDuration);
 
-      campaignRewards.push({
-        tokenAddress,
-        rewardPerSecond,
-        totalRewards,
-      });
+        campaignRewards.push({
+          tokenAddress,
+          rewardPerSecond,
+          totalRewards,
+        });
+      }
     }
 
     const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
