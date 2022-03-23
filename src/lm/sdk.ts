@@ -141,7 +141,7 @@ export class StakerLM {
     const campaignEndTimestamp = await campaignContract.endTimestamp();
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
 
-    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const hasCampaignEnded = hasCampaignStarted ? campaignEndTimestamp.lt(nowBN) : false;
 
     let hasUserStaked = false;
 
