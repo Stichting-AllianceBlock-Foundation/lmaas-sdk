@@ -48,6 +48,7 @@ export class StakerLM {
       stakeLimit: stakeLimitPR,
       extensionDuration: extensionDurationPR,
       getRewardTokensCount: getRewardTokensCountPR,
+      name: namePR,
     } = campaignContract;
 
     const promiseArray = [
@@ -59,6 +60,7 @@ export class StakerLM {
       stakeLimitPR(),
       extensionDurationPR(),
       getRewardTokensCountPR(),
+      namePR(),
     ];
 
     const [
@@ -70,6 +72,7 @@ export class StakerLM {
       walletStakeLimit,
       extensionDuration,
       rewardsCount,
+      name,
     ] = await Promise.all(promiseArray);
 
     const rewardsCountNum = Number(rewardsCount);
@@ -114,6 +117,7 @@ export class StakerLM {
       campaignRewards,
       rewardsCount: rewardsCountNum,
       extensionDuration,
+      name,
     };
   }
 

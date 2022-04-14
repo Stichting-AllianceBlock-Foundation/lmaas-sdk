@@ -15,6 +15,7 @@ export interface CampaingData {
   hasCampaignEnded: boolean;
   campaignRewards: CampaignRewards[];
   rewardsCount: number;
+  name: string;
 }
 
 export interface CampaingStatusData {
