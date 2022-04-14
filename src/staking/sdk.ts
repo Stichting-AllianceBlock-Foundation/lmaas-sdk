@@ -49,6 +49,7 @@ export class StakerSolo {
       contractStakeLimit: contractStakeLimitPR,
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
+      name: namePR,
     } = campaignContract;
 
     const promiseArray = [
@@ -59,6 +60,7 @@ export class StakerSolo {
       contractStakeLimitPR(),
       stakeLimitPR(),
       getRewardTokensCountPR(),
+      namePR(),
     ];
 
     const [
@@ -69,6 +71,7 @@ export class StakerSolo {
       contractStakeLimit,
       walletStakeLimit,
       rewardsCount,
+      name,
     ] = await Promise.all(promiseArray);
 
     const rewardsCountNum = Number(rewardsCount);
@@ -112,6 +115,7 @@ export class StakerSolo {
       deltaDuration,
       campaignRewards,
       rewardsCount: rewardsCountNum,
+      name,
     };
   }
 
