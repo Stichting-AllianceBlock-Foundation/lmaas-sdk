@@ -53,6 +53,18 @@ export class StakerSolo {
       wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract;
 
+    let wrappedNativeToken: string = '';
+
+    /*
+     @REMOVE this when the version of the pool is fixed.
+     Some saving, because there are pools already deployed of v2.
+    */
+    try {
+      wrappedNativeToken = await wrappedNativeTokenPR();
+    } catch (e) {
+      console.error(e);
+    }
+
     const promiseArray = [
       totalStakedPR(),
       startTimestampPR(),
@@ -62,7 +74,6 @@ export class StakerSolo {
       stakeLimitPR(),
       getRewardTokensCountPR(),
       namePR(),
-      wrappedNativeTokenPR(),
     ];
 
     const [
@@ -74,7 +85,6 @@ export class StakerSolo {
       walletStakeLimit,
       rewardsCount,
       name,
-      wrappedNativeToken,
     ] = await Promise.all(promiseArray);
 
     const rewardsCountNum = Number(rewardsCount);
