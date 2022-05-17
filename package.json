@@ -1,6 +1,6 @@
 {
   "name": "@stichting-allianceblock-foundation/lmaas-sdk",
-  "author": "Martin Dobrev",
+  "author": "AllianceBlock",
   "version": "0.0.6",
   "license": "MIT",
   "main": "dist/index.js",
