@@ -49,6 +49,7 @@ export class StakerLM {
       extensionDuration: extensionDurationPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
+      wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract;
 
     const promiseArray = [
@@ -61,6 +62,7 @@ export class StakerLM {
       extensionDurationPR(),
       getRewardTokensCountPR(),
       namePR(),
+      wrappedNativeTokenPR(),
     ];
 
     const [
@@ -73,6 +75,7 @@ export class StakerLM {
       extensionDuration,
       rewardsCount,
       name,
+      wrappedNativeToken,
     ] = await Promise.all(promiseArray);
 
     const rewardsCountNum = Number(rewardsCount);
@@ -118,6 +121,7 @@ export class StakerLM {
       rewardsCount: rewardsCountNum,
       extensionDuration,
       name,
+      wrappedNativeToken,
     };
   }
 

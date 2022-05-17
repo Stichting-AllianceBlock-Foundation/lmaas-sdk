@@ -2,7 +2,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Detailed",
         "name": "_stakingToken",
         "type": "address"
       },
@@ -35,6 +35,11 @@
         "internalType": "string",
         "name": "_name",
         "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_wrappedNativeToken",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -486,19 +491,6 @@
   },
   {
     "inputs": [],
-    "name": "getPreviousCampaignsCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getRewardTokensCount",
     "outputs": [
       {
@@ -706,30 +698,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "previousCampaigns",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "startTimestamp",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endTimestamp",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -840,7 +808,7 @@
     "name": "stakingToken",
     "outputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Detailed",
         "name": "",
         "type": "address"
       }
@@ -1009,6 +977,19 @@
     "name": "withdrawTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "wrappedNativeToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]
