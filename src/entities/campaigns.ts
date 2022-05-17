@@ -16,6 +16,7 @@ export interface CampaingData {
   campaignRewards: CampaignRewards[];
   rewardsCount: number;
   name: string;
+  wrappedNativeToken: string;
 }
 
 export interface CampaingStatusData {
