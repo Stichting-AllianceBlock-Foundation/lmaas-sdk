@@ -247,16 +247,22 @@ export class StakerSolo {
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @param {string} amountToStake - Amount to stake
+   * @param {boolean} isNativeSupported - Switch to stake native tokens
    * @return {object} transaction object
    */
-  public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
+  public async stake(
+    contractAddress: string,
+    amountToStake: string,
+    isNativeSupported: boolean,
+  ): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
     const amountToStakeParsed = parseEther(amountToStake);
 
-    const transaction = await campaignContract.stake(amountToStakeParsed);
+    if (isNativeSupported)
+      return await campaignContract.stake(amountToStakeParsed, { value: amountToStakeParsed });
 
-    return transaction;
+    return await campaignContract.stake(amountToStakeParsed);
   }
 
   /**
