@@ -656,7 +656,7 @@
     ],
     "name": "stake",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -670,6 +670,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_tokenAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "stakeNative",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {

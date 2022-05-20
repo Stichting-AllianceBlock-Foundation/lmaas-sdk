@@ -260,7 +260,9 @@ export class StakerSolo {
     const amountToStakeParsed = parseEther(amountToStake);
 
     if (isNativeSupported)
-      return await campaignContract.stake(amountToStakeParsed, { value: amountToStakeParsed });
+      return await campaignContract.stakeNative(amountToStakeParsed, {
+        value: amountToStakeParsed,
+      });
 
     return await campaignContract.stake(amountToStakeParsed);
   }
