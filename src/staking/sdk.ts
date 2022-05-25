@@ -53,6 +53,18 @@ export class StakerSolo {
       wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract;
 
+    let wrappedNativeToken: string = '';
+
+    /*
+     @REMOVE this when the version of the pool is fixed.
+     Some saving, because there are pools already deployed of v2.
+    */
+    try {
+      wrappedNativeToken = await wrappedNativeTokenPR();
+    } catch (e) {
+      console.error(e);
+    }
+
     const promiseArray = [
       totalStakedPR(),
       startTimestampPR(),
@@ -62,7 +74,6 @@ export class StakerSolo {
       stakeLimitPR(),
       getRewardTokensCountPR(),
       namePR(),
-      wrappedNativeTokenPR(),
     ];
 
     const [
@@ -74,7 +85,6 @@ export class StakerSolo {
       walletStakeLimit,
       rewardsCount,
       name,
-      wrappedNativeToken,
     ] = await Promise.all(promiseArray);
 
     const rewardsCountNum = Number(rewardsCount);
@@ -237,16 +247,24 @@ export class StakerSolo {
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @param {string} amountToStake - Amount to stake
+   * @param {boolean} isNativeSupported - Switch to stake native tokens
    * @return {object} transaction object
    */
-  public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
+  public async stake(
+    contractAddress: string,
+    amountToStake: string,
+    isNativeSupported: boolean,
+  ): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
     const amountToStakeParsed = parseEther(amountToStake);
 
-    const transaction = await campaignContract.stake(amountToStakeParsed);
+    if (isNativeSupported)
+      return await campaignContract.stakeNative({
+        value: amountToStakeParsed,
+      });
 
-    return transaction;
+    return await campaignContract.stake(amountToStakeParsed);
   }
 
   /**

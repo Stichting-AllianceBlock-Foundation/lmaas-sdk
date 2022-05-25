@@ -674,6 +674,13 @@
   },
   {
     "inputs": [],
+    "name": "stakeNative",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "stakingToken",
     "outputs": [
       {
@@ -834,5 +841,9 @@
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]
