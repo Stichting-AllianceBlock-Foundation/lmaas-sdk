@@ -2,6 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
+import { BigNumber as BigNumberJS } from 'bignumber.js';
 
 import {
   approveToken,
@@ -648,9 +649,9 @@ export class SoloStakerWrapper {
   }
 
   _calculatePercentageLimit(totalStaked: number, contractStakeLimit: number) {
-    const zeroBN = BigNumber.from(0);
-    const totalStakedBigNumber = BigNumber.from(totalStaked);
-    const contractStakeLimitBigNumber = BigNumber.from(contractStakeLimit);
+    const zeroBN = new BigNumberJS(0);
+    const totalStakedBigNumber = new BigNumberJS(totalStaked);
+    const contractStakeLimitBigNumber = new BigNumberJS(contractStakeLimit);
 
     const percentageBigNumber =
       totalStakedBigNumber.gt(zeroBN) && contractStakeLimitBigNumber.gt(zeroBN)
