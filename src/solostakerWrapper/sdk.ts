@@ -815,7 +815,7 @@ export class SoloStakerWrapper {
     return totalData;
   }
 
-  async getAllowance(userWallet: Web3Provider, campaign: StakingInterface) {
+  async getAllowance(userWallet: JsonRpcSigner, campaign: StakingInterface) {
     const { campaignAddress: stakerContractAddress, campaignTokenAddress: stakeTokenAddress } =
       campaign;
 

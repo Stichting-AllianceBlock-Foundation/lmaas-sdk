@@ -53,12 +53,12 @@ export const approveToken = async (
 };
 
 export const getAllowance = async (
-  wallet: Web3Provider,
+  wallet: JsonRpcSigner,
   tokenAddress: string,
   spenderAddress: string,
 ): Promise<FunctionFragment> => {
   const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
-  const walletAddress = await wallet._getAddress;
+  const walletAddress = await wallet.getAddress();
 
   return tokenContract.allowance(walletAddress, spenderAddress);
 };
