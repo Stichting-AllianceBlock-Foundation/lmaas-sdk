@@ -1,7 +1,7 @@
 {
   "name": "@stichting-allianceblock-foundation/lmaas-sdk",
   "author": "AllianceBlock",
-  "version": "0.0.6-beta.1",
+  "version": "0.1.0-beta.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -40,6 +40,9 @@
     }
   },
   "dependencies": {
+    "@stichting-allianceblock-foundation/abdex-sdk-v2": "^0.1.22",
+    "axios": "^0.27.2",
+    "bignumber.js": "^9.0.2",
     "ethers": "^5.5.2"
   },
   "devDependencies": {

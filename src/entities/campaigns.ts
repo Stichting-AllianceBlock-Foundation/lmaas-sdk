@@ -1,14 +1,42 @@
-import { BigNumberish } from 'ethers';
+import { BigNumber } from '@ethersproject/bignumber';
 
+import { DexEnum, NetworkEnum } from '..';
+
+export interface LMInterface {
+  network: NetworkEnum;
+  campaignAddress: string;
+  dex: DexEnum;
+  liquidityPoolAddress: string;
+  provisionTokensAddresses: string[];
+  rewardsAddresses: string[];
+  lockSchemeAddress?: string;
+  version: string;
+  routerAddress?: string;
+  campaignMessage?: string;
+  name?: string;
+}
+
+export interface StakingInterface {
+  network: NetworkEnum;
+  campaignAddress: string;
+  campaignTokenAddress: string;
+  rewardsAddresses: string[];
+  compounding: boolean;
+  period: string;
+  version: string;
+  campaignMessage?: string;
+  name?: string;
+  isLpToken: boolean;
+}
 export interface CampaingData {
-  totalStaked: BigNumberish;
-  campaignStartTimestamp: BigNumberish;
-  campaignEndTimestamp: BigNumberish;
-  contractStakeLimit: BigNumberish;
-  walletStakeLimit: BigNumberish;
-  deltaExpiration: BigNumberish;
-  deltaDuration: BigNumberish;
-  extensionDuration?: BigNumberish;
+  totalStaked: BigNumber;
+  campaignStartTimestamp: BigNumber;
+  campaignEndTimestamp: BigNumber;
+  contractStakeLimit: BigNumber;
+  walletStakeLimit: BigNumber;
+  deltaExpiration: BigNumber;
+  deltaDuration: BigNumber;
+  extensionDuration?: BigNumber;
   hasContractStakeLimit: boolean;
   hasWalletStakeLimit: boolean;
   hasCampaignStarted: boolean;
@@ -28,30 +56,30 @@ export interface CampaingStatusData {
 export interface CampaingStatusDataActive {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
-  exitTimestamp: BigNumberish;
-  exitStake: BigNumberish;
+  exitTimestamp: BigNumber;
+  exitStake: BigNumber;
 }
 
 export interface UserDataLM {
-  userStakedAmount: BigNumberish;
+  userStakedAmount: BigNumber;
   hasUserStaked: boolean;
   userRewards: UserRewards[];
 }
 
 export interface UserDataStaking {
-  exitTimestamp: BigNumberish;
-  exitStake: BigNumberish;
-  userStakedAmount: BigNumberish;
+  exitTimestamp: BigNumber;
+  exitStake: BigNumber;
+  userStakedAmount: BigNumber;
   userRewards: UserRewards[];
 }
 
 export interface CampaignRewards {
   tokenAddress: string;
-  rewardPerSecond: BigNumberish;
-  totalRewards: BigNumberish;
+  rewardPerSecond: BigNumber;
+  totalRewards: BigNumber;
 }
 
 export interface UserRewards {
   tokenAddress: string;
-  currentAmount: BigNumberish;
+  currentAmount: BigNumber;
 }
