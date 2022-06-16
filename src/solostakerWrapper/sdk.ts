@@ -7,16 +7,24 @@ import {
   approveToken,
   CampaignRewards,
   CoinGecko,
+  formatStakingDuration,
+  formatToken,
+  formatValuesToString,
   getAddressFromWallet,
   getAllowance,
+  getBalance,
   getTokenByPropName,
+  getTotalSupply,
   NetworkEnum,
+  poolTupleToString,
   Result,
+  stableCoinsIds,
   StakerSolo,
   StakingInterface,
   TokenConfigs,
   TokenConfigsProps,
   UserRewards,
+  year,
 } from '..';
 import LpABI from '../abi/AllianceBlockDexPoolABI.json';
 import NonCompoundingRewardsPoolABI from '../abi/NonCompoundingRewardsPool.json';
@@ -61,9 +69,7 @@ export class SoloStakerWrapper {
     return this.soloNonComp.completeExit(campaignAddress);
   }
 
-  async getCardData(userWallet: Web3Provider, campaign: StakingInterface) {
-    const { getTokenByPropName, getBalance, getAddressFromWallet } = this.utils;
-
+  async getCardData(userWallet: JsonRpcSigner, campaign: StakingInterface) {
     //Get campaign data
     const { campaignAddress, campaignTokenAddress, rewardsAddresses } = campaign;
 
@@ -112,7 +118,7 @@ export class SoloStakerWrapper {
 
     const userAddress = await getAddressFromWallet(userWallet);
     const userWalletTokensBalanceBN = await getBalance(
-      this.provider,
+      this.provider as Web3Provider,
       campaignTokenAddress,
       userAddress,
     );
@@ -149,7 +155,7 @@ export class SoloStakerWrapper {
       walletStakeLimit,
       userStakedAmount,
       userWalletTokensBalance,
-    ] = this.utils.formatValuesToString([
+    ] = formatValuesToString([
       totalStakedBN,
       contractStakeLimitBN,
       walletStakeLimitBN,
@@ -163,7 +169,7 @@ export class SoloStakerWrapper {
       deltaExpiration.toNumber(),
     );
 
-    const duration = this.utils.formatStakingDuration(durationMilliseconds);
+    const duration = formatStakingDuration(durationMilliseconds);
 
     // Format campaign rewards
     const {
@@ -173,7 +179,10 @@ export class SoloStakerWrapper {
     } = await this._formatCampaignRewards(1, campaignRewardsBN);
 
     // Calculate percentage limit
-    const percentage = this._calculatePercentageLimit(totalStaked, contractStakeLimit);
+    const percentage = this._calculatePercentageLimit(
+      Number(totalStaked),
+      Number(contractStakeLimit),
+    );
 
     // Get data for APY calculation
     let totalStakedUSD = Number(totalStaked) * stakingTokenPrice;
@@ -182,7 +191,7 @@ export class SoloStakerWrapper {
       totalStakedUSD = await this._getTotalStakedUSD(
         campaignTokenAddress,
         [token0, token1],
-        totalStaked,
+        Number(totalStaked),
         tokenLpInstance,
       );
     }
@@ -236,8 +245,6 @@ export class SoloStakerWrapper {
   }
 
   async getEmptyCardData(campaign: StakingInterface) {
-    const { getTokenByPropName } = this.utils;
-
     //Get campaign data
     const { campaignAddress, campaignTokenAddress, rewardsAddresses } = campaign;
 
@@ -299,7 +306,7 @@ export class SoloStakerWrapper {
     }
 
     // Format values
-    const [totalStaked, contractStakeLimit, walletStakeLimit] = this.utils.formatValuesToString([
+    const [totalStaked, contractStakeLimit, walletStakeLimit] = formatValuesToString([
       totalStakedBN,
       contractStakeLimitBN,
       walletStakeLimitBN,
@@ -311,7 +318,7 @@ export class SoloStakerWrapper {
       deltaExpiration.toNumber(),
     );
 
-    const duration = this.utils.formatStakingDuration(durationMilliseconds);
+    const duration = formatStakingDuration(durationMilliseconds);
 
     // Format campaign rewards
     const {
@@ -321,7 +328,10 @@ export class SoloStakerWrapper {
     } = await this._formatCampaignRewards(1, campaignRewardsBN);
 
     // Calculate percentage limit
-    const percentage = this._calculatePercentageLimit(totalStaked, contractStakeLimit);
+    const percentage = this._calculatePercentageLimit(
+      Number(totalStaked),
+      Number(contractStakeLimit),
+    );
 
     // Get data for APY calculation
     let totalStakedUSD = Number(totalStaked) * stakingTokenPrice;
@@ -330,7 +340,7 @@ export class SoloStakerWrapper {
       totalStakedUSD = await this._getTotalStakedUSD(
         campaignTokenAddress,
         [token0, token1],
-        totalStaked,
+        Number(totalStaked),
         tokenLpInstance,
       );
     }
@@ -384,28 +394,25 @@ export class SoloStakerWrapper {
     const reserves = await poolContract.getReserves();
     const tokenNames = provisionTokensAddresses.map(
       tokenAddress =>
-        this.utils.getTokenByPropName(
-          this.tokenConfigs,
-          TokenConfigsProps.ADDRESS,
-          tokenAddress.toLowerCase(),
-        ).symbol,
+        getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress.toLowerCase())
+          .symbol,
     );
 
     const totalSupply = await poolContract.totalSupply();
-    const pool = await this.utils.poolTupleToString(tokenNames);
+    const pool = poolTupleToString(tokenNames);
     const result: Result = {};
-    result[pool] = await this.utils.formatToken(this.provider, totalSupply, poolAddress);
+    result[pool] = await formatToken(this.provider as Web3Provider, totalSupply, poolAddress);
 
     for (let index = 0; index < tokenNames.length; index++) {
       const tokenName = tokenNames[index];
-      const tokenAddress = this.utils.getTokenByPropName(
+      const tokenAddress = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.SYMBOL,
         tokenName,
       ).address;
 
-      result[tokenName] = await this.utils.formatToken(
-        this.provider,
+      result[tokenName] = await formatToken(
+        this.provider as Web3Provider,
         reserves[index],
         tokenAddress,
       );
@@ -420,7 +427,7 @@ export class SoloStakerWrapper {
     poolContract: Contract,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await this.utils.getTotalSupply(this.provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(
@@ -433,14 +440,14 @@ export class SoloStakerWrapper {
     let totalStakedUSD = 0;
 
     for (let i = 0; i < provisionTokensAddresses.length; i++) {
-      const { symbol, coinGeckoID } = this.utils.getTokenByPropName(
+      const { symbol, coinGeckoID } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         provisionTokensAddresses[i].toLowerCase(),
       );
 
       // Get reward price in USD from Coingecko
-      const priceUSD = this.utils.stableCoinsIds.includes(coinGeckoID)
+      const priceUSD = stableCoinsIds.includes(coinGeckoID)
         ? 1
         : await this.coingecko.getTokenPrice(coinGeckoID, 'usd');
 
@@ -457,7 +464,7 @@ export class SoloStakerWrapper {
     poolContract: Contract,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await this.utils.getTotalSupply(this.provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(
@@ -466,27 +473,27 @@ export class SoloStakerWrapper {
       poolContract,
     );
 
-    const { symbol: symbol0, coinGeckoID: coinGeckoID0 } = this.utils.getTokenByPropName(
+    const { symbol: symbol0, coinGeckoID: coinGeckoID0 } = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.ADDRESS,
       provisionTokensAddresses[0].toLowerCase(),
     );
 
     // Get reward price in USD from Coingecko
-    const priceUSD0 = this.utils.stableCoinsIds.includes(coinGeckoID0)
+    const priceUSD0 = stableCoinsIds.includes(coinGeckoID0)
       ? 1
       : await this.coingecko.getTokenPrice(coinGeckoID0, 'usd');
 
     const amountUSD0 = priceUSD0 * reservesBalances[symbol0];
 
-    const { symbol: symbol1, coinGeckoID: coinGeckoID1 } = this.utils.getTokenByPropName(
+    const { symbol: symbol1, coinGeckoID: coinGeckoID1 } = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.ADDRESS,
       provisionTokensAddresses[1].toLowerCase(),
     );
 
     // Get reward price in USD from Coingecko
-    const priceUSD1 = this.utils.stableCoinsIds.includes(coinGeckoID1)
+    const priceUSD1 = stableCoinsIds.includes(coinGeckoID1)
       ? 1
       : await this.coingecko.getTokenPrice(coinGeckoID1, 'usd');
 
@@ -538,7 +545,7 @@ export class SoloStakerWrapper {
   _formatUserRewards(userRewards: UserRewards[]) {
     const rewards = userRewards.map(r => {
       const tokenAddress = r.tokenAddress.toLowerCase();
-      const { symbol: tokenName, decimals: tokenDecimals } = this.utils.getTokenByPropName(
+      const { symbol: tokenName, decimals: tokenDecimals } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         tokenAddress,
@@ -590,7 +597,7 @@ export class SoloStakerWrapper {
         symbol: tokenName,
         coinGeckoID: tokenId,
         decimals: tokenDecimals,
-      } = this.utils.getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
+      } = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
 
       const tokenAmountTotal = formatUnits(currentReward.totalRewards, tokenDecimals);
       const rewardPerSecond = currentReward.rewardPerSecond as BigNumber;
@@ -617,7 +624,7 @@ export class SoloStakerWrapper {
       });
 
       // Get reward price in USD from Coingecko
-      const priceUSD = this.utils.stableCoinsIds.includes(tokenId)
+      const priceUSD = stableCoinsIds.includes(tokenId)
         ? 1
         : await this.coingecko.getTokenPrice(tokenId, 'usd');
       const amountUSD = priceUSD * Number(tokenAmountDaily);
@@ -654,9 +661,7 @@ export class SoloStakerWrapper {
   }
 
   _calculateAPY_new(totalStakedUSD: number, campaignRewardsPerDayUSD: number) {
-    return totalStakedUSD > 0
-      ? (campaignRewardsPerDayUSD / totalStakedUSD) * this.utils.year * 100
-      : 0;
+    return totalStakedUSD > 0 ? (campaignRewardsPerDayUSD / totalStakedUSD) * year * 100 : 0;
   }
 
   _calculateCooldown(exitTimestamp: BigNumber) {
@@ -732,7 +737,7 @@ export class SoloStakerWrapper {
   }
 
   async _getExitStake(userWallet: JsonRpcSigner, stakerInstance: Contract) {
-    const userAddress = await this.utils.getAddressFromWallet(userWallet);
+    const userAddress = await getAddressFromWallet(userWallet);
     const userExitInfo = await stakerInstance.exitInfo(userAddress);
 
     return userExitInfo.exitStake;
@@ -791,17 +796,13 @@ export class SoloStakerWrapper {
         : BigNumber.from(0);
 
       // Format tokens
-      const userStakedTokensFormatted = await this.utils.formatToken(
+      const userStakedTokensFormatted = await formatToken(
         userWallet,
         userStakedTokens,
         campaignTokenAddress,
       );
 
-      const userRewardsFormatted = await this.utils.formatToken(
-        userWallet,
-        userRewards,
-        campaignTokenAddress,
-      );
+      const userRewardsFormatted = await formatToken(userWallet, userRewards, campaignTokenAddress);
 
       // Convert to USD
       const userStakedTokensUSD = Number(userStakedTokensFormatted) * campaignTokenPrice;

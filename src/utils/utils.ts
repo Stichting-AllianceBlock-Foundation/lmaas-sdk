@@ -6,6 +6,12 @@ import { BigNumber, constants } from 'ethers';
 
 import ERC20ABI from '../abi/ERC20.json';
 
+export const day = 60 * 60 * 24;
+export const week = day * 7;
+export const year = 365;
+
+export const stableCoinsIds = ['tether', 'terra-usd', 'usd-coin', 'dai', 'magic-internet-money'];
+
 export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
   const tenBN = BigNumber.from(10);
   const tenPow18BN = tenBN.pow(18);
@@ -32,7 +38,7 @@ export const formatValuesToString = (values: BigNumber[], decimals = 18): string
 };
 
 export const approveToken = async (
-  wallet: Web3Provider,
+  wallet: Web3Provider | JsonRpcSigner,
   tokenAddress: string,
   spenderAddress: string,
   amountToApprove?: string,
@@ -59,7 +65,7 @@ export const getAllowance = async (
 
 // formatUnits ( wei , decimalsOrUnitName ) => string
 export const formatToken = async (
-  walletOrProvider: Web3Provider,
+  walletOrProvider: Web3Provider | JsonRpcSigner,
   value: any,
   tokenAddress: string,
 ) => {
@@ -68,7 +74,7 @@ export const formatToken = async (
 
 // parseUnits ( valueString , decimalsOrUnitName ) => BigNumber
 export const parseToken = async (
-  walletOrProvider: Web3Provider,
+  walletOrProvider: Web3Provider | JsonRpcSigner,
   valueString: string,
   tokenAddress: string,
 ) => {
@@ -76,7 +82,7 @@ export const parseToken = async (
 };
 
 export const getBalance = async (
-  walletOrProvider: Web3Provider,
+  walletOrProvider: Web3Provider | JsonRpcSigner,
   tokenAddress: string,
   addressToCheck: string,
 ) => {
@@ -96,7 +102,7 @@ export const getTotalSupply = async (
   return supply;
 };
 
-const getTokenDecimals = async (
+export const getTokenDecimals = async (
   walletOrProvider: Web3Provider | JsonRpcSigner,
   tokenAddress: string,
 ) => {

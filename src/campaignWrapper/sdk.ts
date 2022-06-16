@@ -1,21 +1,29 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, Web3Provider } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 
 import {
   CampaignRewards,
   CoinGecko,
   dexByNetworkMapping,
+  formatToken,
   formatValuesToString,
+  getAddressFromWallet,
+  getBalance,
+  getTokenByPropName,
+  getTotalSupply,
   LMInterface,
   NetworkEnum,
+  poolTupleToString,
   Result,
+  stableCoinsIds,
   StakerLM,
   TokenConfigs,
   TokenConfigsProps,
   UserDataLM,
   UserRewards,
+  year,
 } from '..';
 import BalancerBPoolContractABI from '../abi/BalancerBPoolABI.json';
 import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
@@ -103,12 +111,7 @@ export class CampaignWrapper {
     );
 
     // Get APY
-    const apy = this._calculateAPY_new(
-      campaignRewardsUSD,
-      totalStakedUSD,
-      durationDays,
-      this.utils.year,
-    );
+    const apy = this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
     return {
       apy,
@@ -125,7 +128,7 @@ export class CampaignWrapper {
     };
   }
 
-  async getCardData(userWallet: Web3Provider, campaign: LMInterface) {
+  async getCardData(userWallet: JsonRpcSigner, campaign: LMInterface) {
     //Get campaign data
     const {
       liquidityPoolAddress: poolAddress,
@@ -169,13 +172,12 @@ export class CampaignWrapper {
     const { userRewards, userStakedAmount: userStakedAmountBN } = userData;
 
     // Format values
-    const [contractStakeLimit, userStakeLimit, stakedTokens, totalStaked] =
-      this.utils.formatValuesToString([
-        contractStakeLimitBN,
-        walletStakeLimitBN,
-        userStakedAmountBN,
-        totalStakedBN,
-      ]);
+    const [contractStakeLimit, userStakeLimit, stakedTokens, totalStaked] = formatValuesToString([
+      contractStakeLimitBN,
+      walletStakeLimitBN,
+      userStakedAmountBN,
+      totalStakedBN,
+    ]);
 
     // Format durations
     const { duration, durationDays, expirationTime } = this._formatDurationExpiration(
@@ -201,12 +203,7 @@ export class CampaignWrapper {
     );
 
     // Get APY
-    const apy = this._calculateAPY_new(
-      campaignRewardsUSD,
-      totalStakedUSD,
-      durationDays,
-      this.utils.year,
-    );
+    const apy = this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
     const willBeExtended = BigNumber.from(extensionDuration).gt(BigNumber.from(0));
 
@@ -236,7 +233,7 @@ export class CampaignWrapper {
   _formatTuplePairs(provisionTokensAddresses: string[]) {
     const tuple: string[] = [];
     const pairs = provisionTokensAddresses.map(address => {
-      const { symbol } = this.utils.getTokenByPropName(
+      const { symbol } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         address.toLowerCase(),
@@ -266,17 +263,14 @@ export class CampaignWrapper {
     const poolContract = new Contract(poolAddress, abi, this.provider);
     const tokenNames = provisionTokensAddresses.map(
       tokenAddress =>
-        this.utils.getTokenByPropName(
-          this.tokenConfigs,
-          TokenConfigsProps.ADDRESS,
-          tokenAddress.toLowerCase(),
-        ).symbol,
+        getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress.toLowerCase())
+          .symbol,
     );
 
     const totalSupply = await poolContract.totalSupply();
-    const pool = await this.utils.poolTupleToString(tokenNames);
+    const pool = poolTupleToString(tokenNames);
     const result: Result = {};
-    result[pool] = await this.utils.formatToken(this.provider, totalSupply, poolAddress);
+    result[pool] = await formatToken(this.provider as Web3Provider, totalSupply, poolAddress);
 
     if (dex !== 'balancer') {
       reserves = await poolContract.getReserves();
@@ -284,7 +278,7 @@ export class CampaignWrapper {
 
     for (let index = 0; index < tokenNames.length; index++) {
       const tokenName = tokenNames[index];
-      const tokenAddress = this.utils.getTokenByPropName(
+      const tokenAddress = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.SYMBOL,
         tokenName,
@@ -292,10 +286,14 @@ export class CampaignWrapper {
 
       if (dex === 'balancer') {
         const tokenBalance = await poolContract.getBalance(tokenAddress);
-        result[tokenName] = await this.utils.formatToken(this.provider, tokenBalance, tokenAddress);
+        result[tokenName] = await formatToken(
+          this.provider as Web3Provider,
+          tokenBalance,
+          tokenAddress,
+        );
       } else {
-        result[tokenName] = await this.utils.formatToken(
-          this.provider,
+        result[tokenName] = await formatToken(
+          this.provider as Web3Provider,
           reserves[index],
           tokenAddress,
         );
@@ -329,15 +327,15 @@ export class CampaignWrapper {
     return APY * 100;
   }
 
-  async _getPoolBalance(userWallet: Web3Provider, poolAddress: string, dex: string) {
-    const userAddress = await this.utils.getAddressFromWallet(userWallet);
+  async _getPoolBalance(userWallet: JsonRpcSigner, poolAddress: string, dex: string) {
+    const userAddress = await getAddressFromWallet(userWallet);
     let balance;
     if (dex === 'balancer') {
       const poolContract = new Contract(poolAddress, BalancerBPoolContractABI, this.provider);
 
       balance = await poolContract.balanceOf(userAddress);
     } else {
-      balance = await this.utils.getBalance(this.provider, poolAddress, userAddress);
+      balance = getBalance(this.provider as Web3Provider, poolAddress, userAddress);
     }
 
     return balance;
@@ -370,7 +368,7 @@ export class CampaignWrapper {
         symbol: tokenName,
         coinGeckoID: tokenId,
         decimals: tokenDecimals,
-      } = this.utils.getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
+      } = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
 
       const tokenAmount = formatUnits(currentReward.totalRewards.toString(), tokenDecimals);
       const tokenAmountWeekly = formatUnits(
@@ -391,7 +389,7 @@ export class CampaignWrapper {
       });
 
       // Get reward price in USD from Coingecko
-      const priceUSD = this.utils.stableCoinsIds.includes(tokenId)
+      const priceUSD = stableCoinsIds.includes(tokenId)
         ? 1
         : await this.coingecko.getTokenPrice(tokenId, 'usd');
       const amountUSD = priceUSD * Number(tokenAmount);
@@ -416,7 +414,7 @@ export class CampaignWrapper {
     dex: string,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await this.utils.getTotalSupply(this.provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(
@@ -429,14 +427,14 @@ export class CampaignWrapper {
     let totalStakedUSD = 0;
 
     for (let i = 0; i < provisionTokensAddresses.length; i++) {
-      const { symbol, coinGeckoID } = this.utils.getTokenByPropName(
+      const { symbol, coinGeckoID } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         provisionTokensAddresses[i].toLowerCase(),
       );
 
       // Get reward price in USD from Coingecko
-      const priceUSD = this.utils.stableCoinsIds.includes(coinGeckoID)
+      const priceUSD = stableCoinsIds.includes(coinGeckoID)
         ? 1
         : await this.coingecko.getTokenPrice(coinGeckoID, 'usd');
 
@@ -450,7 +448,7 @@ export class CampaignWrapper {
   _formatUserRewards(userRewards: UserRewards[]) {
     const rewards = userRewards.map(r => {
       const tokenAddress = r.tokenAddress.toLowerCase();
-      const { symbol: tokenName, decimals: tokenDecimals } = this.utils.getTokenByPropName(
+      const { symbol: tokenName, decimals: tokenDecimals } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         tokenAddress,

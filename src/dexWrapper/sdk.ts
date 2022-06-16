@@ -14,12 +14,21 @@ import {
 import { BigNumber as BigNumberJS } from 'bignumber.js';
 
 import {
+  approveToken,
   bdiv,
   bmin,
   bnum,
   dexByNetworkMapping,
   DexEnum,
+  formatToken,
+  getAddressFromWallet,
+  getAllowance,
+  getBalance,
+  getTokenByPropName,
+  getTokenDecimals,
   NetworkEnum,
+  parseToken,
+  stripDecimalString,
   TokenConfigs,
   TokenConfigsProps,
   toWei,
@@ -145,17 +154,9 @@ export class DexWrapper {
     let transaction;
 
     if (action === 'removeLiquidity') {
-      const token0Data = this.utils.getTokenByPropName(
-        this.tokenConfigs,
-        TokenConfigsProps.SYMBOL,
-        pair[0],
-      );
+      const token0Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[0]);
 
-      const token1Data = this.utils.getTokenByPropName(
-        this.tokenConfigs,
-        TokenConfigsProps.SYMBOL,
-        pair[1],
-      );
+      const token1Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[1]);
 
       const token0 = new Token(
         getChainIdByNetwork(this.network),
@@ -335,7 +336,7 @@ export class DexWrapper {
    */
   async interactWithBalancer(
     action: string,
-    _tokensAmountsIn: string,
+    _tokensAmountsIn: any,
     provider: JsonRpcSigner,
     poolAddress: string,
     pair: string[],
@@ -353,7 +354,7 @@ export class DexWrapper {
       const [poolTotalSupply, currentTokens] = await Promise.all(promiseArray);
 
       // Calculate tokens to supply ratio
-      const { decimals, symbol } = this.utils.getTokenByPropName(
+      const { decimals, symbol } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         currentTokens[0].toLowerCase(),
@@ -363,8 +364,8 @@ export class DexWrapper {
       const tokenBalance = await poolContract.getBalance(currentTokens[0]);
 
       let tokenAmountIn = _tokensAmountsIn[symbol];
-      tokenAmountIn = await this.utils.parseToken(
-        this.provider,
+      tokenAmountIn = await parseToken(
+        this.provider as Web3Provider,
         tokenAmountIn.toString(),
         currentTokens[0],
       );
@@ -375,7 +376,7 @@ export class DexWrapper {
       const finalRatio = ratioSplitted.join('.');
       const ratioBN = bnum(finalRatio);
 
-      const formattedTotalSupply = await this.utils.formatToken(
+      const formattedTotalSupply = await formatToken(
         provider,
         poolTotalSupply.toString(),
         currentTokens[0],
@@ -389,20 +390,16 @@ export class DexWrapper {
       const maxAmountsIn = [];
 
       for (const tokenAddress of currentTokens) {
-        const tokenName = this.utils.getTokenByPropName(
+        const tokenName = getTokenByPropName(
           this.tokenConfigs,
           TokenConfigsProps.ADDRESS,
           tokenAddress.toLowerCase(),
         ).symbol;
 
-        const currentTokenBalance = await this.utils.getBalance(
-          provider,
-          tokenAddress,
-          walletAddress,
-        );
+        const currentTokenBalance = await getBalance(provider, tokenAddress, walletAddress);
 
         let amount = _tokensAmountsIn[tokenName];
-        amount = await this.utils.parseToken(this.provider, amount.toString(), tokenAddress);
+        amount = await parseToken(this.provider as Web3Provider, amount.toString(), tokenAddress);
         //increase the amounts with 1% from what is currently provided
         const amountBN = BigNumber.from(amount).mul(100).div(99);
 
@@ -421,8 +418,8 @@ export class DexWrapper {
         minAmountsOut.push(bAmount.toString(10));
       }
 
-      const bPoolAmountIn = await this.utils.parseToken(
-        this.provider,
+      const bPoolAmountIn = await parseToken(
+        this.provider as Web3Provider,
         _tokensAmountsIn.toString(),
         poolAddress,
       );
@@ -441,13 +438,13 @@ export class DexWrapper {
    * @param {string} tokenAddress - Token address
    * @return {BigNumber} allowance amount as ethers BN
    */
-  async getTokenAllowance(userWallet: JsonRpcSigner, spenderAddress: string, tokenAddress: string) {
+  async getTokenAllowance(userWallet: Web3Provider, spenderAddress: string, tokenAddress: string) {
     // Check for native token
     if (!tokenAddress) {
       return MaxUint256;
     }
 
-    return await this.utils.getAllowance(userWallet, tokenAddress, spenderAddress);
+    return await getAllowance(userWallet, tokenAddress, spenderAddress);
   }
 
   /**
@@ -459,7 +456,7 @@ export class DexWrapper {
    * @return {object} transaction object
    */
   async approveToken(userWallet: JsonRpcSigner, spenderAddress: string, tokenAddress: string) {
-    const receipt = await this.utils.approveToken(userWallet, tokenAddress, spenderAddress);
+    const receipt = await approveToken(userWallet, tokenAddress, spenderAddress);
     return receipt;
   }
 
@@ -473,7 +470,7 @@ export class DexWrapper {
   async getBalanceOf(userWallet: JsonRpcSigner, tokenName: string) {
     const { nativeToken } = dexByNetworkMapping[this.network];
 
-    const userAddress = await this.utils.getAddressFromWallet(userWallet);
+    const userAddress = await getAddressFromWallet(userWallet);
 
     let balance;
     if (tokenName === nativeToken) {
@@ -482,7 +479,7 @@ export class DexWrapper {
       return balance;
     }
 
-    const tokenAddress = this.utils.getTokenByPropName(
+    const tokenAddress = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.SYMBOL,
       tokenName,
@@ -492,7 +489,7 @@ export class DexWrapper {
       throw `getBalanceOf: ${tokenName} is not found in configuration`;
     }
 
-    balance = await this.utils.getBalance(this.provider, tokenAddress, userAddress);
+    balance = await getBalance(this.provider as Web3Provider, tokenAddress, userAddress);
 
     return balance;
   }
@@ -510,7 +507,7 @@ export class DexWrapper {
       return 18;
     }
 
-    let tokenAddress = this.utils.getTokenByPropName(
+    let tokenAddress = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.SYMBOL,
       tokenName,
@@ -525,7 +522,7 @@ export class DexWrapper {
       }
     }
 
-    const decimals = await this.utils.getTokenDecimals(this.provider, tokenAddress);
+    const decimals = await getTokenDecimals(this.provider as Web3Provider, tokenAddress);
 
     return decimals;
   }
@@ -547,7 +544,7 @@ export class DexWrapper {
 
       const tokenNames: string[] = provisionTokensAddresses.map(
         tokenAddress =>
-          this.utils.getTokenByPropName(
+          getTokenByPropName(
             this.tokenConfigs,
             TokenConfigsProps.ADDRESS,
             tokenAddress.toLowerCase(),
@@ -567,13 +564,13 @@ export class DexWrapper {
 
       return output;
     } else if (dex === DexEnum.alliancedex) {
-      const token0Data = this.utils.getTokenByPropName(
+      const token0Data = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         provisionTokensAddresses[0].toLocaleLowerCase(),
       );
 
-      const token1Data = this.utils.getTokenByPropName(
+      const token1Data = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         provisionTokensAddresses[1].toLocaleLowerCase(),
@@ -639,7 +636,7 @@ export class DexWrapper {
       const result = await Promise.all([reserves, token0Address, token1Address]);
 
       token0Address = result[1];
-      const token0Name = this.utils.getTokenByPropName(
+      const token0Name = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         token0Address.toLowerCase(),
@@ -647,7 +644,7 @@ export class DexWrapper {
       const token0Reserve = result[0]._reserve0;
 
       token1Address = result[2];
-      const token1Name = this.utils.getTokenByPropName(
+      const token1Name = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         token1Address.toLowerCase(),
@@ -691,13 +688,13 @@ export class DexWrapper {
       dexByNetworkMapping[this.network].dexes.balancer.poolABI,
       this.provider,
     );
-    const tokenInAddress = this.utils.getTokenByPropName(
+    const tokenInAddress = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.SYMBOL,
       tokenName,
     ).address;
 
-    const tokenInDecimals = await this.utils.getTokenDecimals(this.provider, tokenInAddress);
+    const tokenInDecimals = await getTokenDecimals(this.provider as Web3Provider, tokenInAddress);
     const tokenInBalance = await poolContract.getBalance(tokenInAddress);
 
     const bTokenInBalance = new BigNumberJS(tokenInBalance.toString());
@@ -708,7 +705,7 @@ export class DexWrapper {
       if (tokenOutName === tokenName) {
         continue;
       }
-      const tokenOutAddress: string = this.utils.getTokenByPropName(
+      const tokenOutAddress: string = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.SYMBOL,
         tokenOutName,
@@ -721,11 +718,14 @@ export class DexWrapper {
       let priceFormatted: string;
       // check if divisor has less than 18 decimals
       if (tokenInDecimals != 18) {
-        const tokenOutDecimals = await this.utils.getTokenDecimals(this.provider, tokenOutAddress);
+        const tokenOutDecimals = await getTokenDecimals(
+          this.provider as Web3Provider,
+          tokenOutAddress,
+        );
         priceFormatted = formatUnits(price.toString(10), tokenOutDecimals + (18 - tokenInDecimals));
       } else {
-        priceFormatted = await this.utils.formatToken(
-          this.provider,
+        priceFormatted = await formatToken(
+          this.provider as Web3Provider,
           price.toString(10),
           tokenOutAddress,
         );
@@ -759,13 +759,13 @@ export class DexWrapper {
       return rate.substring(0, rate.indexOf('.') + 18);
     }
 
-    const token0Address = this.utils.getTokenByPropName(
+    const token0Address = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.SYMBOL,
       token0Name,
     ).address;
 
-    rate = await this.utils.formatToken(this.provider, rate.toString(10), token0Address);
+    rate = await formatToken(this.provider as Web3Provider, rate.toString(10), token0Address);
 
     return rate;
   }
@@ -800,13 +800,13 @@ export class DexWrapper {
       return rate.substring(0, rate.indexOf('.') + 18);
     }
 
-    const token0Address = this.utils.getTokenByPropName(
+    const token0Address = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.SYMBOL,
       token0Name,
     ).address;
 
-    rate = await this.utils.formatToken(this.provider, rate.toString(10), token0Address);
+    rate = await formatToken(this.provider as Web3Provider, rate.toString(10), token0Address);
 
     return rate;
   }
@@ -846,7 +846,7 @@ export class DexWrapper {
         hasNativeToken = true;
       }
 
-      const tokenData = this.utils.getTokenByPropName(
+      const tokenData = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.SYMBOL,
         tokenSymbol,
@@ -857,10 +857,7 @@ export class DexWrapper {
       const slippage = 5;
       const slippageBN = BigNumber.from(slippage);
 
-      const strippedAmount = this.utils.stripDecimalString(
-        tokensAmountsIn[tokenSymbol],
-        tokenDecimals,
-      );
+      const strippedAmount = stripDecimalString(tokensAmountsIn[tokenSymbol], tokenDecimals);
 
       const convertedAmountBN = parseUnits(strippedAmount, tokenDecimals);
 
