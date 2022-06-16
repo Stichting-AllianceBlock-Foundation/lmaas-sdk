@@ -1,12 +1,13 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, Web3Provider } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 
 import {
   approveToken,
   CampaignRewards,
   CoinGecko,
+  getAddressFromWallet,
   getAllowance,
   getTokenByPropName,
   NetworkEnum,
@@ -706,6 +707,35 @@ export class SoloStakerWrapper {
     const campaignInstance = new Contract(transferFrom, NonCompoundingRewardsPoolABI, userWallet);
 
     return campaignInstance.exitAndTransfer(transferTo);
+  }
+
+  async getUserStakedTokens(
+    userWallet: JsonRpcSigner,
+    stakerCampaignAddress: string,
+    state: number,
+  ) {
+    const userAddress = await getAddressFromWallet(userWallet);
+
+    const stakerCampaignInstance = new Contract(
+      stakerCampaignAddress,
+      NonCompoundingRewardsPoolABI,
+      this.provider,
+    );
+    let userStakedTokens;
+    if (state <= 1) {
+      userStakedTokens = await stakerCampaignInstance.balanceOf(userAddress);
+    } else {
+      userStakedTokens = await this._getExitStake(userWallet, stakerCampaignInstance);
+    }
+
+    return userStakedTokens;
+  }
+
+  async _getExitStake(userWallet: JsonRpcSigner, stakerInstance: Contract) {
+    const userAddress = await this.utils.getAddressFromWallet(userWallet);
+    const userExitInfo = await stakerInstance.exitInfo(userAddress);
+
+    return userExitInfo.exitStake;
   }
 
   async getTotal(userWallet: Web3Provider, campaigns: StakingInterface[]) {
