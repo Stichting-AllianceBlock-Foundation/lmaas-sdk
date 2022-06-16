@@ -14,6 +14,13 @@ import {
 } from '..';
 import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
 
+/**
+ *  Represents a class that can interact with SoloStaker's campaigns
+ *  depending on the network.
+ *  @constructor
+ *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
+ */
 export class StakerSolo {
   protected protocol: NetworkEnum;
   protected provider: Web3Provider;

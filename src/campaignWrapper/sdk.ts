@@ -28,6 +28,16 @@ import {
 import BalancerBPoolContractABI from '../abi/BalancerBPoolABI.json';
 import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
 
+/**
+ *  Represents a class that can interact with LMC's
+ *  depending on the network.
+ *  @constructor
+ *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {StakerLM} lmcStaker - Class that helps with the actions of a LMC.
+ *  @param {CoinGecko} coingecko - Class for fetching the balance of the CoinGecko API.
+ *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
+ *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
+ */
 export class CampaignWrapper {
   provider: Web3Provider | JsonRpcBatchProvider;
   lmcStaker: StakerLM;

@@ -75,6 +75,15 @@ const getChainIdByNetwork = (network: NetworkEnum): ChainId => {
   * Get signer from provider
   * Flexible checks for actions
 */
+
+/**
+ *  Represents a class that can interact with DEX's
+ *  depending on the network.
+ *  @constructor
+ *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {NetworkEnum} network - Network on which the class DEX has the instance.
+ *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
+ */
 export class DexWrapper {
   provider: JsonRpcBatchProvider | Web3Provider;
   network: NetworkEnum;

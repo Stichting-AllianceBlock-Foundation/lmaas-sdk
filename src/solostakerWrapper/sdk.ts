@@ -30,6 +30,16 @@ import {
 import LpABI from '../abi/AllianceBlockDexPoolABI.json';
 import NonCompoundingRewardsPoolABI from '../abi/NonCompoundingRewardsPool.json';
 
+/**
+ *  Represents a class that can interact with SoloStaker's campaigns
+ *  depending on the network.
+ *  @constructor
+ *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {StakerSolo} soloNonComp - Class that helps with the actions of a SoloStaker campaign.
+ *  @param {CoinGecko} coingecko - Class for fetching the balance of the CoinGecko API.
+ *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
+ *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
+ */
 export class SoloStakerWrapper {
   provider: Web3Provider | JsonRpcBatchProvider;
   soloNonComp: StakerSolo;
