@@ -9,7 +9,7 @@ import {
   StakerLM,
   StakerSolo,
   TokenConfigs,
-} from '..';
+} from '.';
 
 /**
  *  Represents a class that can interact with the ecosystem of LiquidityMining
