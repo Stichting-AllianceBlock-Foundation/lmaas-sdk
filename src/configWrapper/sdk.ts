@@ -65,24 +65,26 @@ export class ConfigWrapper {
     this.config = response.data.config;
   }
 
-  getLmCampaigns(network: string, filter?: () => boolean) {
+  getLmCampaigns(network: string, filter?: (item: LMInterface) => boolean) {
     if (this.config === null)
       throw new Error('ConfigWrapper: Config not set, please loadConfig method first.');
 
     if (filter) {
-      return this.config?.config.campaignsLM.filter(item => item.network === network && filter());
+      return this.config?.config.campaignsLM.filter(
+        item => item.network === network && filter(item),
+      );
     }
 
     return this.config?.config.campaignsLM.filter(item => item.network === network);
   }
 
-  getStakingCampaigns(network: string, filter?: () => boolean) {
+  getStakingCampaigns(network: string, filter?: (item: StakingInterface) => boolean) {
     if (this.config === null)
       throw new Error('ConfigWrapper: Config not set, please loadConfig method first.');
 
     if (filter) {
       return this.config?.config.campaignsStaking.filter(
-        item => item.network === network && filter(),
+        item => item.network === network && filter(item),
       );
     }
 
