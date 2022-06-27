@@ -5,6 +5,7 @@ import { formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import { BigNumber, constants } from 'ethers';
 
 import ERC20ABI from '../abi/ERC20.json';
+import { Token, TokenConfigs } from '../entities';
 
 export const day = 60 * 60 * 24;
 export const week = day * 7;
@@ -18,6 +19,17 @@ export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
   const maxAmount = constants.MaxUint256.div(tenPow18BN);
 
   return limit.div(tenPow18BN).eq(maxAmount);
+};
+
+export const getTokensConfig = (tokens: Token[]): TokenConfigs => {
+  const tokenConfigs: TokenConfigs = {};
+  if (tokens!.length > 0) {
+    tokens!.forEach((el: Token) => {
+      tokenConfigs[el.symbol] = el;
+    });
+  }
+
+  return tokenConfigs;
 };
 
 // @tuple    -> array of string respresenting token name

@@ -1,14 +1,15 @@
 import { JsonRpcBatchProvider, Web3Provider } from '@ethersproject/providers';
 
 import {
+  BlockchainConfig,
   CampaignWrapper,
   CoinGecko,
   DexWrapper,
+  getTokensConfig,
   NetworkEnum,
   SoloStakerWrapper,
   StakerLM,
   StakerSolo,
-  TokenConfigs,
 } from '.';
 
 /**
@@ -36,7 +37,7 @@ export class StakerSDK {
   constructor(
     provider: JsonRpcBatchProvider | Web3Provider,
     protocol: NetworkEnum,
-    tokenConfigs: TokenConfigs,
+    config: BlockchainConfig,
   ) {
     this.provider = provider; // @notice General provider for the global interaction of the blockchain.
     this.coingecko = new CoinGecko(); // @notice Coingecko fetcher class for their API
@@ -49,16 +50,19 @@ export class StakerSDK {
       this.soloNonCompStaker,
       this.coingecko,
       protocol,
-      tokenConfigs,
+      getTokensConfig(config.tokens.filter(item => item.network === protocol)),
     );
     this.campaignWrapper = new CampaignWrapper(
       this.provider as Web3Provider,
       this.lmcStaker,
       this.coingecko,
-      tokenConfigs,
+      getTokensConfig(config.tokens.filter(item => item.network === protocol)),
       protocol,
     );
-
-    this.dexWrapper = new DexWrapper(this.provider as Web3Provider, protocol, tokenConfigs);
+    this.dexWrapper = new DexWrapper(
+      this.provider as Web3Provider,
+      protocol,
+      getTokensConfig(config.tokens.filter(item => item.network === protocol)),
+    );
   }
 }

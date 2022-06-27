@@ -1,5 +1,6 @@
 export * from './campaignWrapper';
 export * from './coingecko';
+export * from './configWrapper';
 export * from './constants';
 export * from './dexWrapper';
 export * from './entities';

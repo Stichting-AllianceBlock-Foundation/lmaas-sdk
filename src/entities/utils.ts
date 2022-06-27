@@ -1,4 +1,4 @@
-import { NetworkEnum } from '.';
+import { LMInterface, NetworkEnum, StakingInterface } from '.';
 
 export interface Result {
   [key: string]: any;
@@ -24,4 +24,26 @@ export interface Token {
   decimals: number;
   symbol: string;
   projectToken: boolean;
+}
+export interface Config {
+  brandColor: string;
+  coinGeckoID: string;
+  config: BlockchainConfig;
+  contactEmail: string;
+  displayName: string;
+  logoUrl: string;
+  name: string;
+  socialMedia: {
+    [key: string]: string;
+  };
+  theme: 'dark' | 'light' | 'dark_red' | 'dark_blue';
+  token: string;
+  tokenSymbol: string;
+  website: string;
+}
+
+export interface BlockchainConfig {
+  campaignsLM: LMInterface[];
+  campaignsStaking: StakingInterface[];
+  tokens: Token[];
 }
