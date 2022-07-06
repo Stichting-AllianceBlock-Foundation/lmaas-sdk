@@ -60,6 +60,7 @@ const Home: NextPage = () => {
   const handleStake = async (campaignAddress: string): Promise<void> => {
     await stakerSdk?.campaignWrapper.stake(campaignAddress, '1');
   };
+  console.log(campaigns);
 
   return (
     <div>
@@ -73,32 +74,36 @@ const Home: NextPage = () => {
         <button disabled={active} onClick={() => activate(injected)}>
           {active ? 'Connected - MetaMask' : 'Activate'}
         </button>
-        {campaigns.map((campaign, index) => {
-          return (
-            <article
-              key={index}
-              style={{
-                border: '1px solid black',
-                padding: '20px',
-                margin: '20px',
-                borderRadius: '20px',
-              }}
-            >
-              <p>Campaign Address: {campaign.campaign.campaignAddress}</p>
-              <p>Total Staked: {campaign.totalStaked}</p>
-              <p>APY: {campaign.apy.toFixed(2)}</p>
-              <ul>
-                {campaign.tuple.map((item: string) => {
-                  return <li>{item}</li>;
-                })}
-              </ul>
-              <button onClick={() => handleStake(campaign.campaign.campaignAddress)}>Stake</button>
-              <button onClick={() => handleWithdrawClaim(campaign.campaign.campaignAddress)}>
-                Withdraw and Claim
-              </button>
-            </article>
-          );
-        })}
+        {campaigns.length > 0
+          ? campaigns.map((campaign, index) => {
+              return (
+                <article
+                  key={index}
+                  style={{
+                    border: '1px solid black',
+                    padding: '20px',
+                    margin: '20px',
+                    borderRadius: '20px',
+                  }}
+                >
+                  <p>Campaign Address: {campaign.campaign.campaignAddress}</p>
+                  <p>Total Staked: {campaign.totalStaked}</p>
+                  <p>APY: {campaign.apy.toFixed(2)}</p>
+                  <ul>
+                    {campaign.tuple.map((item: string, index: number) => {
+                      return <li key={index}>{item}</li>;
+                    })}
+                  </ul>
+                  <button onClick={() => handleStake(campaign.campaign.campaignAddress)}>
+                    Stake
+                  </button>
+                  <button onClick={() => handleWithdrawClaim(campaign.campaign.campaignAddress)}>
+                    Withdraw and Claim
+                  </button>
+                </article>
+              );
+            })
+          : null}
       </main>
     </div>
   );
