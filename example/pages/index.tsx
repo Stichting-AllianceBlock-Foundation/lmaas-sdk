@@ -12,6 +12,7 @@ const Home: NextPage = () => {
   const { stakerSdk, configWrapper, setStakerSdk } = useGlobalContext();
   const { activate, active, library, chainId, account } = useWeb3React();
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(false);
 
   useEffect(() => {
     setStakerSdk(getSDK(chainId!, library, configWrapper));
@@ -40,8 +41,14 @@ const Home: NextPage = () => {
         stakerSdk?.campaignWrapper.getCardData(signer, campaign),
       );
 
-      const cardDataFull = await Promise.all(cardDataPR);
-      setCampaigns(cardDataFull);
+      try {
+        setLoadingCampaigns(true);
+        const cardDataFull = await Promise.all(cardDataPR);
+        setCampaigns(cardDataFull);
+        setLoadingCampaigns(false);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     if (configWrapper.config && library && active) {
@@ -50,6 +57,7 @@ const Home: NextPage = () => {
 
     return () => {
       setCampaigns([]);
+      setLoadingCampaigns(false);
     };
   }, [configWrapper.config, library]);
 
@@ -60,7 +68,6 @@ const Home: NextPage = () => {
   const handleStake = async (campaignAddress: string): Promise<void> => {
     await stakerSdk?.campaignWrapper.stake(campaignAddress, '1');
   };
-  console.log(campaigns);
 
   return (
     <div>
@@ -74,8 +81,9 @@ const Home: NextPage = () => {
         <button disabled={active} onClick={() => activate(injected)}>
           {active ? 'Connected - MetaMask' : 'Activate'}
         </button>
-        {campaigns.length > 0
-          ? campaigns.map((campaign, index) => {
+        {!loadingCampaigns ? (
+          campaigns.length > 0 ? (
+            campaigns.map((campaign, index) => {
               return (
                 <article
                   key={index}
@@ -103,7 +111,12 @@ const Home: NextPage = () => {
                 </article>
               );
             })
-          : null}
+          ) : (
+            <div>No campaigns to show...</div>
+          )
+        ) : (
+          <div>Loading the data for the campaigns...</div>
+        )}
       </main>
     </div>
   );
