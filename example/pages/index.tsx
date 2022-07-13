@@ -40,6 +40,7 @@ const Home: NextPage = () => {
   const { activate, active, library, chainId, account } = useWeb3React();
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(false);
+  const [pendingTx, setPendingTx] = useState<boolean>(false);
 
   useEffect(() => {
     const sdk = getSDK(chainId!, library, configWrapper!);
@@ -76,27 +77,44 @@ const Home: NextPage = () => {
   }, [library, active, stakerSdk]);
 
   const handleWithdrawClaim = async (campaignAddress: string): Promise<void> => {
-    await stakerSdk?.campaignWrapper.exit(campaignAddress);
+    try {
+      setPendingTx(true);
+      const tx = await stakerSdk?.campaignWrapper.exit(campaignAddress);
+      await tx.wait();
+      setPendingTx(false);
+    } catch (e) {
+      setPendingTx(false);
+    }
   };
 
   const handleStake = async (campaignAddress: string): Promise<void> => {
-    await stakerSdk?.campaignWrapper.stake(campaignAddress, '1');
+    try {
+      setPendingTx(true);
+      const tx = await stakerSdk?.campaignWrapper.stake(campaignAddress, '1');
+      await tx.wait();
+      setPendingTx(false);
+    } catch (e) {
+      console.error(e);
+      setPendingTx(false);
+    }
   };
 
-  const handleApprove = async (campaign: any, pairName: string): Promise<void> => {
+  const handleApprove = async (campaign: any): Promise<void> => {
     const signer = library.getSigner();
 
-    const { address: tokenAddress } = getTokenByPropName(
-      configWrapper?.config?.config.tokens,
-      TokenConfigsProps.SYMBOL,
-      pairName,
-    );
-
-    await stakerSdk?.dexWrapper.approveToken(
-      signer,
-      campaign.campaign.routerAddress || campaign.campaign.liquidityPoolAddress,
-      tokenAddress,
-    );
+    try {
+      setPendingTx(true);
+      const tx = await stakerSdk?.dexWrapper.approveToken(
+        signer,
+        campaign.campaign.campaignAddress,
+        campaign.campaign.liquidityPoolAddress,
+      );
+      await tx.wait();
+      setPendingTx(false);
+    } catch (e) {
+      console.error(e);
+      setPendingTx(false);
+    }
   };
 
   return (
@@ -131,24 +149,28 @@ const Home: NextPage = () => {
                   <p>Campaign Address: {campaign.campaign.campaignAddress}</p>
                   <p>Total Staked: {campaign.totalStaked}</p>
                   <p>APY: {campaign.apy.toFixed(2)}</p>
+                  <p>LP Tokens: {Number(campaign.LPTokens).toFixed(2)}</p>
                   <ul>
                     {campaign.tuple.map((item: string, index: number) => {
                       return <li key={index}>{item}</li>;
                     })}
                   </ul>
 
-                  {campaign.tuple.map((tupleName: string, index: number) => {
-                    return (
-                      <button key={index} onClick={() => handleApprove(campaign, tupleName)}>
-                        Approve token {tupleName}
-                      </button>
-                    );
-                  })}
+                  <button onClick={() => handleApprove(campaign)} disabled={pendingTx}>
+                    Approve LP token
+                  </button>
 
-                  <button onClick={() => handleStake(campaign.campaign.campaignAddress)}>
+                  <button
+                    onClick={() => handleStake(campaign.campaign.campaignAddress)}
+                    disabled={pendingTx}
+                  >
                     Stake
                   </button>
-                  <button onClick={() => handleWithdrawClaim(campaign.campaign.campaignAddress)}>
+
+                  <button
+                    onClick={() => handleWithdrawClaim(campaign.campaign.campaignAddress)}
+                    disabled={pendingTx}
+                  >
                     Withdraw and Claim
                   </button>
                 </article>
