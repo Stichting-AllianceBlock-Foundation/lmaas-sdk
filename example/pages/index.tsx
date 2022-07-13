@@ -2,11 +2,24 @@ import { useWeb3React } from '@web3-react/core';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useGlobalContext } from './_app';
-import { injected } from '../utils/utils';
+import { getProtocolByChainId, injected } from '../utils/utils';
 import { useEffect, useState } from 'react';
-import { getProtocolByChainId } from '../utils/utils';
-import { StakerSDK, ConfigWrapper } from '@stichting-allianceblock-foundation/lmaas-sdk';
 import { Web3Provider } from '@ethersproject/providers';
+import { ConfigWrapper, StakerSDK } from '@stichting-allianceblock-foundation/lmaas-sdk';
+
+function getSDK(
+  chainId: number,
+  provider: Web3Provider,
+  configWrapper: ConfigWrapper,
+): StakerSDK | null {
+  let sdk: StakerSDK | null = null;
+
+  if (chainId && configWrapper.config) {
+    sdk = new StakerSDK(provider, getProtocolByChainId(chainId), configWrapper.config.config);
+  }
+
+  return sdk;
+}
 
 const Home: NextPage = () => {
   const { stakerSdk, configWrapper, setStakerSdk } = useGlobalContext();
@@ -15,26 +28,13 @@ const Home: NextPage = () => {
   const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(false);
 
   useEffect(() => {
-    setStakerSdk(getSDK(chainId!, library, configWrapper));
-  }, [chainId, account, configWrapper.config]);
-
-  function getSDK(
-    chainId: number,
-    provider: Web3Provider,
-    configWrapper: ConfigWrapper,
-  ): StakerSDK | null {
-    let sdk: StakerSDK | null = null;
-
-    if (chainId && configWrapper.config) {
-      sdk = new StakerSDK(provider, getProtocolByChainId(chainId), configWrapper.config.config);
-    }
-
-    return sdk;
-  }
+    const sdk = getSDK(chainId!, library, configWrapper!);
+    setStakerSdk(sdk);
+  }, [chainId, active, account]);
 
   useEffect(() => {
     async function fetchLmCampaignInfo() {
-      const configCampaigns = configWrapper.getLmCampaigns('ewc');
+      const configCampaigns = configWrapper!.getLmCampaigns('ewc');
       const signer = await library.getSigner();
 
       const cardDataPR = configCampaigns.map(campaign =>
@@ -51,7 +51,7 @@ const Home: NextPage = () => {
       }
     }
 
-    if (configWrapper.config && library && active) {
+    if (library && active && stakerSdk) {
       fetchLmCampaignInfo();
     }
 
@@ -59,7 +59,7 @@ const Home: NextPage = () => {
       setCampaigns([]);
       setLoadingCampaigns(false);
     };
-  }, [configWrapper.config, library]);
+  }, [library, active, stakerSdk]);
 
   const handleWithdrawClaim = async (campaignAddress: string): Promise<void> => {
     await stakerSdk?.campaignWrapper.exit(campaignAddress);
@@ -78,9 +78,13 @@ const Home: NextPage = () => {
 
       <main>
         <h1>Example SDK integration</h1>
-        <button disabled={active} onClick={() => activate(injected)}>
-          {active ? 'Connected - MetaMask' : 'Activate'}
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+          <button disabled={active} onClick={() => activate(injected)}>
+            {active ? 'Connected - MetaMask' : 'Activate'}
+          </button>
+          <p>Connected to: {account || '...'}</p>
+        </div>
+
         {!loadingCampaigns ? (
           campaigns.length > 0 ? (
             campaigns.map((campaign, index) => {
