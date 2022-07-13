@@ -21,6 +21,20 @@ function getSDK(
   return sdk;
 }
 
+enum TokenConfigsProps {
+  ADDRESS = 'address',
+  ID = 'id',
+  SYMBOL = 'symbol',
+  NAME = 'name',
+  PROJECT_TOKEN = 'projectToken',
+}
+
+function getTokenByPropName(tokenConfig: any, propName: TokenConfigsProps, propValue: any): any {
+  const values = Object.values(tokenConfig);
+
+  return values.find((item: any) => item[propName] === propValue) || {};
+}
+
 const Home: NextPage = () => {
   const { stakerSdk, configWrapper, setStakerSdk } = useGlobalContext();
   const { activate, active, library, chainId, account } = useWeb3React();
@@ -69,6 +83,22 @@ const Home: NextPage = () => {
     await stakerSdk?.campaignWrapper.stake(campaignAddress, '1');
   };
 
+  const handleApprove = async (campaign: any, pairName: string): Promise<void> => {
+    const signer = library.getSigner();
+
+    const { address: tokenAddress } = getTokenByPropName(
+      configWrapper?.config?.config.tokens,
+      TokenConfigsProps.SYMBOL,
+      pairName,
+    );
+
+    await stakerSdk?.dexWrapper.approveToken(
+      signer,
+      campaign.campaign.routerAddress || campaign.campaign.liquidityPoolAddress,
+      tokenAddress,
+    );
+  };
+
   return (
     <div>
       <Head>
@@ -106,6 +136,15 @@ const Home: NextPage = () => {
                       return <li key={index}>{item}</li>;
                     })}
                   </ul>
+
+                  {campaign.tuple.map((tupleName: string, index: number) => {
+                    return (
+                      <button key={index} onClick={() => handleApprove(campaign, tupleName)}>
+                        Approve token {tupleName}
+                      </button>
+                    );
+                  })}
+
                   <button onClick={() => handleStake(campaign.campaign.campaignAddress)}>
                     Stake
                   </button>
