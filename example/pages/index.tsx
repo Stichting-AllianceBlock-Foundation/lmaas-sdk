@@ -5,7 +5,11 @@ import { useGlobalContext } from './_app';
 import { getProtocolByChainId, injected } from '../utils/utils';
 import { useEffect, useState } from 'react';
 import { Web3Provider } from '@ethersproject/providers';
-import { ConfigWrapper, StakerSDK } from '@stichting-allianceblock-foundation/lmaas-sdk';
+import {
+  ConfigWrapper,
+  StakerSDK,
+  StakingInterface,
+} from '@stichting-allianceblock-foundation/lmaas-sdk';
 
 function getSDK(
   chainId: number,
@@ -38,14 +42,48 @@ function getTokenByPropName(tokenConfig: any, propName: TokenConfigsProps, propV
 const Home: NextPage = () => {
   const { stakerSdk, configWrapper, setStakerSdk } = useGlobalContext();
   const { activate, active, library, chainId, account } = useWeb3React();
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(false);
+  const [lmCampaigns, setLmCampaigns] = useState<any[]>([]);
+  const [stakingCampaigns, setStakingCampaigns] = useState<any[]>([]);
+  const [loadingLmCampaigns, setLoadingLmCampaigns] = useState<boolean>(false);
+  const [loadingStakingCampaigns, setLoadingStakingCampaigns] = useState<boolean>(false);
   const [pendingTx, setPendingTx] = useState<boolean>(false);
 
   useEffect(() => {
     const sdk = getSDK(chainId!, library, configWrapper!);
     setStakerSdk(sdk);
   }, [chainId, active, account]);
+
+  useEffect(() => {
+    async function fetchStakingCampaignInfo() {
+      const configCampaigns = configWrapper!.getStakingCampaigns(
+        getProtocolByChainId(chainId!),
+        item => item.version === '2.0', // The SDK only works with V2 campaigns, not V1 supported
+      );
+      const signer = await library.getSigner();
+
+      const cardDataPR = configCampaigns.map(campaign =>
+        stakerSdk?.soloStakerWrapper.getCardData(signer, campaign),
+      );
+
+      try {
+        setLoadingStakingCampaigns(true);
+        const cardDataFull = await Promise.all(cardDataPR);
+        setStakingCampaigns(cardDataFull);
+        setLoadingStakingCampaigns(false);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (library && active && stakerSdk) {
+      fetchStakingCampaignInfo();
+    }
+
+    return () => {
+      setStakingCampaigns([]);
+      setLoadingStakingCampaigns(false);
+    };
+  }, [library, active, stakerSdk]);
 
   useEffect(() => {
     async function fetchLmCampaignInfo() {
@@ -60,10 +98,10 @@ const Home: NextPage = () => {
       );
 
       try {
-        setLoadingCampaigns(true);
+        setLoadingLmCampaigns(true);
         const cardDataFull = await Promise.all(cardDataPR);
-        setCampaigns(cardDataFull);
-        setLoadingCampaigns(false);
+        setLmCampaigns(cardDataFull);
+        setLoadingLmCampaigns(false);
       } catch (e) {
         console.error(e);
       }
@@ -74,12 +112,60 @@ const Home: NextPage = () => {
     }
 
     return () => {
-      setCampaigns([]);
-      setLoadingCampaigns(false);
+      setLmCampaigns([]);
+      setLoadingLmCampaigns(false);
     };
   }, [library, active, stakerSdk]);
 
-  const handleWithdrawClaim = async (campaignAddress: string): Promise<void> => {
+  const handleStakingWithdraw = async (campaign: StakingInterface): Promise<void> => {
+    try {
+      setPendingTx(true);
+      const tx = await stakerSdk?.soloStakerWrapper.exit(campaign);
+      await tx.wait();
+      setPendingTx(false);
+    } catch (e) {
+      setPendingTx(false);
+    }
+  };
+
+  const handleStakingExit = async (campaign: StakingInterface): Promise<void> => {
+    try {
+      setPendingTx(true);
+      const tx = await stakerSdk?.soloStakerWrapper.completeExit(campaign);
+      await tx.wait();
+      setPendingTx(false);
+    } catch (e) {
+      setPendingTx(false);
+    }
+  };
+
+  const handleStakingStake = async (campaign: StakingInterface): Promise<void> => {
+    try {
+      setPendingTx(true);
+      const tx = await stakerSdk?.soloStakerWrapper.stake(campaign, '1');
+      await tx.wait();
+      setPendingTx(false);
+    } catch (e) {
+      console.error(e);
+      setPendingTx(false);
+    }
+  };
+
+  const handleStakingApprove = async (campaign: StakingInterface): Promise<void> => {
+    const signer = library.getSigner();
+
+    try {
+      setPendingTx(true);
+      const tx = await stakerSdk?.soloStakerWrapper.approveToken(signer, campaign);
+      await tx.wait();
+      setPendingTx(false);
+    } catch (e) {
+      console.error(e);
+      setPendingTx(false);
+    }
+  };
+
+  const handleLmWithdrawClaim = async (campaignAddress: string): Promise<void> => {
     try {
       setPendingTx(true);
       const tx = await stakerSdk?.campaignWrapper.exit(campaignAddress);
@@ -90,7 +176,7 @@ const Home: NextPage = () => {
     }
   };
 
-  const handleStake = async (campaignAddress: string): Promise<void> => {
+  const handleLmStake = async (campaignAddress: string): Promise<void> => {
     try {
       setPendingTx(true);
       const tx = await stakerSdk?.campaignWrapper.stake(campaignAddress, '1');
@@ -102,7 +188,7 @@ const Home: NextPage = () => {
     }
   };
 
-  const handleApprove = async (campaign: any): Promise<void> => {
+  const handleLmApprove = async (campaign: any): Promise<void> => {
     const signer = library.getSigner();
 
     try {
@@ -135,10 +221,10 @@ const Home: NextPage = () => {
           </button>
           <p>Connected to: {account || '...'}</p>
         </div>
-
-        {!loadingCampaigns ? (
-          campaigns.length > 0 ? (
-            campaigns.map((campaign, index) => {
+        <h3>Liquidity Mining Campaigns: </h3>
+        {!loadingLmCampaigns ? (
+          lmCampaigns.length > 0 ? (
+            lmCampaigns.map((campaign, index) => {
               return (
                 <article
                   key={index}
@@ -159,22 +245,79 @@ const Home: NextPage = () => {
                     })}
                   </ul>
 
-                  <button onClick={() => handleApprove(campaign)} disabled={pendingTx}>
+                  <button onClick={() => handleLmApprove(campaign)} disabled={pendingTx}>
                     Approve LP token
                   </button>
 
                   <button
-                    onClick={() => handleStake(campaign.campaign.campaignAddress)}
+                    onClick={() => handleLmStake(campaign.campaign.campaignAddress)}
                     disabled={pendingTx}
                   >
                     Stake
                   </button>
 
                   <button
-                    onClick={() => handleWithdrawClaim(campaign.campaign.campaignAddress)}
+                    onClick={() => handleLmWithdrawClaim(campaign.campaign.campaignAddress)}
                     disabled={pendingTx}
                   >
                     Withdraw and Claim
+                  </button>
+                </article>
+              );
+            })
+          ) : (
+            <div>No campaigns to show...</div>
+          )
+        ) : (
+          <div>Loading the data for the campaigns...</div>
+        )}
+        <h3>Staking Campaigns: </h3>
+        {!loadingStakingCampaigns ? (
+          stakingCampaigns.length > 0 ? (
+            stakingCampaigns.map((campaign, index) => {
+              return (
+                <article
+                  key={index}
+                  style={{
+                    border: '1px solid black',
+                    padding: '20px',
+                    margin: '20px',
+                    borderRadius: '20px',
+                  }}
+                >
+                  <p>Campaign Address: {campaign.campaign.campaignAddress}</p>
+                  <p>Total Staked: {campaign.totalStaked}</p>
+                  <p>APY: {campaign.apy.toFixed(2)}</p>
+                  <p>
+                    Balance {campaign.pair.symbol} Tokens:{' '}
+                    {Number(campaign.userWalletTokensBalance).toFixed(2)}
+                  </p>
+                  <ul>
+                    <li>{campaign.pair.symbol}</li>
+                  </ul>
+
+                  <button
+                    onClick={() => handleStakingApprove(campaign.campaign)}
+                    disabled={pendingTx}
+                  >
+                    Approve {campaign.pair.symbol} token
+                  </button>
+
+                  <button
+                    onClick={() => handleStakingStake(campaign.campaign)}
+                    disabled={pendingTx}
+                  >
+                    Stake
+                  </button>
+
+                  <button
+                    onClick={() => handleStakingWithdraw(campaign.campaign)}
+                    disabled={pendingTx}
+                  >
+                    Withdraw
+                  </button>
+                  <button onClick={() => handleStakingExit(campaign.campaign)} disabled={pendingTx}>
+                    Exit
                   </button>
                 </article>
               );
