@@ -1,7 +1,7 @@
 import { InjectedConnector } from '@web3-react/injected-connector';
 import { NetworkEnum } from '@stichting-allianceblock-foundation/lmaas-sdk';
 
-export const injected = new InjectedConnector({ supportedChainIds: [1, 3, 4, 5, 42, 246] });
+export const injected = new InjectedConnector({ supportedChainIds: [1, 3, 4, 5, 42, 56, 246] });
 
 export const getProtocolByChainId = (chainId: number) => {
   switch (chainId) {
