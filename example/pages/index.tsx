@@ -49,7 +49,10 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     async function fetchLmCampaignInfo() {
-      const configCampaigns = configWrapper!.getLmCampaigns('ewc');
+      const configCampaigns = configWrapper!.getLmCampaigns(
+        getProtocolByChainId(chainId!),
+        item => item.version === '2.0', // The SDK only works with V2 campaigns, not V1 supported
+      );
       const signer = await library.getSigner();
 
       const cardDataPR = configCampaigns.map(campaign =>

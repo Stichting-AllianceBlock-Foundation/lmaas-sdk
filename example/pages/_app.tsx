@@ -27,7 +27,10 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     async function fetchConfig() {
-      const newConfigWrapper = new ConfigWrapper('https://api.defiterm-dev.net', 'bonker');
+      const newConfigWrapper = new ConfigWrapper(
+        process.env.NEXT_PUBLIC_BASE_URL as string,
+        process.env.NEXT_PUBLIC_TENNANT_NAME as string,
+      );
       await newConfigWrapper.loadConfig();
       setConfigWrapper(newConfigWrapper);
     }
