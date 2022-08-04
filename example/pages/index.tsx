@@ -120,7 +120,7 @@ const Home: NextPage = () => {
   const handleStakingWithdraw = async (campaign: StakingInterface): Promise<void> => {
     try {
       setPendingTx(true);
-      const tx = await stakerSdk?.soloStakerWrapper.exit(campaign);
+      const tx = (await stakerSdk?.soloStakerWrapper.exit(campaign)) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -131,7 +131,7 @@ const Home: NextPage = () => {
   const handleStakingExit = async (campaign: StakingInterface): Promise<void> => {
     try {
       setPendingTx(true);
-      const tx = await stakerSdk?.soloStakerWrapper.completeExit(campaign);
+      const tx = (await stakerSdk?.soloStakerWrapper.completeExit(campaign)) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -142,7 +142,7 @@ const Home: NextPage = () => {
   const handleStakingStake = async (campaign: StakingInterface): Promise<void> => {
     try {
       setPendingTx(true);
-      const tx = await stakerSdk?.soloStakerWrapper.stake(campaign, '1');
+      const tx = (await stakerSdk?.soloStakerWrapper.stake(campaign, '1')) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -156,7 +156,7 @@ const Home: NextPage = () => {
 
     try {
       setPendingTx(true);
-      const tx = await stakerSdk?.soloStakerWrapper.approveToken(signer, campaign);
+      const tx = (await stakerSdk?.soloStakerWrapper.approveToken(signer, campaign)) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -168,7 +168,7 @@ const Home: NextPage = () => {
   const handleLmWithdrawClaim = async (campaignAddress: string): Promise<void> => {
     try {
       setPendingTx(true);
-      const tx = await stakerSdk?.campaignWrapper.exit(campaignAddress);
+      const tx = (await stakerSdk?.campaignWrapper.exit(campaignAddress)) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -179,7 +179,7 @@ const Home: NextPage = () => {
   const handleLmStake = async (campaignAddress: string): Promise<void> => {
     try {
       setPendingTx(true);
-      const tx = await stakerSdk?.campaignWrapper.stake(campaignAddress, '1');
+      const tx = (await stakerSdk?.campaignWrapper.stake(campaignAddress, '1')) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -193,11 +193,11 @@ const Home: NextPage = () => {
 
     try {
       setPendingTx(true);
-      const tx = await stakerSdk?.dexWrapper.approveToken(
+      const tx = (await stakerSdk?.dexWrapper.approveToken(
         signer,
         campaign.campaign.campaignAddress,
         campaign.campaign.liquidityPoolAddress,
-      );
+      )) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -225,6 +225,8 @@ const Home: NextPage = () => {
         {!loadingLmCampaigns ? (
           lmCampaigns.length > 0 ? (
             lmCampaigns.map((campaign, index) => {
+              if (Object.keys(campaign).length === 0) return null;
+
               return (
                 <article
                   key={index}
@@ -275,6 +277,8 @@ const Home: NextPage = () => {
         {!loadingStakingCampaigns ? (
           stakingCampaigns.length > 0 ? (
             stakingCampaigns.map((campaign, index) => {
+              if (Object.keys(campaign).length === 0) return null;
+
               return (
                 <article
                   key={index}
