@@ -2,7 +2,7 @@ import { useWeb3React } from '@web3-react/core';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useGlobalContext } from './_app';
-import { getProtocolByChainId, injected } from '../utils/utils';
+import { injected } from '../utils/utils';
 import { useEffect, useState } from 'react';
 import { Web3Provider } from '@ethersproject/providers';
 import {
@@ -19,7 +19,7 @@ function getSDK(
   let sdk: StakerSDK | null = null;
 
   if (chainId && configWrapper.config) {
-    sdk = new StakerSDK(provider, getProtocolByChainId(chainId), configWrapper.config.config);
+    sdk = new StakerSDK(provider, chainId, configWrapper.config.config);
   }
 
   return sdk;
@@ -56,7 +56,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     async function fetchStakingCampaignInfo() {
       const configCampaigns = configWrapper!.getStakingCampaigns(
-        getProtocolByChainId(chainId!),
+        stakerSdk!.getProtocolByChainId(chainId!),
         item => item.version === '2.0', // The SDK only works with V2 campaigns, not V1 supported
       );
       const signer = await library.getSigner();
@@ -88,7 +88,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     async function fetchLmCampaignInfo() {
       const configCampaigns = configWrapper!.getLmCampaigns(
-        getProtocolByChainId(chainId!),
+        stakerSdk!.getProtocolByChainId(chainId!),
         item => item.version === '2.0', // The SDK only works with V2 campaigns, not V1 supported
       );
       const signer = await library.getSigner();
