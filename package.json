@@ -1,7 +1,7 @@
 {
   "name": "@stichting-allianceblock-foundation/lmaas-sdk",
   "author": "AllianceBlock",
-  "version": "0.3.5-beta",
+  "version": "0.3.5",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
