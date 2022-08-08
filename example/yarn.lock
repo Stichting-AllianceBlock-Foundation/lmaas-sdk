@@ -504,10 +504,10 @@
     tiny-warning "^1.0.3"
     toformat "^2.0.0"
 
-"@stichting-allianceblock-foundation/lmaas-sdk@^0.3.5-beta":
-  version "0.3.5-beta"
-  resolved "https://npm.pkg.github.com/download/@Stichting-AllianceBlock-Foundation/lmaas-sdk/0.3.5-beta/1b309ce97b295263dff8a6706ca7d371afb21a35#1b309ce97b295263dff8a6706ca7d371afb21a35"
-  integrity sha512-Hh2A33Em0l0KEdFvCc5VLrSOGELVTBOMQiUUW0BypvpTC4oOsM9GtBCMN2nyq2qqKIb/du/FpDtjUTvGqfJDxQ==
+"@stichting-allianceblock-foundation/lmaas-sdk@^0.3.8-beta":
+  version "0.3.8-beta"
+  resolved "https://npm.pkg.github.com/download/@Stichting-AllianceBlock-Foundation/lmaas-sdk/0.3.8-beta/e81f5a8e732ca30b2c13bf38a77b633342e8bf7c#e81f5a8e732ca30b2c13bf38a77b633342e8bf7c"
+  integrity sha512-0rTp8dM1Evgq2fnfiBNLSHaP56Pxu2qgqfAFhtLMJR+gkLOfeYKSfR82c2m/Vulq+fxyI1Bve6H0gy/3uNoMMw==
   dependencies:
     "@stichting-allianceblock-foundation/abdex-sdk-v2" "^0.1.22"
     axios "^0.27.2"
