@@ -11,7 +11,56 @@ export const day = 60 * 60 * 24;
 export const week = day * 7;
 export const year = 365;
 
+const BLOCKS_PER_DAY_ETH = 6646;
+const BLOCKS_PER_DAY_BSC = 28800;
+//polygon average block time 2 sec
+const BLOCKS_PER_DAY_POLY = 43200;
+//avalanche average block time 2 sec
+const BLOCKS_PER_DAY_AVAX = 43200;
+
+export const BLOCKS_COUNT: { [key: string]: any } = {
+  eth: {
+    PER_DAY: BLOCKS_PER_DAY_ETH,
+    PER_WEEK: BLOCKS_PER_DAY_ETH * 7,
+    PER_30_DAYS: BLOCKS_PER_DAY_ETH * 30,
+  },
+  bsc: {
+    PER_DAY: BLOCKS_PER_DAY_BSC,
+    PER_WEEK: BLOCKS_PER_DAY_BSC * 7,
+    PER_30_DAYS: BLOCKS_PER_DAY_BSC * 30,
+  },
+  polygon: {
+    PER_DAY: BLOCKS_PER_DAY_POLY,
+    PER_WEEK: BLOCKS_PER_DAY_POLY * 7,
+    PER_30_DAYS: BLOCKS_PER_DAY_POLY * 30,
+  },
+  avalanche: {
+    PER_DAY: BLOCKS_PER_DAY_AVAX,
+    PER_WEEK: BLOCKS_PER_DAY_AVAX * 7,
+    PER_30_DAYS: BLOCKS_PER_DAY_AVAX * 30,
+  },
+};
+
 export const stableCoinsIds = ['tether', 'terra-usd', 'usd-coin', 'dai', 'magic-internet-money'];
+
+const SECONDS_PER_BLOCK: { [key: string]: number } = {
+  eth: 13,
+  bsc: 3,
+  polygon: 2,
+  avalanche: 2,
+  volta: 5,
+};
+
+export const convertBlockToSeconds = (blocks: BigNumber, protocol: string) => {
+  if (SECONDS_PER_BLOCK[protocol]) {
+    const secondsTen = SECONDS_PER_BLOCK[protocol] * 10;
+    const blocksPerSecond = blocks.mul(secondsTen);
+    const bigTen = BigNumber.from(10);
+
+    return blocksPerSecond.div(bigTen);
+  }
+  return blocks;
+};
 
 export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
   const tenBN = BigNumber.from(10);

@@ -41,7 +41,7 @@ export interface CampaingData {
   hasWalletStakeLimit: boolean;
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
-  campaignRewards: CampaignRewards[];
+  campaignRewards: CampaignRewardsNew[];
   rewardsCount: number;
   name: string;
   wrappedNativeToken: string;
@@ -73,13 +73,32 @@ export interface UserDataStaking {
   userRewards: UserRewards[];
 }
 
-export interface CampaignRewards {
+export interface CampaignRewardsNew {
   tokenAddress: string;
   rewardPerSecond: BigNumber;
   totalRewards: BigNumber;
 }
 
+export interface CampaignRewards {
+  total: Reward[];
+  weekly: Reward[];
+}
+
+export interface CampaignRewards {
+  [key: string]: {
+    tokenName: string;
+    tokenAddress: string;
+    tokenAmount: string;
+  }[];
+}
+
 export interface UserRewards {
   tokenAddress: string;
   currentAmount: BigNumber;
+}
+
+export interface Reward {
+  tokenAmount: string;
+  tokenName: string;
+  tokenAddress: string;
 }

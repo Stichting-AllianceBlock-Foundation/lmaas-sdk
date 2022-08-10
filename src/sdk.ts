@@ -1,6 +1,7 @@
 import { JsonRpcBatchProvider, Web3Provider } from '@ethersproject/providers';
 
 import {
+  ALBStaker,
   BlockchainConfig,
   CampaignWrapper,
   CoinGecko,
@@ -27,6 +28,7 @@ import {
  */
 export class StakerSDK {
   lmcStaker: StakerLM;
+  albStaker: ALBStaker;
   soloNonCompStaker: StakerSolo;
   coingecko: CoinGecko;
   soloStakerWrapper: SoloStakerWrapper;
@@ -45,6 +47,7 @@ export class StakerSDK {
     this.protocol = this.getProtocolByChainId(chainId);
 
     this.lmcStaker = new StakerLM(this.provider as Web3Provider, this.protocol);
+    this.albStaker = new ALBStaker(this.provider, this.protocol);
     this.soloNonCompStaker = new StakerSolo(this.provider as Web3Provider, this.protocol);
 
     this.soloStakerWrapper = new SoloStakerWrapper(
@@ -57,6 +60,7 @@ export class StakerSDK {
     this.campaignWrapper = new CampaignWrapper(
       this.provider as Web3Provider,
       this.lmcStaker,
+      this.albStaker,
       this.coingecko,
       getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
       this.protocol,

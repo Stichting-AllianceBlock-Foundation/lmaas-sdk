@@ -1,3 +1,4 @@
+export * from './albStaker';
 export * from './campaignWrapper';
 export * from './coingecko';
 export * from './configWrapper';
