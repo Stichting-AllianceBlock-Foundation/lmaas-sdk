@@ -1,3 +1,4 @@
+import { FunctionFragment } from '@ethersproject/abi';
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
@@ -77,12 +78,14 @@ export class SoloStakerWrapper {
       return this._stake(userWallet, campaign, amountToStake);
     }
 
-    if (version === '2.0') {
-      return this.soloNonComp.stake(campaignAddress, amountToStake, false);
-    }
+    return this.soloNonComp.stake(campaignAddress, amountToStake, false);
   }
 
-  async _stake(userWallet: JsonRpcSigner, campaign: StakingInterface, stakeTokenAmountIn: string) {
+  async _stake(
+    userWallet: JsonRpcSigner,
+    campaign: StakingInterface,
+    stakeTokenAmountIn: string,
+  ): Promise<FunctionFragment> {
     const {
       campaignAddress: stakerContractAddress,
       campaignTokenAddress: stakeTokenAddress,
@@ -111,9 +114,7 @@ export class SoloStakerWrapper {
       return this._exit(userWallet, campaign);
     }
 
-    if (version === '2.0') {
-      return this.soloNonComp.exit(campaignAddress);
-    }
+    return this.soloNonComp.exit(campaignAddress);
   }
 
   async _exit(userWallet: JsonRpcSigner, campaign: StakingInterface) {
@@ -134,9 +135,7 @@ export class SoloStakerWrapper {
       return this._completeExit(userWallet, campaign);
     }
 
-    if (version === '2.0') {
-      return this.soloNonComp.completeExit(campaignAddress);
-    }
+    return this.soloNonComp.completeExit(campaignAddress);
   }
 
   async _completeExit(userWallet: JsonRpcSigner, campaign: StakingInterface) {
@@ -1122,7 +1121,7 @@ export class SoloStakerWrapper {
     stakerCampaignAddress: string,
     compounding: boolean,
     version = '1.0',
-  ) {
+  ): Promise<any> {
     if (version === '1.0') {
       let currentBlock: any = this.provider.getBlock('latest');
       const userAddress = await getAddressFromWallet(userWallet);
@@ -1516,7 +1515,7 @@ export class SoloStakerWrapper {
     return nowInSeconds + deltaCooldown;
   }
 
-  async getDisconnectedState(campaignAddress: string, version = '1.0') {
+  async getDisconnectedState(campaignAddress: string, version = '1.0'): Promise<any> {
     if (version === '1.0') {
       const campaignInstance = new Contract(
         campaignAddress,
