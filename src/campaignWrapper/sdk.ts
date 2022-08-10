@@ -76,9 +76,7 @@ export class CampaignWrapper {
       return this.albStaker.stake(userWallet, campaignAddress, lockSchemeAddress, amountToStake);
     }
 
-    if (version === '2.0') {
-      return this.lmcStaker.stake(campaignAddress, amountToStake);
-    }
+    return this.lmcStaker.stake(campaignAddress, amountToStake);
   }
 
   exit(version: string, userWallet: Web3Provider, campaignAddress: string) {
@@ -86,9 +84,7 @@ export class CampaignWrapper {
       return this.albStaker.withdraw(userWallet, campaignAddress);
     }
 
-    if (version === '2.0') {
-      return this.lmcStaker.exit(campaignAddress);
-    }
+    return this.lmcStaker.exit(campaignAddress);
   }
 
   /**
