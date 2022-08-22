@@ -91,6 +91,7 @@ const Home: NextPage = () => {
       const configCampaigns = configWrapper!.getLmCampaigns(
         stakerSdk!.getProtocolByChainId(chainId!),
       );
+      console.log(configCampaigns);
       const signer = await library.getSigner();
 
       const cardDataPR = configCampaigns.map(campaign =>
@@ -215,8 +216,8 @@ const Home: NextPage = () => {
       setPendingTx(true);
       const tx = (await stakerSdk?.dexWrapper.approveToken(
         signer,
-        campaign.campaign.campaignAddress,
-        campaign.campaign.liquidityPoolAddress,
+        campaign.campaignAddress,
+        campaign.liquidityPoolAddress,
       )) as any;
       await tx.wait();
       setPendingTx(false);
@@ -267,19 +268,16 @@ const Home: NextPage = () => {
                     })}
                   </ul>
 
-                  <button onClick={() => handleLmApprove(campaign)} disabled={pendingTx}>
+                  <button onClick={() => handleLmApprove(campaign.campaign)} disabled={pendingTx}>
                     Approve LP token
                   </button>
 
-                  <button
-                    onClick={() => handleLmStake(campaign.campaign.campaignAddress)}
-                    disabled={pendingTx}
-                  >
+                  <button onClick={() => handleLmStake(campaign.campaign)} disabled={pendingTx}>
                     Stake
                   </button>
 
                   <button
-                    onClick={() => handleLmWithdrawClaim(campaign.campaign.campaignAddress)}
+                    onClick={() => handleLmWithdrawClaim(campaign.campaign)}
                     disabled={pendingTx}
                   >
                     Withdraw and Claim
