@@ -11,8 +11,8 @@
   "dependencies": {
     "@ethersproject/providers": "^5.6.8",
     "@ethersproject/units": "^5.6.1",
-    "@stichting-allianceblock-foundation/lmaas-sdk": "^0.3.8-beta",
     "@web3-react/core": "6.1.9",
+    "@stichting-allianceblock-foundation/lmaas-sdk": "../dist",
     "@web3-react/injected-connector": "6.0.7",
     "next": "12.2.0",
     "react": "18.2.0",

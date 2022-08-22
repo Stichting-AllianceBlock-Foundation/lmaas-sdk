@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Web3Provider } from '@ethersproject/providers';
 import {
   ConfigWrapper,
+  LMInterface,
   StakerSDK,
   StakingInterface,
 } from '@stichting-allianceblock-foundation/lmaas-sdk';
@@ -57,12 +58,12 @@ const Home: NextPage = () => {
     async function fetchStakingCampaignInfo() {
       const configCampaigns = configWrapper!.getStakingCampaigns(
         stakerSdk!.getProtocolByChainId(chainId!),
-        item => item.version === '2.0', // The SDK only works with V2 campaigns, not V1 supported
       );
+
       const signer = await library.getSigner();
 
       const cardDataPR = configCampaigns.map(campaign =>
-        stakerSdk?.soloStakerWrapper.getCardData(signer, campaign),
+        stakerSdk?.soloStakerWrapper.getCardDataCommon(signer, campaign),
       );
 
       try {
@@ -89,12 +90,11 @@ const Home: NextPage = () => {
     async function fetchLmCampaignInfo() {
       const configCampaigns = configWrapper!.getLmCampaigns(
         stakerSdk!.getProtocolByChainId(chainId!),
-        item => item.version === '2.0', // The SDK only works with V2 campaigns, not V1 supported
       );
       const signer = await library.getSigner();
 
       const cardDataPR = configCampaigns.map(campaign =>
-        stakerSdk?.campaignWrapper.getCardData(signer, campaign),
+        stakerSdk?.campaignWrapper.getCardDataCommon(signer, campaign),
       );
 
       try {
@@ -118,9 +118,11 @@ const Home: NextPage = () => {
   }, [library, active, stakerSdk]);
 
   const handleStakingWithdraw = async (campaign: StakingInterface): Promise<void> => {
+    const signer = library.getSigner();
+
     try {
       setPendingTx(true);
-      const tx = (await stakerSdk?.soloStakerWrapper.exit(campaign)) as any;
+      const tx = (await stakerSdk?.soloStakerWrapper.exit(signer, campaign)) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -129,9 +131,11 @@ const Home: NextPage = () => {
   };
 
   const handleStakingExit = async (campaign: StakingInterface): Promise<void> => {
+    const signer = library.getSigner();
+
     try {
       setPendingTx(true);
-      const tx = (await stakerSdk?.soloStakerWrapper.completeExit(campaign)) as any;
+      const tx = (await stakerSdk?.soloStakerWrapper.completeExit(signer, campaign)) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -140,9 +144,11 @@ const Home: NextPage = () => {
   };
 
   const handleStakingStake = async (campaign: StakingInterface): Promise<void> => {
+    const signer = library.getSigner();
+
     try {
       setPendingTx(true);
-      const tx = (await stakerSdk?.soloStakerWrapper.stake(campaign, '1')) as any;
+      const tx = (await stakerSdk?.soloStakerWrapper.stake(signer, campaign, '1')) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -165,10 +171,16 @@ const Home: NextPage = () => {
     }
   };
 
-  const handleLmWithdrawClaim = async (campaignAddress: string): Promise<void> => {
+  const handleLmWithdrawClaim = async (campaign: LMInterface): Promise<void> => {
+    const signer = library.getSigner();
+
     try {
       setPendingTx(true);
-      const tx = (await stakerSdk?.campaignWrapper.exit(campaignAddress)) as any;
+      const tx = (await stakerSdk?.campaignWrapper.exit(
+        campaign.version,
+        signer,
+        campaign.campaignAddress,
+      )) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
@@ -176,10 +188,18 @@ const Home: NextPage = () => {
     }
   };
 
-  const handleLmStake = async (campaignAddress: string): Promise<void> => {
+  const handleLmStake = async (campaign: LMInterface): Promise<void> => {
+    const signer = library.getSigner();
+
     try {
       setPendingTx(true);
-      const tx = (await stakerSdk?.campaignWrapper.stake(campaignAddress, '1')) as any;
+      const tx = (await stakerSdk?.campaignWrapper.stake(
+        campaign.version,
+        signer,
+        campaign.campaignAddress,
+        campaign.lockSchemeAddress || '',
+        '1',
+      )) as any;
       await tx.wait();
       setPendingTx(false);
     } catch (e) {
