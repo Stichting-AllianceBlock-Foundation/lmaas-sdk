@@ -156,7 +156,7 @@ export class CampaignWrapper {
     contractStakeLimit = result[3];
 
     const campaignRewardsUSD = await this._getCampaignRewardsUSD_v1(campaignRewards);
-    const [totalStakedString] = this.utils.formatValuesToString([totalStakedAmountBN]);
+    const [totalStakedString] = formatValuesToString([totalStakedAmountBN]);
     const durationDays = duration / (60 * 60 * 24 * 1000);
 
     // Get total staked in USD
@@ -170,7 +170,7 @@ export class CampaignWrapper {
     // Get APY
     const apy = hasCampaignEnded
       ? 0
-      : this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, this.utils.year);
+      : this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
     return {
       apy,
@@ -352,7 +352,7 @@ export class CampaignWrapper {
     hasUserStakeLimit = result[9];
 
     const campaignRewardsUSD = await this._getCampaignRewardsUSD_v1(campaignRewards);
-    const [totalStakedString] = this.utils.formatValuesToString([totalStakedAmountBN]);
+    const [totalStakedString] = formatValuesToString([totalStakedAmountBN]);
     const durationDays = duration / (60 * 60 * 24 * 1000);
 
     // Get total staked in USD
@@ -366,7 +366,7 @@ export class CampaignWrapper {
     // Get APY
     const apy = hasCampaignEnded
       ? 0
-      : this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, this.utils.year);
+      : this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
     return {
       apy,
@@ -522,13 +522,13 @@ export class CampaignWrapper {
       const currentTotalAmount = currentReward.tokenAmount;
       const currentAddress = currentReward.tokenAddress;
 
-      const { coinGeckoID: tokenId } = this.utils.getTokenByPropName(
+      const { coinGeckoID: tokenId } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         currentAddress,
       );
 
-      const priceUSD = this.utils.stableCoinsIds.includes(tokenId)
+      const priceUSD = stableCoinsIds.includes(tokenId)
         ? 1
         : await this.coingecko.getTokenPrice(tokenId, 'usd');
       const amountUSD = priceUSD * Number(currentTotalAmount);
@@ -545,7 +545,7 @@ export class CampaignWrapper {
     dex: string,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await this.utils.getTotalSupply(this.provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(
@@ -558,14 +558,14 @@ export class CampaignWrapper {
     let totalStakedUSD = 0;
 
     for (let i = 0; i < provisionTokensAddresses.length; i++) {
-      const { symbol, coinGeckoID } = this.utils.getTokenByPropName(
+      const { symbol, coinGeckoID } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         provisionTokensAddresses[i].toLowerCase(),
       );
 
       // Get reward price in USD from Coingecko
-      const priceUSD = this.utils.stableCoinsIds.includes(coinGeckoID)
+      const priceUSD = stableCoinsIds.includes(coinGeckoID)
         ? 1
         : await this.coingecko.getTokenPrice(coinGeckoID, 'usd');
 

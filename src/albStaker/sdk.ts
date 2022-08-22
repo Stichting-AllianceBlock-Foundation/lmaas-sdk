@@ -4,6 +4,13 @@ import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits, parseEther } from '@ethersproject/units';
 
+import {
+  BLOCKS_COUNT,
+  checkMaxStakingLimit,
+  convertBlockToSeconds,
+  getAddressFromWallet,
+  getTokenByPropName,
+} from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaignV1.json';
 import { CampaignRewards, NetworkEnum, Reward, TokenConfigs, TokenConfigsProps } from '../entities';
 
@@ -124,7 +131,7 @@ export class ALBStaker {
     );
 
     const rewardsCount = await stakingRewardsContract.getRewardTokensCount();
-    const walletAddress = await this.utils.getAddressFromWallet(userWallet);
+    const walletAddress = await getAddressFromWallet(userWallet);
 
     const currentRewards = [];
 
@@ -137,7 +144,7 @@ export class ALBStaker {
     if (userStakingBalance === '0.0') {
       for (let i = 0; i < rewardsCount.toNumber(); i++) {
         const currentRewardToken = await stakingRewardsContract.rewardsTokens(i);
-        const rewardsContractName = this.utils.getTokenByPropName(
+        const rewardsContractName = getTokenByPropName(
           tokensConfig,
           TokenConfigsProps.ADDRESS,
           currentRewardToken.toLowerCase(),
@@ -163,12 +170,11 @@ export class ALBStaker {
           i,
         );
 
-        const { symbol: rewardsContractName, decimals: tokenDecimals } =
-          this.utils.getTokenByPropName(
-            tokensConfig,
-            TokenConfigsProps.ADDRESS,
-            currentRewardToken.toLowerCase(),
-          );
+        const { symbol: rewardsContractName, decimals: tokenDecimals } = getTokenByPropName(
+          tokensConfig,
+          TokenConfigsProps.ADDRESS,
+          currentRewardToken.toLowerCase(),
+        );
 
         const currentRewardObj = {
           tokenName: rewardsContractName,
@@ -201,7 +207,7 @@ export class ALBStaker {
       this.provider,
     );
 
-    const walletAddress = await this.utils.getAddressFromWallet(userWallet);
+    const walletAddress = await getAddressFromWallet(userWallet);
     const balance = await stakingRewardsContract.balanceOf(walletAddress);
 
     // shouldn't be an issue - pool's token is 18 decimals
@@ -311,7 +317,7 @@ export class ALBStaker {
       const currentRewardToken = await stakingRewardsContract.rewardsTokens(i);
       const rewardPerBlock = await stakingRewardsContract.rewardPerBlock(i);
 
-      const { symbol: tokenName, decimals: tokenDecimals } = this.utils.getTokenByPropName(
+      const { symbol: tokenName, decimals: tokenDecimals } = getTokenByPropName(
         tokensConfig,
         TokenConfigsProps.ADDRESS,
         currentRewardToken.toLowerCase(),
@@ -329,7 +335,7 @@ export class ALBStaker {
         tokenName,
         tokenAddress: currentRewardToken.toLowerCase(),
         tokenAmount: formatUnits(
-          rewardPerBlock.mul(this.utils.BLOCKS_COUNT[this.protocol].PER_WEEK),
+          rewardPerBlock.mul(BLOCKS_COUNT[this.protocol].PER_WEEK),
           tokenDecimals,
         ),
       };
@@ -418,7 +424,7 @@ export class ALBStaker {
 
     try {
       const contractStakeLimit = await stakingRewardsContract.contractStakeLimit();
-      hasContractStakeLimit = !this.utils.checkMaxStakingLimit(contractStakeLimit);
+      hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     } catch (e) {
       console.error(e);
     }
@@ -466,7 +472,7 @@ export class ALBStaker {
 
     try {
       const stakeLimit = await stakingRewardsContract.stakeLimit();
-      hasUserStakeLimit = !this.utils.checkMaxStakingLimit(stakeLimit);
+      hasUserStakeLimit = !checkMaxStakingLimit(stakeLimit);
     } catch (e) {
       console.error(e);
     }
@@ -497,17 +503,14 @@ export class ALBStaker {
     const durationPeriodInBlocks = deltaDurationPeriod.gt(0)
       ? deltaDurationPeriod
       : BigNumber.from(0);
-    const durationInSeconds = await this.utils.convertBlockToSeconds(
-      durationPeriodInBlocks,
-      this.protocol,
-    );
+    const durationInSeconds = await convertBlockToSeconds(durationPeriodInBlocks, this.protocol);
     const durationInMilliseconds = durationInSeconds.mul(1000).toNumber();
 
     const deltaExpirationPeriod = endBlock.sub(currentBlock.number);
     const expirationPeriodInBlocks = deltaExpirationPeriod.gt(0)
       ? deltaExpirationPeriod
       : BigNumber.from(0);
-    const expirationInSeconds = await this.utils.convertBlockToSeconds(
+    const expirationInSeconds = await convertBlockToSeconds(
       expirationPeriodInBlocks,
       this.protocol,
     );
@@ -529,7 +532,7 @@ export class ALBStaker {
   async getUserStakedInCampaign(userWallet: any, address: string): Promise<boolean> {
     const stakingRewardsContract = new Contract(address, LiquidityMiningCampaignABI, this.provider);
 
-    const walletAddress = await this.utils.getAddressFromWallet(userWallet);
+    const walletAddress = await getAddressFromWallet(userWallet);
     const stakedAmount = await stakingRewardsContract.balanceOf(walletAddress);
 
     return stakedAmount.toBigInt() > 0;

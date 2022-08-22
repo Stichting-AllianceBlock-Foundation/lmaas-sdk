@@ -37,7 +37,7 @@ import {
 import LpABI from '../abi/AllianceBlockDexPoolABI.json';
 import CompoundingPoolABI from '../abi/CompoundingRewardsPool.json';
 import CompoundingRewardsPoolABI from '../abi/CompoundingRewardsPoolStaker.json';
-import NonCompoundingRewardsPoolABI from '../abi/NonCompoundingRewardsPool.json';
+import NonCompoundingRewardsPoolABI from '../abi/NonCompoundingRewardsPoolV1.json';
 
 /**
  *  Represents a class that can interact with SoloStaker's campaigns
@@ -299,10 +299,9 @@ export class SoloStakerWrapper {
     );
     stakeLimit = await formatToken(this.provider as Web3Provider, stakeLimit, campaignTokenAddress);
 
-    const totalStakedBN = BigNumber.from(totalStaked);
-    const stakingTokenPriceBN = BigNumber.from(stakingTokenPrice);
-    const contractStakeLimitBN = BigNumber.from(contractStakeLimit);
-    const zeroBN = BigNumber.from('0');
+    const totalStakedBN = BigNumber.from(parseInt(totalStaked));
+    const contractStakeLimitBN = BigNumber.from(parseInt(contractStakeLimit));
+    const zeroBN = BigNumber.from(0);
 
     const percentageBN =
       totalStakedBN.gt(zeroBN) && contractStakeLimitBN.gt(zeroBN)
@@ -311,7 +310,7 @@ export class SoloStakerWrapper {
 
     const percentage = Number(percentageBN.toString()) * 100;
 
-    const totalStakedUSD = totalStakedBN.mul(stakingTokenPriceBN).toString();
+    const totalStakedUSD = String(Number(totalStakedBN) * Number(stakingTokenPrice));
 
     const pair = {
       symbol,
@@ -1032,32 +1031,31 @@ export class SoloStakerWrapper {
 
     const result = await Promise.all([totalStaked, stakingToken, startBlock, endBlock]);
 
-    let totalRewardPerBlockInUSD = BigNumber.from(0);
+    let totalRewardPerBlockInUSD = 0;
     const rewardsCount = await getRewardTokensCount();
 
     for (let i = 0; i < rewardsCount; i++) {
       const rewardTokenAddress = await rewardsTokens(i);
       let rewardAmountPerBlock = await rewardPerBlock(i);
-      rewardAmountPerBlock = await formatToken(
-        this.provider as Web3Provider,
-        rewardAmountPerBlock,
-        rewardTokenAddress,
-      );
-      rewardAmountPerBlock = BigNumber.from(rewardAmountPerBlock);
-
-      // PRICE
       const rewardToken = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         rewardTokenAddress.toLowerCase(),
       );
+
+      rewardAmountPerBlock = await formatToken(
+        this.provider as Web3Provider,
+        rewardAmountPerBlock,
+        rewardTokenAddress,
+      );
+
+      // PRICE
       const tokenId = rewardToken.coinGeckoID;
-      let priceInUSD = await this.coingecko.getTokenPrice(tokenId, 'usd');
-      priceInUSD = BigNumber.from(priceInUSD);
+      const priceInUSD = await this.coingecko.getTokenPrice(tokenId, 'usd');
 
       // CALCULATE
-      const rewardAmountInUSD = rewardAmountPerBlock.multipliedBy(priceInUSD);
-      totalRewardPerBlockInUSD = totalRewardPerBlockInUSD.add(rewardAmountInUSD);
+      const rewardAmountInUSD = Number(rewardAmountPerBlock) * priceInUSD;
+      totalRewardPerBlockInUSD += rewardAmountInUSD;
     }
 
     stakingToken = result[1];
@@ -1067,7 +1065,7 @@ export class SoloStakerWrapper {
 
     // total rewards in USD
     const durationInBlocks = BigNumber.from(endBlock.sub(startBlock).toString());
-    const totalRewardsInUSD = totalRewardPerBlockInUSD.mul(durationInBlocks);
+    const totalRewardsInUSD = totalRewardPerBlockInUSD * durationInBlocks.toNumber();
 
     // total staked in USD
     const tokenId = getTokenByPropName(
@@ -1076,29 +1074,27 @@ export class SoloStakerWrapper {
       stakingToken.toLowerCase(),
     ).coinGeckoID;
     const priceInUSD = await this.coingecko.getTokenPrice(tokenId, 'usd');
-    const priceInUSDBN = BigNumber.from(priceInUSD);
-    const totalStakedBN = BigNumber.from(totalStaked);
-    const totalStakedInUSD = totalStakedBN.mul(priceInUSDBN);
+    const totalStakedInUSD = Number(totalStaked) * priceInUSD;
 
     // TPY
-    let tpy = BigNumber.from(0);
+    let tpy = 0;
 
-    if (!totalStakedInUSD.eq(0)) {
-      tpy = totalRewardsInUSD.div(totalStakedInUSD);
+    if (totalStakedInUSD !== 0) {
+      tpy = totalRewardsInUSD / totalStakedInUSD;
     }
 
     // time of lock up estimation
     const seconds = await convertBlockToSeconds(endBlock.sub(startBlock), this.protocol);
-    const days = BigNumber.from(Math.floor(seconds.div(day).toNumber()));
+    const days = Math.floor(seconds.div(day).toNumber());
 
     // APY
-    let apy = BigNumber.from(0);
+    let apy = 0;
 
-    if (!days.eq(0)) {
-      apy = tpy.div(days.div(year));
+    if (days !== 0) {
+      apy = tpy / (days / year);
     }
 
-    return Number(apy.div(100).toString());
+    return apy * 100;
   }
 
   async _getCoolDownPeriod(userWallet: JsonRpcSigner, campaignInstance: Contract) {
