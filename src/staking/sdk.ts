@@ -223,8 +223,8 @@ export class StakerSolo {
     const hasUserInitiatedWithdraw = exitTimestamp.gt(zeroBN);
 
     const userStakedAmount = hasUserInitiatedWithdraw ? exitStake : userBalance;
+    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
 
-    const rewardsCount = 1;
     const userRewards = [];
 
     if (userStakedAmount.gt(zeroBN)) {
