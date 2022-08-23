@@ -1,13 +1,13 @@
 {
-  "name": "@stichting-allianceblock-foundation/lmaas-sdk",
+  "name": "@allianceblock/lmaas-sdk",
   "author": "AllianceBlock",
-  "version": "1.0.5-beta",
+  "version": "1.0.5",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "module": "dist/ts-sdk.esm.js",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org"
   },
   "files": [
     "dist",
@@ -76,5 +76,18 @@
       "path": "dist/ts-sdk.esm.js",
       "limit": "10 KB"
     }
+  ],
+  "description": "## ⚙️ Install dependencies",
+  "bugs": {
+    "url": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk/issues"
+  },
+  "homepage": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk#readme",
+  "directories": {
+    "example": "example"
+  },
+  "keywords": [
+    "defi",
+    "allianceblock",
+    "lmaas"
   ]
 }
