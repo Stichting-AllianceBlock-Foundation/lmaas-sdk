@@ -2,7 +2,7 @@ import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import { Web3ReactProvider } from '@web3-react/core';
 import { Web3Provider } from '@ethersproject/providers';
-import { StakerSDK, ConfigWrapper } from '@stichting-allianceblock-foundation/lmaas-sdk';
+import { StakerSDK, ConfigWrapper } from '@allianceblock/lmaas-sdk';
 import { useState, createContext, useContext, Dispatch, SetStateAction, useEffect } from 'react';
 
 const initialContext: {

@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+"@allianceblock/lmaas-sdk@1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@allianceblock/lmaas-sdk/-/lmaas-sdk-1.0.5.tgz#936ba6da2ae2a67d44844b6cffb30e974f5ccdd5"
+  integrity sha512-IU94/8LKOuFgKh4rrIiHNz/obFVjZgPatoAi94w1tw5vpHab0cxEgBIIv85Rl0+jbIwZ9aeEH9kH748df22R0A==
+  dependencies:
+    "@stichting-allianceblock-foundation/abdex-sdk-v2" "^0.1.22"
+    axios "^0.27.2"
+    bignumber.js "^9.0.2"
+    ethers "^5.5.2"
+
 "@babel/runtime-corejs3@^7.10.2":
   version "7.18.6"
   resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.18.6.tgz#6f02c5536911f4b445946a2179554b95c8838635"
@@ -725,16 +735,6 @@
     tiny-invariant "^1.1.0"
     tiny-warning "^1.0.3"
     toformat "^2.0.0"
-
-"@stichting-allianceblock-foundation/lmaas-sdk@1.0.5-beta":
-  version "1.0.5-beta"
-  resolved "https://npm.pkg.github.com/download/@Stichting-AllianceBlock-Foundation/lmaas-sdk/1.0.5-beta/853f12c0a19ec7a50f4268835852a0eb9108e521#853f12c0a19ec7a50f4268835852a0eb9108e521"
-  integrity sha512-wBGJTG13jYi6XEzLy7KNAS6jTV4iqBb+r7Pr+75l8ZzfgRUWKKBlukV9JYSYW1tmg9Tn/xDYSvvBQdlLcoX3Zw==
-  dependencies:
-    "@stichting-allianceblock-foundation/abdex-sdk-v2" "^0.1.22"
-    axios "^0.27.2"
-    bignumber.js "^9.0.2"
-    ethers "^5.5.2"
 
 "@swc/helpers@0.4.2":
   version "0.4.2"

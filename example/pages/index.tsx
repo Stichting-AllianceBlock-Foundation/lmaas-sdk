@@ -5,12 +5,7 @@ import { useGlobalContext } from './_app';
 import { injected } from '../utils/utils';
 import { useEffect, useState } from 'react';
 import { Web3Provider } from '@ethersproject/providers';
-import {
-  ConfigWrapper,
-  LMInterface,
-  StakerSDK,
-  StakingInterface,
-} from '@stichting-allianceblock-foundation/lmaas-sdk';
+import { ConfigWrapper, LMInterface, StakerSDK, StakingInterface } from '@allianceblock/lmaas-sdk';
 
 function getSDK(
   chainId: number,

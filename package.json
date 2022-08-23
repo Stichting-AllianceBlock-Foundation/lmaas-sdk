@@ -6,9 +6,6 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "module": "dist/ts-sdk.esm.js",
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
   "files": [
     "dist",
     "src"
