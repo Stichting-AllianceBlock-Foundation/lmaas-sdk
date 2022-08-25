@@ -1,14 +1,11 @@
 {
-  "name": "@stichting-allianceblock-foundation/lmaas-sdk",
-  "author": "Martin Dobrev",
-  "version": "0.0.5",
+  "name": "@allianceblock/lmaas-sdk",
+  "author": "AllianceBlock",
+  "version": "1.0.7",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "module": "dist/ts-sdk.esm.js",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "files": [
     "dist",
     "src"
@@ -40,6 +37,9 @@
     }
   },
   "dependencies": {
+    "@stichting-allianceblock-foundation/abdex-sdk-v2": "^0.1.22",
+    "axios": "^0.27.2",
+    "bignumber.js": "^9.0.2",
     "ethers": "^5.5.2"
   },
   "devDependencies": {
@@ -73,5 +73,18 @@
       "path": "dist/ts-sdk.esm.js",
       "limit": "10 KB"
     }
+  ],
+  "description": "## ⚙️ Install dependencies",
+  "bugs": {
+    "url": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk/issues"
+  },
+  "homepage": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk#readme",
+  "directories": {
+    "example": "example"
+  },
+  "keywords": [
+    "defi",
+    "allianceblock",
+    "lmaas"
   ]
 }

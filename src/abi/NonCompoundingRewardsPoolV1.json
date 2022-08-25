@@ -2,14 +2,29 @@
   {
     "inputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Detailed",
         "name": "_stakingToken",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_startBlock",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_endBlock",
+        "type": "uint256"
       },
       {
         "internalType": "address[]",
         "name": "_rewardsTokens",
         "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_rewardPerBlock",
+        "type": "uint256[]"
       },
       {
         "internalType": "uint256",
@@ -18,18 +33,28 @@
       },
       {
         "internalType": "uint256",
-        "name": "_contractStakeLimit",
+        "name": "_throttleRoundBlocks",
         "type": "uint256"
       },
       {
-        "internalType": "string",
-        "name": "_name",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "_throttleRoundCap",
+        "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "_wrappedNativeToken",
+        "name": "_treasury",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_externalRewardToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_contractStakeLimit",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -64,6 +89,44 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "stake",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExitCompleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "exitBlock",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExitRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "user",
@@ -85,19 +148,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newStartTimestamp",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newEndTimestamp",
+        "name": "newEndBlock",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256[]",
-        "name": "newRewardsPerSecond",
+        "name": "newRewardsPerBlock",
         "type": "uint256[]"
       }
     ],
@@ -110,17 +167,49 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "previousOwner",
+        "name": "from",
         "type": "address"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
-        "name": "newOwner",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "reward",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExternalRewardsAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receiver",
         "type": "address"
       }
     ],
-    "name": "OwnershipTransferred",
+    "name": "ExternalRewardsClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "StakeWithdrawn",
     "type": "event"
   },
   {
@@ -146,25 +235,19 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
-        "name": "startTimestamp",
+        "name": "rewardsAmount",
         "type": "uint256"
       },
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "endTimestamp",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "rewardsPerSecond",
-        "type": "uint256[]"
+        "indexed": true,
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
       }
     ],
-    "name": "Started",
+    "name": "WithdrawLPRewards",
     "type": "event"
   },
   {
@@ -226,27 +309,6 @@
   },
   {
     "inputs": [],
-    "name": "cancel",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "cancelExtension",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "claim",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "contractStakeLimit",
     "outputs": [
       {
@@ -259,8 +321,26 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "staker",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "stake",
+        "type": "uint256"
+      }
+    ],
+    "name": "delegateStake",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
-    "name": "endTimestamp",
+    "name": "endBlock",
     "outputs": [
       {
         "internalType": "uint256",
@@ -272,35 +352,49 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "exit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
-        "name": "transferTo",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "exitAndTransfer",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "exitInfo",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "exitBlock",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "exitStake",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_durationTime",
+        "name": "_endBlock",
         "type": "uint256"
       },
       {
         "internalType": "uint256[]",
-        "name": "_rewardPerSecond",
+        "name": "_rewardsPerBlock",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_currentRemainingRewards",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_newRemainingRewards",
         "type": "uint256[]"
       }
     ],
@@ -311,7 +405,26 @@
   },
   {
     "inputs": [],
-    "name": "extensionDuration",
+    "name": "externalRewardToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "externalRewards",
     "outputs": [
       {
         "internalType": "uint256",
@@ -326,43 +439,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "tokenIndex",
         "type": "uint256"
       }
     ],
-    "name": "extensionRewardPerSecond",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_rewardTokenIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "getAvailableBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getPreviousCampaignsCount",
+    "name": "getPendingReward",
     "outputs": [
       {
         "internalType": "uint256",
@@ -395,12 +476,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_tokenIndex",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_time",
+        "name": "tokenIndex",
         "type": "uint256"
       }
     ],
@@ -516,12 +592,12 @@
   },
   {
     "inputs": [],
-    "name": "name",
+    "name": "lastRewardBlock",
     "outputs": [
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "",
-        "type": "string"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -529,12 +605,38 @@
   },
   {
     "inputs": [],
-    "name": "owner",
+    "name": "lockEndBlock",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nextAvailableExitBlock",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nextAvailableRoundExitVolume",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -544,24 +646,13 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "reward",
         "type": "uint256"
       }
     ],
-    "name": "previousCampaigns",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "startTimestamp",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endTimestamp",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "notifyExternalReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -584,13 +675,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -598,12 +682,25 @@
         "type": "uint256"
       }
     ],
-    "name": "rewardPerSecond",
+    "name": "rewardPerBlock",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rewardsPoolFactory",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -632,12 +729,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_receiver",
+        "name": "receiver",
         "type": "address"
       },
       {
         "internalType": "bool",
-        "name": "_whitelisted",
+        "name": "whitelisted",
         "type": "bool"
       }
     ],
@@ -674,17 +771,10 @@
   },
   {
     "inputs": [],
-    "name": "stakeNative",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "stakingToken",
     "outputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Detailed",
         "name": "",
         "type": "address"
       }
@@ -693,31 +783,34 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "startBlock",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "_startTimestamp",
+        "name": "",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_endTimestamp",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_rewardPerSecond",
-        "type": "uint256[]"
       }
     ],
-    "name": "start",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "startTimestamp",
+    "name": "throttleRoundBlocks",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "throttleRoundCap",
     "outputs": [
       {
         "internalType": "uint256",
@@ -742,16 +835,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "treasury",
+    "outputs": [
       {
         "internalType": "address",
-        "name": "newOwner",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -773,7 +866,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "firstStakedTimestamp",
+        "name": "firstStakedBlockNumber",
         "type": "uint256"
       },
       {
@@ -783,6 +876,37 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "lpTokenContract",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawLPRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawStake",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -799,51 +923,37 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_recipient",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawExcessRewards",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_recipient",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawTokens",
+    "inputs": [],
+    "name": "claim",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "wrappedNativeToken",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "exit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "stateMutability": "payable",
-    "type": "receive"
+    "inputs": [],
+    "name": "completeExit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "transferTo",
+        "type": "address"
+      }
+    ],
+    "name": "exitAndTransfer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]

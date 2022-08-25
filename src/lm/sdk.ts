@@ -13,6 +13,13 @@ import {
 } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
 
+/**
+ *  Represents a class that can interact with LMC's
+ *  depending on the network.
+ *  @constructor
+ *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
+ */
 export class StakerLM {
   protected protocol: NetworkEnum;
   protected provider: Web3Provider;
@@ -49,7 +56,23 @@ export class StakerLM {
       extensionDuration: extensionDurationPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
+      wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract;
+
+    let wrappedNativeToken: string = '';
+
+    /*
+      @REMOVE this when the version of the pool is fixed.
+      Some saving, because there are pools already deployed of v2.
+    */
+    try {
+      wrappedNativeToken = await wrappedNativeTokenPR();
+    } catch (e) {
+      /*
+        Not printing the error, for the different versions of the campaigns
+        being around of the ecosystem.
+      */
+    }
 
     const promiseArray = [
       totalStakedPR(),
@@ -118,6 +141,7 @@ export class StakerLM {
       rewardsCount: rewardsCountNum,
       extensionDuration,
       name,
+      wrappedNativeToken,
     };
   }
 

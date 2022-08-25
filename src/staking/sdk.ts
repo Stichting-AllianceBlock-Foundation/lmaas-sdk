@@ -14,6 +14,13 @@ import {
 } from '..';
 import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
 
+/**
+ *  Represents a class that can interact with SoloStaker's campaigns
+ *  depending on the network.
+ *  @constructor
+ *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
+ */
 export class StakerSolo {
   protected protocol: NetworkEnum;
   protected provider: Web3Provider;
@@ -50,7 +57,20 @@ export class StakerSolo {
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
+      wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract;
+
+    let wrappedNativeToken: string = '';
+
+    /*
+     @REMOVE this when the version of the pool is fixed.
+     Some saving, because there are pools already deployed of v2.
+    */
+    try {
+      wrappedNativeToken = await wrappedNativeTokenPR();
+    } catch (e) {
+      console.error(e);
+    }
 
     const promiseArray = [
       totalStakedPR(),
@@ -116,6 +136,7 @@ export class StakerSolo {
       campaignRewards,
       rewardsCount: rewardsCountNum,
       name,
+      wrappedNativeToken,
     };
   }
 
@@ -202,8 +223,8 @@ export class StakerSolo {
     const hasUserInitiatedWithdraw = exitTimestamp.gt(zeroBN);
 
     const userStakedAmount = hasUserInitiatedWithdraw ? exitStake : userBalance;
+    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
 
-    const rewardsCount = 1;
     const userRewards = [];
 
     if (userStakedAmount.gt(zeroBN)) {
@@ -233,16 +254,24 @@ export class StakerSolo {
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @param {string} amountToStake - Amount to stake
+   * @param {boolean} isNativeSupported - Switch to stake native tokens
    * @return {object} transaction object
    */
-  public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
+  public async stake(
+    contractAddress: string,
+    amountToStake: string,
+    isNativeSupported: boolean,
+  ): Promise<FunctionFragment> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
     const amountToStakeParsed = parseEther(amountToStake);
 
-    const transaction = await campaignContract.stake(amountToStakeParsed);
+    if (isNativeSupported)
+      return await campaignContract.stakeNative({
+        value: amountToStakeParsed,
+      });
 
-    return transaction;
+    return await campaignContract.stake(amountToStakeParsed);
   }
 
   /**
