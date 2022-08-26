@@ -2,12 +2,26 @@
 # yarn lockfile v1
 
 
-"@allianceblock/lmaas-sdk@1.0.7":
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/@allianceblock/lmaas-sdk/-/lmaas-sdk-1.0.7.tgz#7bcf8b87b96f3b948c71081feb263e78dbe72a8b"
-  integrity sha512-04tZJP9jENT4mzoeE+RWhaNYg6fKaKS2gh2v+sAej653EmtHHoawD/P15L2s7NcErB3VVFwrLLMI/7KEpulWYw==
+"@allianceblock/abdex-sdk-v2@^0.1.24":
+  version "0.1.24"
+  resolved "https://registry.yarnpkg.com/@allianceblock/abdex-sdk-v2/-/abdex-sdk-v2-0.1.24.tgz#b76832d5b637c1c290f8e78c9761f9482be581a6"
+  integrity sha512-6rVjZCQTNVTZ+qOz8FyMb8/mr5C9vgo8XfkyqpHU/NIPThkWTB2I8oQ6sWxmYBMLkYrLnaHNC0eKDitB+WCSNw==
   dependencies:
-    "@stichting-allianceblock-foundation/abdex-sdk-v2" "^0.1.22"
+    big.js "^6.1.1"
+    decimal.js-light "^2.5.1"
+    ethereumjs-util "^7.1.3"
+    ethers "^5.4.7"
+    jsbi "^3.2.5"
+    tiny-invariant "^1.1.0"
+    tiny-warning "^1.0.3"
+    toformat "^2.0.0"
+
+"@allianceblock/lmaas-sdk@1.0.8":
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@allianceblock/lmaas-sdk/-/lmaas-sdk-1.0.8.tgz#813eb57cc11fb5a559615cdbe41f78f1d2f1df3d"
+  integrity sha512-rZSqv6AQmXk6UzcQhPjg03J0RvqvnnQs1ped5e08lnt4ucvcJcTVdmJQhcyUdhShnfZDdJQ7LRe340BnYjmxPw==
+  dependencies:
+    "@allianceblock/abdex-sdk-v2" "^0.1.24"
     axios "^0.27.2"
     bignumber.js "^9.0.2"
     ethers "^5.5.2"
@@ -721,20 +735,6 @@
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-patch/-/eslint-patch-1.1.4.tgz#0c8b74c50f29ee44f423f7416829c0bf8bb5eb27"
   integrity sha512-LwzQKA4vzIct1zNZzBmRKI9QuNpLgTQMEjsQLf3BXuGYb3QPTP4Yjf6mkdX+X1mYttZ808QpOwAzZjv28kq7DA==
-
-"@stichting-allianceblock-foundation/abdex-sdk-v2@^0.1.22":
-  version "0.1.23"
-  resolved "https://npm.pkg.github.com/download/@Stichting-AllianceBlock-Foundation/abdex-sdk-v2/0.1.23/d420e4715da9d2760b1a47c9229593fe57df35cc#d420e4715da9d2760b1a47c9229593fe57df35cc"
-  integrity sha512-BaRbbyeFoAn8jEH4Ctc8XF1VrARWnDgXpbcc0bwTirHkRWA8UX25rBvKyz5EO4kghvVFMRmfsO43CzBNyqjBSw==
-  dependencies:
-    big.js "^6.1.1"
-    decimal.js-light "^2.5.1"
-    ethereumjs-util "^7.1.3"
-    ethers "^5.4.7"
-    jsbi "^3.2.5"
-    tiny-invariant "^1.1.0"
-    tiny-warning "^1.0.3"
-    toformat "^2.0.0"
 
 "@swc/helpers@0.4.2":
   version "0.4.2"
