@@ -2,6 +2,20 @@
 # yarn lockfile v1
 
 
+"@allianceblock/abdex-sdk-v2@^0.1.24":
+  version "0.1.24"
+  resolved "https://registry.yarnpkg.com/@allianceblock/abdex-sdk-v2/-/abdex-sdk-v2-0.1.24.tgz#b76832d5b637c1c290f8e78c9761f9482be581a6"
+  integrity sha512-6rVjZCQTNVTZ+qOz8FyMb8/mr5C9vgo8XfkyqpHU/NIPThkWTB2I8oQ6sWxmYBMLkYrLnaHNC0eKDitB+WCSNw==
+  dependencies:
+    big.js "^6.1.1"
+    decimal.js-light "^2.5.1"
+    ethereumjs-util "^7.1.3"
+    ethers "^5.4.7"
+    jsbi "^3.2.5"
+    tiny-invariant "^1.1.0"
+    tiny-warning "^1.0.3"
+    toformat "^2.0.0"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.5.5":
   version "7.16.7"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.16.7.tgz#44416b6bd7624b998f5b1af5d470856c40138789"
@@ -1938,20 +1952,6 @@
   dependencies:
     "@size-limit/esbuild" "7.0.5"
     "@size-limit/file" "7.0.5"
-
-"@stichting-allianceblock-foundation/abdex-sdk-v2@^0.1.22":
-  version "0.1.22"
-  resolved "https://npm.pkg.github.com/download/@stichting-allianceblock-foundation/abdex-sdk-v2/0.1.22/72cf48e16b1d57dd6ad5c18682683d159a0c9ae0fb77edc7fe238d268245eb86#82a36514f6f37fd9f71c529376413e22cd1d4a7b"
-  integrity sha512-mgIdnKh6xhdPViSrsv3fgCAFfa5JXhUlGPltbYLDjiu2FmhHJjQ2wV5OAoEmZQD1cYZjYr8GrxC+yhTx0zfFhg==
-  dependencies:
-    big.js "^6.1.1"
-    decimal.js-light "^2.5.1"
-    ethereumjs-util "^7.1.3"
-    ethers "^5.4.7"
-    jsbi "^3.2.5"
-    tiny-invariant "^1.1.0"
-    tiny-warning "^1.0.3"
-    toformat "^2.0.0"
 
 "@typechain/ethers-v5@^8.0.5":
   version "8.0.5"

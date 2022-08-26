@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@allianceblock/lmaas-sdk@1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@allianceblock/lmaas-sdk/-/lmaas-sdk-1.0.5.tgz#936ba6da2ae2a67d44844b6cffb30e974f5ccdd5"
-  integrity sha512-IU94/8LKOuFgKh4rrIiHNz/obFVjZgPatoAi94w1tw5vpHab0cxEgBIIv85Rl0+jbIwZ9aeEH9kH748df22R0A==
+"@allianceblock/lmaas-sdk@1.0.7":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@allianceblock/lmaas-sdk/-/lmaas-sdk-1.0.7.tgz#7bcf8b87b96f3b948c71081feb263e78dbe72a8b"
+  integrity sha512-04tZJP9jENT4mzoeE+RWhaNYg6fKaKS2gh2v+sAej653EmtHHoawD/P15L2s7NcErB3VVFwrLLMI/7KEpulWYw==
   dependencies:
     "@stichting-allianceblock-foundation/abdex-sdk-v2" "^0.1.22"
     axios "^0.27.2"

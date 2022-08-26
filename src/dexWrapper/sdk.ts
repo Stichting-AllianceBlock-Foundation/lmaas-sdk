@@ -1,8 +1,3 @@
-import { BigNumber, FixedNumber } from '@ethersproject/bignumber';
-import { MaxUint256 } from '@ethersproject/constants';
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
-import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import {
   ChainId,
   initSDK,
@@ -10,7 +5,12 @@ import {
   Percent,
   Token,
   TokenAmount,
-} from '@stichting-allianceblock-foundation/abdex-sdk-v2';
+} from '@allianceblock/abdex-sdk-v2';
+import { BigNumber, FixedNumber } from '@ethersproject/bignumber';
+import { MaxUint256 } from '@ethersproject/constants';
+import { Contract } from '@ethersproject/contracts';
+import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
+import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import { BigNumber as BigNumberJS } from 'bignumber.js';
 
 import {
