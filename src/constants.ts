@@ -95,4 +95,13 @@ export const dexByNetworkMapping: DexByNetworkMapping = {
       },
     },
   },
+  songbird: {
+    nativeToken: 'SGB',
+    pangolin: {
+      routerABI: pangolinRouterABI,
+      poolABI: uniswapPoolABI,
+      routerAddress: '0x6591cf4E1CfDDEcB4Aa5946c033596635Ba6FB0F', // Router address is different for test and main nets, so needs to be dynamic
+      interactWithNativeSuffix: 'AVAX',
+    },
+  },
 };
