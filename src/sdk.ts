@@ -96,6 +96,8 @@ export class StakerSDK {
         return NetworkEnum.ewc;
       case 1284:
         return NetworkEnum.moonbeam;
+      case 19:
+        return NetworkEnum.songbird;
       default:
         return NetworkEnum.localhost;
     }
