@@ -5,6 +5,7 @@ export enum NetworkEnum {
   polygon = 'polygon',
   ewc = 'ewc',
   moonbeam = 'moonbeam',
+  songbird = 'sonbird',
   localhost = 'localhost',
 }
 

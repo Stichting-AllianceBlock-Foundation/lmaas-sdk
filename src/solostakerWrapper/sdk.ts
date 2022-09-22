@@ -159,6 +159,7 @@ export class SoloStakerWrapper {
     const versionMapping: VersionMapping = {
       '1.0': 'getCardData',
       '2.0': 'getCardDataNew',
+      '3.0': 'getCardDataNew',
     };
 
     // Compose function name based on version
@@ -539,6 +540,7 @@ export class SoloStakerWrapper {
     const versionMapping: VersionMapping = {
       '1.0': 'getEmptyCardData',
       '2.0': 'getEmptyCardDataNew',
+      '3.0': 'getEmptyCardDataNew',
     };
 
     // Compose function name based on version
