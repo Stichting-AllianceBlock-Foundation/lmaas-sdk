@@ -1,4 +1,3 @@
-import { FunctionFragment } from '@ethersproject/abi';
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
@@ -12,7 +11,14 @@ import {
   getTokenByPropName,
 } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaignV1.json';
-import { CampaignRewards, NetworkEnum, Reward, TokenConfigs, TokenConfigsProps } from '../entities';
+import {
+  CampaignRewards,
+  NetworkEnum,
+  Reward,
+  TokenConfigs,
+  TokenConfigsProps,
+  TransactionResponse,
+} from '../entities';
 
 export class ALBStaker {
   provider: Web3Provider | JsonRpcBatchProvider;
@@ -38,7 +44,7 @@ export class ALBStaker {
     stakingContractAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -61,7 +67,7 @@ export class ALBStaker {
   async claimRewards(
     userWallet: Web3Provider,
     stakingContractAddress: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -80,7 +86,7 @@ export class ALBStaker {
   async withdraw(
     userWallet: Web3Provider,
     stakingContractAddress: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -101,7 +107,7 @@ export class ALBStaker {
     userWallet: Web3Provider,
     stakingContractAddress: string,
     stakerPoolAddress: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,

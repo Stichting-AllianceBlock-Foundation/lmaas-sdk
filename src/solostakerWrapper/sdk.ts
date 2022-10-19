@@ -1,4 +1,3 @@
-import { FunctionFragment } from '@ethersproject/abi';
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
@@ -31,6 +30,7 @@ import {
   StakingInterface,
   TokenConfigs,
   TokenConfigsProps,
+  TransactionResponse,
   UserRewards,
   year,
 } from '..';
@@ -85,7 +85,7 @@ export class SoloStakerWrapper {
     userWallet: JsonRpcSigner,
     campaign: StakingInterface,
     stakeTokenAmountIn: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<TransactionResponse> {
     const {
       campaignAddress: stakerContractAddress,
       campaignTokenAddress: stakeTokenAddress,

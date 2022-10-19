@@ -1,4 +1,3 @@
-import { FunctionFragment } from '@ethersproject/abi';
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
@@ -9,6 +8,7 @@ import {
   CampaingStatusData,
   checkMaxStakingLimit,
   NetworkEnum,
+  TransactionResponse,
   UserDataLM,
 } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
@@ -241,7 +241,7 @@ export class StakerLM {
    * @param {string} amountToStake - Amount to stake
    * @return {object} transaction object
    */
-  public async stake(contractAddress: string, amountToStake: string): Promise<FunctionFragment> {
+  public async stake(contractAddress: string, amountToStake: string): Promise<TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
     const amountToStakeParsed = parseEther(amountToStake);
@@ -257,7 +257,7 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async exit(contractAddress: string): Promise<FunctionFragment> {
+  public async exit(contractAddress: string): Promise<TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
 
@@ -272,7 +272,7 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async claim(contractAddress: string): Promise<FunctionFragment> {
+  public async claim(contractAddress: string): Promise<TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
 
@@ -293,7 +293,7 @@ export class StakerLM {
     contractAddress: string,
     duration: number,
     rewardsPerSecond: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
 
