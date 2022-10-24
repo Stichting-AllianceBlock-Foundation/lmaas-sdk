@@ -1,5 +1,3 @@
-import { BigNumber, Transaction } from 'ethers';
-
 import { LMInterface, NetworkEnum, StakingInterface } from '.';
 
 export interface Result {
@@ -49,31 +47,4 @@ export interface BlockchainConfig {
   campaignsLM: LMInterface[];
   campaignsStaking: StakingInterface[];
   tokens: Token[];
-}
-
-export interface TransactionReceipt {
-  to: string;
-  from: string;
-  gasUsed: BigNumber;
-  effectiveGasPrice: BigNumber;
-  logsBloom: string;
-  blockHash: string;
-  transactionHash: string;
-  logs: Array<any>;
-  blockNumber: number;
-  confirmations: number;
-  cumulativeGasUsed: BigNumber;
-  byzantium: boolean;
-  status: number;
-}
-
-export interface TransactionResponse extends Transaction {
-  hash: string;
-  blockNumber?: number;
-  blockHash?: string;
-  timestamp?: number;
-  confirmations: number;
-  from: string;
-  raw?: string;
-  wait: (confirmations?: number) => Promise<TransactionReceipt>;
 }

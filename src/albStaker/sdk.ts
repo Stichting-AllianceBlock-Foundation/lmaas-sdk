@@ -2,6 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits, parseEther } from '@ethersproject/units';
+import { providers } from 'ethers';
 
 import {
   BLOCKS_COUNT,
@@ -11,14 +12,7 @@ import {
   getTokenByPropName,
 } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaignV1.json';
-import {
-  CampaignRewards,
-  NetworkEnum,
-  Reward,
-  TokenConfigs,
-  TokenConfigsProps,
-  TransactionResponse,
-} from '../entities';
+import { CampaignRewards, NetworkEnum, Reward, TokenConfigs, TokenConfigsProps } from '../entities';
 
 export class ALBStaker {
   provider: Web3Provider | JsonRpcBatchProvider;
@@ -44,7 +38,7 @@ export class ALBStaker {
     stakingContractAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
-  ): Promise<TransactionResponse> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -67,7 +61,7 @@ export class ALBStaker {
   async claimRewards(
     userWallet: Web3Provider,
     stakingContractAddress: string,
-  ): Promise<TransactionResponse> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -86,7 +80,7 @@ export class ALBStaker {
   async withdraw(
     userWallet: Web3Provider,
     stakingContractAddress: string,
-  ): Promise<TransactionResponse> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -107,7 +101,7 @@ export class ALBStaker {
     userWallet: Web3Provider,
     stakingContractAddress: string,
     stakerPoolAddress: string,
-  ): Promise<TransactionResponse> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,

@@ -1,10 +1,10 @@
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatUnits, parseEther, parseUnits } from '@ethersproject/units';
-import { BigNumber, constants } from 'ethers';
+import { BigNumber, constants, providers } from 'ethers';
 
 import ERC20ABI from '../abi/ERC20.json';
-import { Token, TokenConfigs, TransactionResponse } from '../entities';
+import { Token, TokenConfigs } from '../entities';
 
 export const day = 60 * 60 * 24;
 export const week = day * 7;
@@ -102,7 +102,7 @@ export const approveToken = async (
   tokenAddress: string,
   spenderAddress: string,
   amountToApprove?: string,
-): Promise<TransactionResponse> => {
+): Promise<providers.TransactionResponse> => {
   const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
 
   const amountToApproveParsed = amountToApprove

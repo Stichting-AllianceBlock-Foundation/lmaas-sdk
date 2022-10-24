@@ -3,6 +3,7 @@ import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 import { BigNumber as BigNumberJS } from 'bignumber.js';
+import { providers } from 'ethers';
 
 import {
   approveToken,
@@ -30,7 +31,6 @@ import {
   StakingInterface,
   TokenConfigs,
   TokenConfigsProps,
-  TransactionResponse,
   UserRewards,
   year,
 } from '..';
@@ -85,7 +85,7 @@ export class SoloStakerWrapper {
     userWallet: JsonRpcSigner,
     campaign: StakingInterface,
     stakeTokenAmountIn: string,
-  ): Promise<TransactionResponse> {
+  ): Promise<providers.TransactionResponse> {
     const {
       campaignAddress: stakerContractAddress,
       campaignTokenAddress: stakeTokenAddress,

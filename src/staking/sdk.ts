@@ -2,6 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { Web3Provider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
+import { providers } from 'ethers';
 
 import {
   CampaingData,
@@ -9,7 +10,6 @@ import {
   CampaingStatusDataActive,
   checkMaxStakingLimit,
   NetworkEnum,
-  TransactionResponse,
   UserDataStaking,
 } from '..';
 import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
@@ -261,7 +261,7 @@ export class StakerSolo {
     contractAddress: string,
     amountToStake: string,
     isNativeSupported: boolean,
-  ): Promise<TransactionResponse> {
+  ): Promise<providers.TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
     const amountToStakeParsed = parseEther(amountToStake);
@@ -280,7 +280,7 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async exit(contractAddress: string): Promise<TransactionResponse> {
+  public async exit(contractAddress: string): Promise<providers.TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
 
@@ -295,7 +295,7 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async completeExit(contractAddress: string): Promise<TransactionResponse> {
+  public async completeExit(contractAddress: string): Promise<providers.TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
 
