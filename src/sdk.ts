@@ -44,7 +44,7 @@ export class StakerSDK {
   ) {
     this.provider = provider; // @notice General provider for the global interaction of the blockchain.
     this.coingecko = new CoinGecko(); // @notice Coingecko fetcher class for their API
-    this.protocol = this.getProtocolByChainId(chainId);
+    this.protocol = getProtocolByChainId(chainId);
 
     this.lmcStaker = new StakerLM(this.provider as Web3Provider, this.protocol);
     this.albStaker = new ALBStaker(this.provider, this.protocol);
@@ -71,35 +71,35 @@ export class StakerSDK {
       getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
     );
   }
+}
 
-  /**
-   *  Extract the chainId into a enum easy to select and have control.
-   *  @param {number} chainId - chainId where we can return the current network.
-   */
-  getProtocolByChainId(chainId: number) {
-    switch (chainId) {
-      case 1:
-      case 42:
-      case 3:
-      case 4:
-      case 5:
-        return NetworkEnum.eth;
-      case 56:
-        return NetworkEnum.bsc;
-      case 137:
-      case 80001:
-        return NetworkEnum.polygon;
-      case 43113:
-      case 43114:
-        return NetworkEnum.avalanche;
-      case 246:
-        return NetworkEnum.ewc;
-      case 1284:
-        return NetworkEnum.moonbeam;
-      case 19:
-        return NetworkEnum.songbird;
-      default:
-        return NetworkEnum.localhost;
-    }
+/**
+ *  Extract the chainId into a enum easy to select and have control.
+ *  @param {number} chainId - chainId where we can return the current network.
+ */
+export function getProtocolByChainId(chainId: number) {
+  switch (chainId) {
+    case 1:
+    case 42:
+    case 3:
+    case 4:
+    case 5:
+      return NetworkEnum.eth;
+    case 56:
+      return NetworkEnum.bsc;
+    case 137:
+    case 80001:
+      return NetworkEnum.polygon;
+    case 43113:
+    case 43114:
+      return NetworkEnum.avalanche;
+    case 246:
+      return NetworkEnum.ewc;
+    case 1284:
+      return NetworkEnum.moonbeam;
+    case 19:
+      return NetworkEnum.songbird;
+    default:
+      return NetworkEnum.localhost;
   }
 }

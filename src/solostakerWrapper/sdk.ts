@@ -1,9 +1,9 @@
-import { FunctionFragment } from '@ethersproject/abi';
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 import { BigNumber as BigNumberJS } from 'bignumber.js';
+import { providers } from 'ethers';
 
 import {
   approveToken,
@@ -85,7 +85,7 @@ export class SoloStakerWrapper {
     userWallet: JsonRpcSigner,
     campaign: StakingInterface,
     stakeTokenAmountIn: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<providers.TransactionResponse> {
     const {
       campaignAddress: stakerContractAddress,
       campaignTokenAddress: stakeTokenAddress,
