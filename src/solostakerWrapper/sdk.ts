@@ -20,6 +20,7 @@ import {
   getAllowance,
   getBalance,
   getTokenByPropName,
+  getTokenDecimals,
   getTotalSupply,
   NetworkEnum,
   parseToken,
@@ -409,6 +410,11 @@ export class SoloStakerWrapper {
       userAddress,
     );
 
+    const tokenDecimals = await getTokenDecimals(
+      this.provider as Web3Provider,
+      campaignTokenAddress,
+    );
+
     const {
       deltaDuration,
       deltaExpiration,
@@ -435,18 +441,14 @@ export class SoloStakerWrapper {
     const userRewards = this._formatUserRewards(userRewardsBN);
 
     // Format values
-    const [
-      totalStaked,
-      contractStakeLimit,
-      walletStakeLimit,
-      userStakedAmount,
-      userWalletTokensBalance,
-    ] = formatValuesToString([
-      totalStakedBN,
+    const [userWalletTokensBalance, totalStaked, userStakedAmount] = formatValuesToString(
+      [userWalletTokensBalanceBN, totalStakedBN, userStakedAmountBN],
+      tokenDecimals,
+    );
+
+    const [, contractStakeLimit, walletStakeLimit] = formatValuesToString([
       contractStakeLimitBN,
       walletStakeLimitBN,
-      userStakedAmountBN,
-      userWalletTokensBalanceBN,
     ]);
 
     // Format durations
