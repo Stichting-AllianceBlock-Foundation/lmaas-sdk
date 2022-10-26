@@ -446,9 +446,9 @@ export class SoloStakerWrapper {
       tokenDecimals,
     );
 
-    const [, contractStakeLimit, walletStakeLimit] = formatValuesToString([
-      contractStakeLimitBN,
+    const [walletStakeLimit, contractStakeLimit] = formatValuesToString([
       walletStakeLimitBN,
+      contractStakeLimitBN,
     ]);
 
     // Format durations
