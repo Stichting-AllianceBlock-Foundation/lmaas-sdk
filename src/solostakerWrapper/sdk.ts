@@ -1,9 +1,9 @@
-import { FunctionFragment } from '@ethersproject/abi';
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 import { BigNumber as BigNumberJS } from 'bignumber.js';
+import { providers } from 'ethers';
 
 import {
   approveToken,
@@ -20,6 +20,7 @@ import {
   getAllowance,
   getBalance,
   getTokenByPropName,
+  getTokenDecimals,
   getTotalSupply,
   NetworkEnum,
   parseToken,
@@ -85,7 +86,7 @@ export class SoloStakerWrapper {
     userWallet: JsonRpcSigner,
     campaign: StakingInterface,
     stakeTokenAmountIn: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<providers.TransactionResponse> {
     const {
       campaignAddress: stakerContractAddress,
       campaignTokenAddress: stakeTokenAddress,
@@ -159,6 +160,7 @@ export class SoloStakerWrapper {
     const versionMapping: VersionMapping = {
       '1.0': 'getCardData',
       '2.0': 'getCardDataNew',
+      '3.0': 'getCardDataNew',
     };
 
     // Compose function name based on version
@@ -408,6 +410,11 @@ export class SoloStakerWrapper {
       userAddress,
     );
 
+    const tokenDecimals = await getTokenDecimals(
+      this.provider as Web3Provider,
+      campaignTokenAddress,
+    );
+
     const {
       deltaDuration,
       deltaExpiration,
@@ -434,18 +441,14 @@ export class SoloStakerWrapper {
     const userRewards = this._formatUserRewards(userRewardsBN);
 
     // Format values
-    const [
-      totalStaked,
-      contractStakeLimit,
-      walletStakeLimit,
-      userStakedAmount,
-      userWalletTokensBalance,
-    ] = formatValuesToString([
-      totalStakedBN,
-      contractStakeLimitBN,
+    const [userWalletTokensBalance, totalStaked, userStakedAmount] = formatValuesToString(
+      [userWalletTokensBalanceBN, totalStakedBN, userStakedAmountBN],
+      tokenDecimals,
+    );
+
+    const [walletStakeLimit, contractStakeLimit] = formatValuesToString([
       walletStakeLimitBN,
-      userStakedAmountBN,
-      userWalletTokensBalanceBN,
+      contractStakeLimitBN,
     ]);
 
     // Format durations
@@ -539,6 +542,7 @@ export class SoloStakerWrapper {
     const versionMapping: VersionMapping = {
       '1.0': 'getEmptyCardData',
       '2.0': 'getEmptyCardDataNew',
+      '3.0': 'getEmptyCardDataNew',
     };
 
     // Compose function name based on version

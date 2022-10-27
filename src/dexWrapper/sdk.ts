@@ -447,7 +447,11 @@ export class DexWrapper {
    * @param {string} tokenAddress - Token address
    * @return {BigNumber} allowance amount as ethers BN
    */
-  async getTokenAllowance(userWallet: JsonRpcSigner, spenderAddress: string, tokenAddress: string) {
+  async getTokenAllowance(
+    userWallet: JsonRpcSigner,
+    spenderAddress: string,
+    tokenAddress: string,
+  ): Promise<BigNumber> {
     // Check for native token
     if (!tokenAddress) {
       return MaxUint256;

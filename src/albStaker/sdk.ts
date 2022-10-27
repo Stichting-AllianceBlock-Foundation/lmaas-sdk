@@ -1,8 +1,8 @@
-import { FunctionFragment } from '@ethersproject/abi';
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
 import { formatEther, formatUnits, parseEther } from '@ethersproject/units';
+import { providers } from 'ethers';
 
 import {
   BLOCKS_COUNT,
@@ -38,7 +38,7 @@ export class ALBStaker {
     stakingContractAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -61,7 +61,7 @@ export class ALBStaker {
   async claimRewards(
     userWallet: Web3Provider,
     stakingContractAddress: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -80,7 +80,7 @@ export class ALBStaker {
   async withdraw(
     userWallet: Web3Provider,
     stakingContractAddress: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,
@@ -101,7 +101,7 @@ export class ALBStaker {
     userWallet: Web3Provider,
     stakingContractAddress: string,
     stakerPoolAddress: string,
-  ): Promise<FunctionFragment> {
+  ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
       stakingContractAddress,
       LiquidityMiningCampaignABI,

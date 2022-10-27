@@ -5,6 +5,7 @@ export enum NetworkEnum {
   polygon = 'polygon',
   ewc = 'ewc',
   moonbeam = 'moonbeam',
+  songbird = 'sonbird',
   localhost = 'localhost',
 }
 
@@ -15,6 +16,7 @@ export enum DexEnum {
   pangolin = 'pangolin',
   quickswap = 'quickswap',
   alliancedex = 'alliancedex',
+  solarflare = 'solarflare',
 }
 export interface DexByNetworkMapping {
   [key: string]: any;

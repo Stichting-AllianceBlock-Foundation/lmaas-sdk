@@ -36,6 +36,7 @@ export interface Config {
   socialMedia: {
     [key: string]: string;
   };
+  thirdPartyIntegrations: string;
   theme: 'dark' | 'light' | 'dark_red' | 'dark_blue';
   token: string;
   tokenSymbol: string;

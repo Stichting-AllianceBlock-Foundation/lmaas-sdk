@@ -102,6 +102,7 @@ export class CampaignWrapper {
     const versionMapping: VersionMapping = {
       '1.0': 'getEmptyCardData',
       '2.0': 'getEmptyCardDataNew',
+      '3.0': 'getEmptyCardDataNew',
     };
 
     // Compose function name based on version
@@ -268,7 +269,9 @@ export class CampaignWrapper {
     const versionMapping: VersionMapping = {
       '1.0': 'getCardData',
       '2.0': 'getCardDataNew',
+      '3.0': 'getCardDataNew',
     };
+
     // Compose function name based on version
     const cardDataMethod = `${versionMapping[version]}`;
 
@@ -633,6 +636,7 @@ export class CampaignWrapper {
     const versionMapping: VersionMapping = {
       '1.0': 'getCampaignStatus',
       '2.0': 'getCampaignStatusNew',
+      '3.0': 'getCampaignStatusNew',
     };
 
     // Compose function name based on version
