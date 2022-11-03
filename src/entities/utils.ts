@@ -37,6 +37,7 @@ export interface Config {
     [key: string]: string;
   };
   thirdPartyIntegrations: string;
+  showFiatWidget: boolean;
   theme: 'dark' | 'light' | 'dark_red' | 'dark_blue';
   token: string;
   tokenSymbol: string;
