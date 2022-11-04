@@ -41,9 +41,10 @@ export class StakerSDK {
     provider: JsonRpcBatchProvider | Web3Provider,
     chainId: number,
     config: BlockchainConfig,
+    minutesForExpiration: number,
   ) {
     this.provider = provider; // @notice General provider for the global interaction of the blockchain.
-    this.coingecko = new CoinGecko(); // @notice Coingecko fetcher class for their API
+    this.coingecko = new CoinGecko(minutesForExpiration); // @notice Coingecko fetcher class for their API
     this.protocol = getProtocolByChainId(chainId);
 
     this.lmcStaker = new StakerLM(this.provider as Web3Provider, this.protocol);
