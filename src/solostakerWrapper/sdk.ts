@@ -441,15 +441,22 @@ export class SoloStakerWrapper {
     const userRewards = this._formatUserRewards(userRewardsBN);
 
     // Format values
-    const [userWalletTokensBalance, totalStaked, userStakedAmount] = formatValuesToString(
-      [userWalletTokensBalanceBN, totalStakedBN, userStakedAmountBN],
+    const [
+      userWalletTokensBalance,
+      totalStaked,
+      userStakedAmount,
+      walletStakeLimit,
+      contractStakeLimit,
+    ] = formatValuesToString(
+      [
+        userWalletTokensBalanceBN,
+        totalStakedBN,
+        userStakedAmountBN,
+        walletStakeLimitBN,
+        contractStakeLimitBN,
+      ],
       tokenDecimals,
     );
-
-    const [walletStakeLimit, contractStakeLimit] = formatValuesToString([
-      walletStakeLimitBN,
-      contractStakeLimitBN,
-    ]);
 
     // Format durations
     const { duration: durationMilliseconds, expirationTime } = this._formatDurationExpiration(
