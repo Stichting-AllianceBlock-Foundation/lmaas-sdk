@@ -79,6 +79,27 @@ export class CampaignWrapper {
     return this.lmcStaker.stake(campaignAddress, amountToStake);
   }
 
+  stakeWithTier(
+    version: string,
+    campaignAddress: string,
+    amountToStake: string,
+    signature: string,
+    maxTier: number,
+    deadline: number,
+  ) {
+    if (!version || version === '1.0') {
+      throw new Error('Wrong version for tier campaign');
+    }
+
+    return this.lmcStaker.stakeWithTier(
+      campaignAddress,
+      amountToStake,
+      signature,
+      maxTier,
+      deadline,
+    );
+  }
+
   exit(version: string, userWallet: Web3Provider, campaignAddress: string) {
     if (!version || version === '1.0') {
       return this.albStaker.withdraw(userWallet, campaignAddress);

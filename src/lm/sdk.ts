@@ -12,6 +12,7 @@ import {
   UserDataLM,
 } from '..';
 import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaign.json';
+import LiquidityMiningCampaignTierABI from '../abi/LiquidityMiningCampaignTier.json';
 
 /**
  *  Represents a class that can interact with LMC's
@@ -241,12 +242,46 @@ export class StakerLM {
    * @param {string} amountToStake - Amount to stake
    * @return {object} transaction object
    */
-  public async stake(contractAddress: string, amountToStake: string): Promise<providers.TransactionResponse> {
+  public async stake(
+    contractAddress: string,
+    amountToStake: string,
+  ): Promise<providers.TransactionResponse> {
     const signer = this.provider.getSigner();
     const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
     const amountToStakeParsed = parseEther(amountToStake);
 
     const transaction = await campaignContract.stake(amountToStakeParsed);
+
+    return transaction;
+  }
+
+  /**
+   * Stake in tier campaign
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @param {string} amountToStake - Amount to stake
+   * @param {string} signature - Signature provided for the tier campaign
+   * @param {number} maxTier - Max tier for the user
+   * @param {number} deadline - Deadline for the signature to be over
+   * @return {object} transaction object
+   */
+  public async stakeWithTier(
+    contractAddress: string,
+    amountToStake: string,
+    signature: string,
+    maxTier: number,
+    deadline: number,
+  ): Promise<providers.TransactionResponse> {
+    const signer = this.provider.getSigner();
+    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignTierABI, signer);
+    const amountToStakeParsed = parseEther(amountToStake);
+
+    const transaction = await campaignContract.stakeWithTier(
+      amountToStakeParsed,
+      signature,
+      maxTier,
+      deadline,
+    );
 
     return transaction;
   }
