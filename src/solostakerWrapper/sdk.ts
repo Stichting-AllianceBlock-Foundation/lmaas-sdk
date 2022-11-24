@@ -742,7 +742,7 @@ export class SoloStakerWrapper {
     const campaignData = await this.soloNonComp.getCampaignData(campaignAddress);
 
     // Get campaign state
-    const state = await this.getDisconnectedState(campaignAddress);
+    const state = await this.getDisconnectedState(campaignAddress, '3.0');
 
     const {
       deltaDuration,
