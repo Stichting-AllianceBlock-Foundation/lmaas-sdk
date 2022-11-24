@@ -57,23 +57,7 @@ export class StakerLM {
       extensionDuration: extensionDurationPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
-      wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract;
-
-    let wrappedNativeToken: string = '';
-
-    /*
-      @REMOVE this when the version of the pool is fixed.
-      Some saving, because there are pools already deployed of v2.
-    */
-    try {
-      wrappedNativeToken = await wrappedNativeTokenPR();
-    } catch (e) {
-      /*
-        Not printing the error, for the different versions of the campaigns
-        being around of the ecosystem.
-      */
-    }
 
     const promiseArray = [
       totalStakedPR(),
@@ -142,7 +126,6 @@ export class StakerLM {
       rewardsCount: rewardsCountNum,
       extensionDuration,
       name,
-      wrappedNativeToken,
     };
   }
 
