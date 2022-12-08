@@ -644,7 +644,8 @@ export class DexWrapper {
     } else {
       const poolContract = new Contract(poolAddress, poolABI, this.provider);
 
-      const reserves = poolContract.getReserves();
+      const reserves =
+        dex === DexEnum.arrakis ? poolContract.getUnderlyingBalances() : poolContract.getReserves();
       let token0Address = poolContract.token0();
       let token1Address = poolContract.token1();
       const result = await Promise.all([reserves, token0Address, token1Address]);

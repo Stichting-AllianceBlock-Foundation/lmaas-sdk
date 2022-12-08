@@ -17,6 +17,7 @@ export enum DexEnum {
   quickswap = 'quickswap',
   alliancedex = 'alliancedex',
   solarflare = 'solarflare',
+  arrakis = 'arrakis',
 }
 export interface DexByNetworkMapping {
   [key: string]: any;

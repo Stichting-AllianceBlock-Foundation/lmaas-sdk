@@ -9,6 +9,7 @@ import {
   CampaignRewardsNew,
   CoinGecko,
   dexByNetworkMapping,
+  DexEnum,
   formatToken,
   formatValuesToString,
   getAddressFromWallet,
@@ -608,9 +609,9 @@ export class CampaignWrapper {
   ): Promise<Result> {
     let reserves;
     const abi =
-      dex === 'balancer'
+      dex === DexEnum.balancer
         ? BalancerBPoolContractABI
-        : dex === 'arrakis'
+        : dex === DexEnum.arrakis
         ? ArrakisPoolABI
         : UniswapV2PairABI;
 
@@ -626,8 +627,8 @@ export class CampaignWrapper {
     const result: Result = {};
     result[pool] = await formatToken(this.provider as Web3Provider, totalSupply, poolAddress);
 
-    if (dex !== 'balancer') {
-      if (dex === 'arrakis') {
+    if (dex !== DexEnum.balancer) {
+      if (dex === DexEnum.arrakis) {
         reserves = await poolContract.getUnderlyingBalances();
       } else {
         reserves = await poolContract.getReserves();
@@ -642,7 +643,7 @@ export class CampaignWrapper {
         tokenName,
       ).address;
 
-      if (dex === 'balancer') {
+      if (dex === DexEnum.balancer) {
         const tokenBalance = await poolContract.getBalance(tokenAddress);
         result[tokenName] = await formatToken(
           this.provider as Web3Provider,
@@ -724,7 +725,7 @@ export class CampaignWrapper {
   async _getPoolBalance(userWallet: JsonRpcSigner, poolAddress: string, dex: string) {
     const userAddress = await getAddressFromWallet(userWallet);
     let balance;
-    if (dex === 'balancer') {
+    if (dex === DexEnum.balancer) {
       const poolContract = new Contract(poolAddress, BalancerBPoolContractABI, this.provider);
 
       balance = await poolContract.balanceOf(userAddress);
