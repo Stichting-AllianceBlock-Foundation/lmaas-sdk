@@ -289,7 +289,15 @@ export class DexWrapper {
 
     if (action === 'removeLiquidity') {
       // Get pool data
-      const { totalSupply: totalSupplyPR, getReserves: getReservesPR } = poolContract;
+      let getReservesPR;
+
+      if (dex === DexEnum.arrakis) {
+        getReservesPR = poolContract.getUnderlyingBalances;
+      } else {
+        getReservesPR = poolContract.getReserves;
+      }
+
+      const { totalSupply: totalSupplyPR } = poolContract;
 
       const promiseArray = [totalSupplyPR(), getReservesPR()];
       const [poolTotalSupply, poolReserves] = await Promise.all(promiseArray);
@@ -328,6 +336,28 @@ export class DexWrapper {
             tokensArr,
             walletAddress,
           );
+
+    if (dex === DexEnum.arrakis) {
+      const configuredArgs = [...args];
+
+      if (action === 'removeLiquidity') {
+        // this is only an extra step that takes the arrakis router
+        configuredArgs.splice(0, 2, poolAddress);
+        configuredArgs.splice(5, 1);
+
+        const transaction = await routerContract[methodName](...configuredArgs);
+
+        return transaction;
+      }
+
+      // this is only an extra step that takes the arrakis router
+      configuredArgs.splice(0, 2, poolAddress);
+      configuredArgs.splice(6, 1);
+
+      const transaction = await routerContract[methodName](...configuredArgs);
+
+      return transaction;
+    }
 
     const transaction = await routerContract[methodName](...args);
 
