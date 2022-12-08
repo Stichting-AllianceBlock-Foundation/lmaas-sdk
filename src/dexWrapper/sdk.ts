@@ -656,7 +656,9 @@ export class DexWrapper {
         TokenConfigsProps.ADDRESS,
         token0Address.toLowerCase(),
       ).symbol;
-      const token0Reserve = result[0]._reserve0;
+
+      const token0Reserve =
+        dex === DexEnum.arrakis ? result[0].amount0Current : result[0]._reserve0;
 
       token1Address = result[2];
       const token1Name = getTokenByPropName(
@@ -664,7 +666,9 @@ export class DexWrapper {
         TokenConfigsProps.ADDRESS,
         token1Address.toLowerCase(),
       ).symbol;
-      const token1Reserve = result[0]._reserve1;
+
+      const token1Reserve =
+        dex === DexEnum.arrakis ? result[0].amount1Current : result[0]._reserve1;
 
       return {
         [token0Name]: {
