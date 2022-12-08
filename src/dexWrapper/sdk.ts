@@ -127,6 +127,7 @@ export class DexWrapper {
       quickswap: 'interactWithUniswap',
       alliancedex: 'interactWithAbDex',
       solarflare: 'interactWithUniswap',
+      arrakis: 'interactWithUniswap',
     };
 
     // Compose function name based on version
