@@ -27,6 +27,7 @@ import {
   UserRewards,
   year,
 } from '..';
+import ArrakisPoolABI from '../abi/ArrakisPoolABI.json';
 import BalancerBPoolContractABI from '../abi/BalancerBPoolABI.json';
 import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
 
@@ -606,7 +607,13 @@ export class CampaignWrapper {
     dex: string,
   ): Promise<Result> {
     let reserves;
-    const abi = dex === 'balancer' ? BalancerBPoolContractABI : UniswapV2PairABI;
+    const abi =
+      dex === 'balancer'
+        ? BalancerBPoolContractABI
+        : dex === 'arrakis'
+        ? ArrakisPoolABI
+        : UniswapV2PairABI;
+
     const poolContract = new Contract(poolAddress, abi, this.provider);
     const tokenNames = provisionTokensAddresses.map(
       tokenAddress =>
@@ -620,7 +627,11 @@ export class CampaignWrapper {
     result[pool] = await formatToken(this.provider as Web3Provider, totalSupply, poolAddress);
 
     if (dex !== 'balancer') {
-      reserves = await poolContract.getReserves();
+      if (dex === 'arrakis') {
+        reserves = await poolContract.getUnderlyingBalances();
+      } else {
+        reserves = await poolContract.getReserves();
+      }
     }
 
     for (let index = 0; index < tokenNames.length; index++) {
@@ -646,6 +657,7 @@ export class CampaignWrapper {
         );
       }
     }
+
     return result;
   }
 
