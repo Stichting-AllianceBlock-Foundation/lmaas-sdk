@@ -38,7 +38,15 @@ export class CoinGecko {
     let response;
 
     // note: this is only for BEUR, delete in the future if not needed anymore
-    if (tokenId === 'beur') {
+    if (tokenId === 'bonq') {
+      response = {
+        data: {
+          bonq: {
+            usd: 0.03,
+          },
+        },
+      };
+    } else if (tokenId === 'beur') {
       // call to an external API
       const resultTranspose = await axios.post(
         transposeAPI,
