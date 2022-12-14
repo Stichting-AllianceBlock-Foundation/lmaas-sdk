@@ -1,6 +1,8 @@
 import { DexByNetworkMapping } from '.';
 import AllianceBlockDexPoolABI from './abi/AllianceBlockDexPoolABI.json';
 import AllianceBlockDexRouterABI from './abi/AllianceBlockDexRouterABI.json';
+import arrakisPoolABI from './abi/ArrakisPoolABI.json';
+import arrakisRouterABI from './abi/ArrakisRouterABI.json';
 import balancerPoolABI from './abi/BalancerBPoolABI.json';
 import pangolinRouterABI from './abi/PangolinRouterABI.json';
 import SolarflareRouterABI from './abi/SolarflareRouterABI.json';
@@ -23,6 +25,7 @@ export const dexes = [
   'pangolin',
   'alliancedex',
   'solarflare',
+  'arrakis',
 ];
 
 export const dexByNetworkMapping: DexByNetworkMapping = {
@@ -91,6 +94,12 @@ export const dexByNetworkMapping: DexByNetworkMapping = {
         routerABI: uniswapRouterABI,
         poolABI: uniswapPoolABI,
         routerAddress: '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
+        interactWithNativeSuffix: 'ETH',
+      },
+      arrakis: {
+        routerABI: arrakisRouterABI,
+        poolABI: arrakisPoolABI,
+        routerAddress: '0x477E509B9d08862baEb8Ab69e901Ae72b13efcA0',
         interactWithNativeSuffix: 'ETH',
       },
     },

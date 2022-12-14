@@ -9,6 +9,7 @@ import {
   CampaignRewardsNew,
   CoinGecko,
   dexByNetworkMapping,
+  DexEnum,
   formatToken,
   formatValuesToString,
   getAddressFromWallet,
@@ -27,6 +28,7 @@ import {
   UserRewards,
   year,
 } from '..';
+import ArrakisPoolABI from '../abi/ArrakisPoolABI.json';
 import BalancerBPoolContractABI from '../abi/BalancerBPoolABI.json';
 import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
 
@@ -77,6 +79,27 @@ export class CampaignWrapper {
     }
 
     return this.lmcStaker.stake(campaignAddress, amountToStake);
+  }
+
+  stakeWithTier(
+    version: string,
+    campaignAddress: string,
+    amountToStake: string,
+    signature: string,
+    maxTier: number,
+    deadline: number,
+  ) {
+    if (!version || version === '1.0') {
+      throw new Error('Wrong version for tier campaign');
+    }
+
+    return this.lmcStaker.stakeWithTier(
+      campaignAddress,
+      amountToStake,
+      signature,
+      maxTier,
+      deadline,
+    );
   }
 
   exit(version: string, userWallet: Web3Provider, campaignAddress: string) {
@@ -585,7 +608,13 @@ export class CampaignWrapper {
     dex: string,
   ): Promise<Result> {
     let reserves;
-    const abi = dex === 'balancer' ? BalancerBPoolContractABI : UniswapV2PairABI;
+    const abi =
+      dex === DexEnum.balancer
+        ? BalancerBPoolContractABI
+        : dex === DexEnum.arrakis
+        ? ArrakisPoolABI
+        : UniswapV2PairABI;
+
     const poolContract = new Contract(poolAddress, abi, this.provider);
     const tokenNames = provisionTokensAddresses.map(
       tokenAddress =>
@@ -598,8 +627,12 @@ export class CampaignWrapper {
     const result: Result = {};
     result[pool] = await formatToken(this.provider as Web3Provider, totalSupply, poolAddress);
 
-    if (dex !== 'balancer') {
-      reserves = await poolContract.getReserves();
+    if (dex !== DexEnum.balancer) {
+      if (dex === DexEnum.arrakis) {
+        reserves = await poolContract.getUnderlyingBalances();
+      } else {
+        reserves = await poolContract.getReserves();
+      }
     }
 
     for (let index = 0; index < tokenNames.length; index++) {
@@ -610,7 +643,7 @@ export class CampaignWrapper {
         tokenName,
       ).address;
 
-      if (dex === 'balancer') {
+      if (dex === DexEnum.balancer) {
         const tokenBalance = await poolContract.getBalance(tokenAddress);
         result[tokenName] = await formatToken(
           this.provider as Web3Provider,
@@ -625,6 +658,7 @@ export class CampaignWrapper {
         );
       }
     }
+
     return result;
   }
 
@@ -691,7 +725,7 @@ export class CampaignWrapper {
   async _getPoolBalance(userWallet: JsonRpcSigner, poolAddress: string, dex: string) {
     const userAddress = await getAddressFromWallet(userWallet);
     let balance;
-    if (dex === 'balancer') {
+    if (dex === DexEnum.balancer) {
       const poolContract = new Contract(poolAddress, BalancerBPoolContractABI, this.provider);
 
       balance = await poolContract.balanceOf(userAddress);

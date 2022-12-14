@@ -34,6 +34,10 @@ await newConfigWrapper.loadConfig();
 
 const sdk = new StakerSDK(provider, chainId, configWrapper.config.config);
 ```
+## :factory: CICD information
+
+CICD is done into the [GitHub Actions scripts](/.github/workflows).  
+Access to packages into other repositories of this organization ([see list here](package.json)) is done through `GITHUB_TOKEN` with additionnal authorizations into the packages settings (use "Add Repository" in "Manage Actions access").
 
 ## Usage
 

@@ -6,6 +6,10 @@ on:
       - develop
       - main
 
+permissions:
+  contents: read
+  packages: read
+
 env:
   CI: true
   CACHE_TOKEN: 50001cff
@@ -17,25 +21,25 @@ jobs:
     runs-on: ubuntu-18.04
     if: github.base_ref == 'main'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: '12.x'
 
       - name: Get local version
         id: local_version
-        run: echo ::set-output name=value::$(cat ./package.json | jq --raw-output .version)
+        run: echo "value=$(cat ./package.json | jq --raw-output .version)" >> $GITHUB_OUTPUT
 
       - name: Authenticate GPR
-        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> .npmrc
+        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Get registry version
         id: registry_version
-        run: echo ::set-output name=value::$(npm view ${{ github.repository }} version)
+        run: echo "value=$(npm view ${{ github.repository }} version)" >> $GITHUB_OUTPUT
 
       - name: Validate version
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
@@ -51,9 +55,9 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: '12.x'
 
@@ -64,9 +68,9 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ${{ steps.yarn-cache-path.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ env.CACHE_TOKEN }}-${{ hashFiles('**/yarn.lock') }}
@@ -74,7 +78,7 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Prepare .npmrc
-        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> .npmrc
+        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile --ignore-scripts
@@ -84,15 +88,3 @@ jobs:
 
       - name: Linting
         run: yarn lint
-
-      # - name: Prettier
-      #   run: yarn format
-
-      # - name: Unit tests
-      #   run: yarn test:coverage
-
-      # - name: Upload coverage
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: test-reports
-      #     path: coverage/

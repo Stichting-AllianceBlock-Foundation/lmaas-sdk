@@ -127,6 +127,7 @@ export class DexWrapper {
       quickswap: 'interactWithUniswap',
       alliancedex: 'interactWithAbDex',
       solarflare: 'interactWithUniswap',
+      arrakis: 'interactWithUniswap',
     };
 
     // Compose function name based on version
@@ -288,7 +289,15 @@ export class DexWrapper {
 
     if (action === 'removeLiquidity') {
       // Get pool data
-      const { totalSupply: totalSupplyPR, getReserves: getReservesPR } = poolContract;
+      let getReservesPR;
+
+      if (dex === DexEnum.arrakis) {
+        getReservesPR = poolContract.getUnderlyingBalances;
+      } else {
+        getReservesPR = poolContract.getReserves;
+      }
+
+      const { totalSupply: totalSupplyPR } = poolContract;
 
       const promiseArray = [totalSupplyPR(), getReservesPR()];
       const [poolTotalSupply, poolReserves] = await Promise.all(promiseArray);
@@ -327,6 +336,28 @@ export class DexWrapper {
             tokensArr,
             walletAddress,
           );
+
+    if (dex === DexEnum.arrakis) {
+      const configuredArgs = [...args];
+
+      if (action === 'removeLiquidity') {
+        // this is only an extra step that takes the arrakis router
+        configuredArgs.splice(0, 2, poolAddress);
+        configuredArgs.splice(5, 1);
+
+        const transaction = await routerContract[methodName](...configuredArgs);
+
+        return transaction;
+      }
+
+      // this is only an extra step that takes the arrakis router
+      configuredArgs.splice(0, 2, poolAddress);
+      configuredArgs.splice(6, 1);
+
+      const transaction = await routerContract[methodName](...configuredArgs);
+
+      return transaction;
+    }
 
     const transaction = await routerContract[methodName](...args);
 
@@ -643,7 +674,8 @@ export class DexWrapper {
     } else {
       const poolContract = new Contract(poolAddress, poolABI, this.provider);
 
-      const reserves = poolContract.getReserves();
+      const reserves =
+        dex === DexEnum.arrakis ? poolContract.getUnderlyingBalances() : poolContract.getReserves();
       let token0Address = poolContract.token0();
       let token1Address = poolContract.token1();
       const result = await Promise.all([reserves, token0Address, token1Address]);
@@ -654,7 +686,9 @@ export class DexWrapper {
         TokenConfigsProps.ADDRESS,
         token0Address.toLowerCase(),
       ).symbol;
-      const token0Reserve = result[0]._reserve0;
+
+      const token0Reserve =
+        dex === DexEnum.arrakis ? result[0].amount0Current : result[0]._reserve0;
 
       token1Address = result[2];
       const token1Name = getTokenByPropName(
@@ -662,7 +696,9 @@ export class DexWrapper {
         TokenConfigsProps.ADDRESS,
         token1Address.toLowerCase(),
       ).symbol;
-      const token1Reserve = result[0]._reserve1;
+
+      const token1Reserve =
+        dex === DexEnum.arrakis ? result[0].amount1Current : result[0]._reserve1;
 
       return {
         [token0Name]: {

@@ -441,15 +441,22 @@ export class SoloStakerWrapper {
     const userRewards = this._formatUserRewards(userRewardsBN);
 
     // Format values
-    const [userWalletTokensBalance, totalStaked, userStakedAmount] = formatValuesToString(
-      [userWalletTokensBalanceBN, totalStakedBN, userStakedAmountBN],
+    const [
+      userWalletTokensBalance,
+      totalStaked,
+      userStakedAmount,
+      walletStakeLimit,
+      contractStakeLimit,
+    ] = formatValuesToString(
+      [
+        userWalletTokensBalanceBN,
+        totalStakedBN,
+        userStakedAmountBN,
+        walletStakeLimitBN,
+        contractStakeLimitBN,
+      ],
       tokenDecimals,
     );
-
-    const [walletStakeLimit, contractStakeLimit] = formatValuesToString([
-      walletStakeLimitBN,
-      contractStakeLimitBN,
-    ]);
 
     // Format durations
     const { duration: durationMilliseconds, expirationTime } = this._formatDurationExpiration(
@@ -641,9 +648,8 @@ export class SoloStakerWrapper {
     );
     stakeLimit = await formatToken(this.provider as Web3Provider, stakeLimit, campaignTokenAddress);
 
-    const totalStakedBN = BigNumber.from(totalStaked);
-    const stakingTokenPriceBN = BigNumber.from(stakingTokenPrice);
-    const contractStakeLimitBN = BigNumber.from(contractStakeLimit);
+    const totalStakedBN = BigNumber.from(parseInt(totalStaked));
+    const contractStakeLimitBN = BigNumber.from(parseInt(contractStakeLimit));
     const zeroBN = BigNumber.from('0');
 
     const percentageBN =
@@ -653,7 +659,7 @@ export class SoloStakerWrapper {
 
     const percentage = Number(percentageBN.toString()) * 100;
 
-    const totalStakedUSD = totalStakedBN.mul(stakingTokenPriceBN).toString();
+    const totalStakedUSD = Number(totalStakedBN) * Number(stakingTokenPrice);
 
     const pair = {
       symbol,
@@ -735,7 +741,7 @@ export class SoloStakerWrapper {
     const campaignData = await this.soloNonComp.getCampaignData(campaignAddress);
 
     // Get campaign state
-    const state = await this.getDisconnectedState(campaignAddress);
+    const state = await this.getDisconnectedState(campaignAddress, '3.0');
 
     const {
       deltaDuration,
