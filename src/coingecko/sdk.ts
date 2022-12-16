@@ -52,15 +52,12 @@ export class CoinGecko {
         transposeAPI,
         {
           sql: `SELECT effective_price FROM polygon.dex_swaps
-            WHERE contract_address IN (
-            '0x0066ead4772591b62dC72929AEF13F7DDE1B4374',
-            '0x0792130d3c17c58B6320a4aeb70DF8b5eE559ECc',
-            '0xb14900b0eE6E50dD535e02Ac2195c37690407a15',
-            '0x4f5f469781cE3A294EE22759B0c4822F0C6178A1',
-            '0x559Bd861FAEB53605bfF0FEe54500f07912c31cB')
-            AND from_token_address = '0x338Eb4d394a4327E5dB80d08628fa56EA2FD4B81'
-            ORDER BY timestamp DESC
-            LIMIT 1`,
+          WHERE contract_address IN (
+          '0x0792130d3c17c58B6320a4aeb70DF8b5eE559ECc',
+          '0x4f5f469781cE3A294EE22759B0c4822F0C6178A1')
+          AND from_token_address = '0x338Eb4d394a4327E5dB80d08628fa56EA2FD4B81'
+          ORDER BY timestamp DESC
+          LIMIT 1`,
         },
         {
           headers: {
