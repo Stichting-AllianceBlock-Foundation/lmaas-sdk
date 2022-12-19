@@ -294,15 +294,17 @@ export class SoloStakerWrapper {
       campaignTokenAddress,
     );
 
+    const contractStakeLimitBN = contractStakeLimit;
+
     contractStakeLimit = await formatToken(
       this.provider as Web3Provider,
       contractStakeLimit,
       campaignTokenAddress,
     );
+
     stakeLimit = await formatToken(this.provider as Web3Provider, stakeLimit, campaignTokenAddress);
 
     const totalStakedBN = BigNumber.from(parseInt(totalStaked));
-    const contractStakeLimitBN = BigNumber.from(parseInt(contractStakeLimit));
     const zeroBN = BigNumber.from(0);
 
     const percentageBN =
@@ -635,6 +637,8 @@ export class SoloStakerWrapper {
     const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     const hasUserStakeLimit = !checkMaxStakingLimit(stakeLimit);
 
+    const contractStakeLimitBN = contractStakeLimit;
+
     // format tokens
     totalStaked = await formatToken(
       this.provider as Web3Provider,
@@ -649,7 +653,6 @@ export class SoloStakerWrapper {
     stakeLimit = await formatToken(this.provider as Web3Provider, stakeLimit, campaignTokenAddress);
 
     const totalStakedBN = BigNumber.from(parseInt(totalStaked));
-    const contractStakeLimitBN = BigNumber.from(parseInt(contractStakeLimit));
     const zeroBN = BigNumber.from('0');
 
     const percentageBN =
