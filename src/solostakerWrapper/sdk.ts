@@ -411,7 +411,7 @@ export class SoloStakerWrapper {
     const state = await this.getState(userWallet, campaignAddress, false, version);
 
     // Get user data
-    const userData = await this.soloNonComp.getUserData(campaignAddress);
+    const userData = await this.soloNonComp.getUserData(campaignAddress, userWallet);
 
     const userAddress = await getAddressFromWallet(userWallet);
     const userWalletTokensBalanceBN = await getBalance(
@@ -1198,9 +1198,9 @@ export class SoloStakerWrapper {
       }
     } else {
       const { hasCampaignStarted, hasCampaignEnded } =
-        await this.soloNonComp.getCampaignStatusActive(stakerCampaignAddress);
+        await this.soloNonComp.getCampaignStatusActive(stakerCampaignAddress, userWallet);
 
-      const userData = await this.soloNonComp.getUserData(stakerCampaignAddress);
+      const userData = await this.soloNonComp.getUserData(stakerCampaignAddress, userWallet);
 
       const { exitTimestamp: exitTimestampBN, exitStake } = userData;
 
@@ -1707,7 +1707,7 @@ export class SoloStakerWrapper {
           }
         }
       } else {
-        const userData = await this.soloNonComp.getUserData(stakerCampaignAddress);
+        const userData = await this.soloNonComp.getUserData(stakerCampaignAddress, userWallet);
 
         userStakedTokens = userData.userStakedAmount as BigNumber;
         userRewards = userStakedTokens.gt(0)

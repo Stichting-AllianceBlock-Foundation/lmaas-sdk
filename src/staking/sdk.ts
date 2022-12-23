@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider } from '@ethersproject/providers';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 import { providers } from 'ethers';
 
@@ -161,11 +161,17 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {CampaingStatusData} CampaingStatusData object
    */
-  public async getCampaignStatusActive(campaignAddress: string): Promise<CampaingStatusDataActive> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
+  public async getCampaignStatusActive(
+    campaignAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<CampaingStatusDataActive> {
+    const walletAddress = await signerProvider.getAddress();
 
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = new Contract(
+      campaignAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
@@ -192,15 +198,21 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {UserData} UserData object
    */
-  public async getUserData(campaignAddress: string): Promise<UserDataStaking> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
+  public async getUserData(
+    campaignAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<UserDataStaking> {
+    const walletAddress = await signerProvider.getAddress();
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
     const zeroBN = BigNumber.from(0);
 
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = new Contract(
+      campaignAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     // Get raw user data
     const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);

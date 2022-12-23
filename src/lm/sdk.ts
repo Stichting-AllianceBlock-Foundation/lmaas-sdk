@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider } from '@ethersproject/providers';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 import { providers } from 'ethers';
 
@@ -138,6 +138,7 @@ export class StakerLM {
   public async getCampaignStatus(
     campaignAddress: string,
     active: boolean,
+    signerProvider: JsonRpcSigner,
   ): Promise<CampaingStatusData> {
     const campaignContract = new Contract(
       campaignAddress,
@@ -158,11 +159,8 @@ export class StakerLM {
     let hasUserStaked = false;
 
     if (active) {
-      const signer = this.provider.getSigner();
-      const walletAddress = await signer.getAddress();
-
+      const walletAddress = await signerProvider.getAddress();
       const userStakedAmount = await campaignContract.balanceOf(walletAddress);
-
       hasUserStaked = userStakedAmount.gt(0);
     }
 
@@ -179,11 +177,17 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {UserData} UserData object
    */
-  public async getUserData(campaignAddress: string): Promise<UserDataLM> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
+  public async getUserData(
+    campaignAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<UserDataLM> {
+    const walletAddress = await signerProvider.getAddress();
 
-    const campaignContract = new Contract(campaignAddress, LiquidityMiningCampaignABI, signer);
+    const campaignContract = new Contract(
+      campaignAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     // Get raw user data
     const userStakedAmount = await campaignContract.balanceOf(walletAddress);

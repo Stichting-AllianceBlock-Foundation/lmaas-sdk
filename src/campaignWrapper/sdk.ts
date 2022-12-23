@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcSigner,  } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 
 import {
@@ -43,7 +43,7 @@ import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class CampaignWrapper {
-  provider:  JsonRpcBatchProvider;
+  provider: JsonRpcBatchProvider;
   lmcStaker: StakerLM;
   albStaker: ALBStaker;
   coingecko: CoinGecko;
@@ -436,7 +436,7 @@ export class CampaignWrapper {
 
     // Get data from new SDK
     const campaignData = await this.lmcStaker.getCampaignData(campaignAddress);
-    const userData: UserDataLM = await this.lmcStaker.getUserData(campaignAddress);
+    const userData: UserDataLM = await this.lmcStaker.getUserData(campaignAddress, userWallet);
 
     const {
       deltaDuration,
@@ -645,24 +645,20 @@ export class CampaignWrapper {
 
       if (dex === DexEnum.balancer) {
         const tokenBalance = await poolContract.getBalance(tokenAddress);
-        result[tokenName] = await formatToken(
-          this.provider,
-          tokenBalance,
-          tokenAddress,
-        );
+        result[tokenName] = await formatToken(this.provider, tokenBalance, tokenAddress);
       } else {
-        result[tokenName] = await formatToken(
-          this.provider,
-          reserves[index],
-          tokenAddress,
-        );
+        result[tokenName] = await formatToken(this.provider, reserves[index], tokenAddress);
       }
     }
 
     return result;
   }
 
-  async getCampaignStatusCommon(campaign: LMInterface, connected: boolean) {
+  async getCampaignStatusCommon(
+    campaign: LMInterface,
+    connected: boolean,
+    signerProvider: JsonRpcSigner,
+  ) {
     const { version } = campaign;
     interface VersionMapping {
       [key: string]: 'getCampaignStatus' | 'getCampaignStatusNew';
@@ -676,10 +672,14 @@ export class CampaignWrapper {
     // Compose function name based on version
     const cardDataMethod = `${versionMapping[version]}`;
 
-    return await this[cardDataMethod](campaign, connected);
+    return await this[cardDataMethod](campaign, connected, signerProvider);
   }
 
-  async getCampaignStatus(campaign: LMInterface, connected: boolean) {
+  async getCampaignStatus(
+    campaign: LMInterface,
+    connected: boolean,
+    signerProvider: JsonRpcSigner,
+  ) {
     const { campaignAddress } = campaign;
     let hasUserStaked = false;
 
@@ -687,21 +687,21 @@ export class CampaignWrapper {
     const hasCampaignEnded = await this.albStaker.hasCampaignEnded(campaignAddress);
 
     if (connected) {
-      const provider = this.provider;
-      hasUserStaked = await this.albStaker.getUserStakedInCampaign(
-        provider.getSigner(),
-        campaignAddress,
-      );
+      hasUserStaked = await this.albStaker.getUserStakedInCampaign(signerProvider, campaignAddress);
     }
 
     return { hasCampaignStarted, hasCampaignEnded, hasUserStaked };
   }
 
-  async getCampaignStatusNew(campaign: LMInterface, connected: boolean) {
+  async getCampaignStatusNew(
+    campaign: LMInterface,
+    connected: boolean,
+    signerProvider: JsonRpcSigner,
+  ) {
     const { campaignAddress } = campaign;
 
     const { hasCampaignStarted, hasCampaignEnded, hasUserStaked } =
-      await this.lmcStaker.getCampaignStatus(campaignAddress, connected);
+      await this.lmcStaker.getCampaignStatus(campaignAddress, connected, signerProvider);
 
     return { hasCampaignStarted, hasCampaignEnded, hasUserStaked };
   }

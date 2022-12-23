@@ -89,9 +89,7 @@ export const poolTupleToString = (tuple: string[]) => {
 // @wallet  -> wallet object
 // @returns -> address of wallet
 export const getAddressFromWallet = async (wallet: JsonRpcSigner) => {
-  console.log('wallet :>> ', wallet);
   const walletAddress = await wallet.getAddress();
-  console.log('walletAddress :>> ', walletAddress);
   return walletAddress;
 };
 
