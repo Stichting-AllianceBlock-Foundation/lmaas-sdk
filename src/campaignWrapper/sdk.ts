@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcSigner,  } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 
 import {
@@ -36,14 +36,14 @@ import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
  *  Represents a class that can interact with LMC's
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {JsonRpcBatchProvider} provider - Provider with the global interaction.
  *  @param {StakerLM} lmcStaker - Class that helps with the actions of a LMC.
  *  @param {CoinGecko} coingecko - Class for fetching the balance of the CoinGecko API.
  *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class CampaignWrapper {
-  provider: Web3Provider | JsonRpcBatchProvider;
+  provider:  JsonRpcBatchProvider;
   lmcStaker: StakerLM;
   albStaker: ALBStaker;
   coingecko: CoinGecko;
@@ -52,7 +52,7 @@ export class CampaignWrapper {
   [key: string]: any;
 
   constructor(
-    provider: Web3Provider | JsonRpcBatchProvider,
+    provider: JsonRpcBatchProvider,
     lmcStaker: StakerLM,
     albStaker: ALBStaker,
     coingecko: CoinGecko,
@@ -69,7 +69,7 @@ export class CampaignWrapper {
 
   stake(
     version: string,
-    userWallet: Web3Provider,
+    userWallet: JsonRpcSigner,
     campaignAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
@@ -102,7 +102,7 @@ export class CampaignWrapper {
     );
   }
 
-  exit(version: string, userWallet: Web3Provider, campaignAddress: string) {
+  exit(version: string, userWallet: JsonRpcSigner, campaignAddress: string) {
     if (!version || version === '1.0') {
       return this.albStaker.withdraw(userWallet, campaignAddress);
     }
@@ -571,7 +571,7 @@ export class CampaignWrapper {
     dex: string,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(
@@ -625,7 +625,7 @@ export class CampaignWrapper {
     const totalSupply = await poolContract.totalSupply();
     const pool = poolTupleToString(tokenNames);
     const result: Result = {};
-    result[pool] = await formatToken(this.provider as Web3Provider, totalSupply, poolAddress);
+    result[pool] = await formatToken(this.provider, totalSupply, poolAddress);
 
     if (dex !== DexEnum.balancer) {
       if (dex === DexEnum.arrakis) {
@@ -646,13 +646,13 @@ export class CampaignWrapper {
       if (dex === DexEnum.balancer) {
         const tokenBalance = await poolContract.getBalance(tokenAddress);
         result[tokenName] = await formatToken(
-          this.provider as Web3Provider,
+          this.provider,
           tokenBalance,
           tokenAddress,
         );
       } else {
         result[tokenName] = await formatToken(
-          this.provider as Web3Provider,
+          this.provider,
           reserves[index],
           tokenAddress,
         );
@@ -687,7 +687,7 @@ export class CampaignWrapper {
     const hasCampaignEnded = await this.albStaker.hasCampaignEnded(campaignAddress);
 
     if (connected) {
-      const provider = this.provider as Web3Provider;
+      const provider = this.provider;
       hasUserStaked = await this.albStaker.getUserStakedInCampaign(
         provider.getSigner(),
         campaignAddress,
@@ -730,7 +730,7 @@ export class CampaignWrapper {
 
       balance = await poolContract.balanceOf(userAddress);
     } else {
-      balance = getBalance(this.provider as Web3Provider, poolAddress, userAddress);
+      balance = getBalance(this.provider, poolAddress, userAddress);
     }
 
     return balance;
@@ -809,7 +809,7 @@ export class CampaignWrapper {
     dex: string,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(

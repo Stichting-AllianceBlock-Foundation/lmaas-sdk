@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { Web3Provider } from '@ethersproject/providers';
+import { JsonRpcProvider } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 import { providers } from 'ethers';
 
@@ -18,14 +18,14 @@ import LiquidityMiningCampaignTierABI from '../abi/LiquidityMiningCampaignTier.j
  *  Represents a class that can interact with LMC's
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider with the global interaction.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class StakerLM {
   protected protocol: NetworkEnum;
-  protected provider: Web3Provider;
+  protected provider: JsonRpcProvider;
 
-  constructor(provider: Web3Provider, protocol: NetworkEnum) {
+  constructor(provider: JsonRpcProvider, protocol: NetworkEnum) {
     this.provider = provider;
     this.protocol = protocol;
   }

@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { formatEther, formatUnits, parseEther } from '@ethersproject/units';
 import { providers } from 'ethers';
 
@@ -15,11 +15,11 @@ import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaignV1.json';
 import { CampaignRewards, NetworkEnum, Reward, TokenConfigs, TokenConfigsProps } from '../entities';
 
 export class ALBStaker {
-  provider: Web3Provider | JsonRpcBatchProvider;
+  provider: JsonRpcProvider | JsonRpcBatchProvider;
   protocol: NetworkEnum;
   [key: string]: any;
 
-  constructor(provider: Web3Provider | JsonRpcBatchProvider, protocol: NetworkEnum) {
+  constructor(provider: JsonRpcProvider | JsonRpcBatchProvider, protocol: NetworkEnum) {
     this.provider = provider;
     this.protocol = protocol;
   }
@@ -34,7 +34,7 @@ export class ALBStaker {
    * @return {object} transaction object
    */
   async stake(
-    userWallet: Web3Provider,
+    userWallet: JsonRpcSigner,
     stakingContractAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
@@ -59,7 +59,7 @@ export class ALBStaker {
    * @return {object} transaction object
    */
   async claimRewards(
-    userWallet: Web3Provider,
+    userWallet: JsonRpcSigner,
     stakingContractAddress: string,
   ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
@@ -78,7 +78,7 @@ export class ALBStaker {
    * @return {object} transaction object
    */
   async withdraw(
-    userWallet: Web3Provider,
+    userWallet: JsonRpcSigner,
     stakingContractAddress: string,
   ): Promise<providers.TransactionResponse> {
     const stakingRewardsContract = new Contract(
@@ -98,7 +98,7 @@ export class ALBStaker {
    * @return {object} transaction object
    */
   async exitAndStake(
-    userWallet: Web3Provider,
+    userWallet: JsonRpcSigner,
     stakingContractAddress: string,
     stakerPoolAddress: string,
   ): Promise<providers.TransactionResponse> {
