@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { Web3Provider } from '@ethersproject/providers';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 import { providers } from 'ethers';
 
@@ -18,14 +18,14 @@ import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
  *  Represents a class that can interact with SoloStaker's campaigns
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider with the global interaction.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class StakerSolo {
   protected protocol: NetworkEnum;
-  protected provider: Web3Provider;
+  protected provider: JsonRpcProvider;
 
-  constructor(provider: Web3Provider, protocol: NetworkEnum) {
+  constructor(provider: JsonRpcProvider, protocol: NetworkEnum) {
     this.provider = provider;
     this.protocol = protocol;
   }
@@ -161,11 +161,17 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {CampaingStatusData} CampaingStatusData object
    */
-  public async getCampaignStatusActive(campaignAddress: string): Promise<CampaingStatusDataActive> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
+  public async getCampaignStatusActive(
+    campaignAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<CampaingStatusDataActive> {
+    const walletAddress = await signerProvider.getAddress();
 
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = new Contract(
+      campaignAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
@@ -192,15 +198,21 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {UserData} UserData object
    */
-  public async getUserData(campaignAddress: string): Promise<UserDataStaking> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
+  public async getUserData(
+    campaignAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<UserDataStaking> {
+    const walletAddress = await signerProvider.getAddress();
 
     // Get now in seconds and convert to BN
     const now = Math.floor(Date.now() / 1000);
     const zeroBN = BigNumber.from(0);
 
-    const campaignContract = new Contract(campaignAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = new Contract(
+      campaignAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     // Get raw user data
     const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
@@ -246,16 +258,14 @@ export class StakerSolo {
   public async stake(
     contractAddress: string,
     amountToStake: string,
-    isNativeSupported: boolean,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
     const amountToStakeParsed = parseEther(amountToStake);
-
-    if (isNativeSupported)
-      return await campaignContract.stakeNative({
-        value: amountToStakeParsed,
-      });
 
     return await campaignContract.stake(amountToStakeParsed);
   }
@@ -266,9 +276,15 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async exit(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+  public async exit(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.exit();
 
@@ -281,9 +297,15 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async completeExit(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+  public async completeExit(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.completeExit();
 

@@ -1,4 +1,4 @@
-import { JsonRpcBatchProvider, Web3Provider } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcProvider } from '@ethersproject/providers';
 
 import {
   ALBStaker,
@@ -24,7 +24,7 @@ import {
  *  @param {CampaignWrapper} campaignWrapper - Class that help with the actions of LMC's.
  *  @param {DexWrapper} dexWrapper - Class that help with the actions of DEX's depending on the network.
  *  @param {number} chainId - Name of the network where this class is being used.
- *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider that helps every class to interact with the blockchain.
+ *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider that helps every class to interact with the blockchain.
  */
 export class StakerSDK {
   lmcStaker: StakerLM;
@@ -32,13 +32,13 @@ export class StakerSDK {
   soloNonCompStaker: StakerSolo;
   coingecko: CoinGecko;
   soloStakerWrapper: SoloStakerWrapper;
-  provider: JsonRpcBatchProvider | Web3Provider;
+  provider: JsonRpcBatchProvider | JsonRpcProvider;
   dexWrapper: DexWrapper;
   campaignWrapper: CampaignWrapper;
   protocol: NetworkEnum;
 
   constructor(
-    provider: JsonRpcBatchProvider | Web3Provider,
+    provider: JsonRpcBatchProvider | JsonRpcProvider,
     chainId: number,
     config: BlockchainConfig,
     minutesForExpiration: number,
@@ -47,19 +47,19 @@ export class StakerSDK {
     this.coingecko = new CoinGecko(minutesForExpiration); // @notice Coingecko fetcher class for their API
     this.protocol = getProtocolByChainId(chainId);
 
-    this.lmcStaker = new StakerLM(this.provider as Web3Provider, this.protocol);
+    this.lmcStaker = new StakerLM(this.provider, this.protocol);
     this.albStaker = new ALBStaker(this.provider, this.protocol);
-    this.soloNonCompStaker = new StakerSolo(this.provider as Web3Provider, this.protocol);
+    this.soloNonCompStaker = new StakerSolo(this.provider, this.protocol);
 
     this.soloStakerWrapper = new SoloStakerWrapper(
-      this.provider as Web3Provider,
+      this.provider,
       this.soloNonCompStaker,
       this.coingecko,
       this.protocol,
       getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
     );
     this.campaignWrapper = new CampaignWrapper(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcBatchProvider,
       this.lmcStaker,
       this.albStaker,
       this.coingecko,
@@ -67,7 +67,7 @@ export class StakerSDK {
       this.protocol,
     );
     this.dexWrapper = new DexWrapper(
-      this.provider as Web3Provider,
+      this.provider,
       this.protocol,
       getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
     );

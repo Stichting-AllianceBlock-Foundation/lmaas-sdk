@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { formatEther, formatUnits } from '@ethersproject/units';
 import { BigNumber as BigNumberJS } from 'bignumber.js';
 import { providers } from 'ethers';
@@ -44,14 +44,14 @@ import NonCompoundingRewardsPoolABI from '../abi/NonCompoundingRewardsPoolV1.jso
  *  Represents a class that can interact with SoloStaker's campaigns
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider with the global interaction.
  *  @param {StakerSolo} soloNonComp - Class that helps with the actions of a SoloStaker campaign.
  *  @param {CoinGecko} coingecko - Class for fetching the balance of the CoinGecko API.
  *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class SoloStakerWrapper {
-  provider: Web3Provider | JsonRpcBatchProvider;
+  provider: JsonRpcProvider | JsonRpcBatchProvider;
   soloNonComp: StakerSolo;
   coingecko: CoinGecko;
   tokenConfigs: TokenConfigs;
@@ -59,7 +59,7 @@ export class SoloStakerWrapper {
   [key: string]: any;
 
   constructor(
-    provider: Web3Provider | JsonRpcBatchProvider,
+    provider: JsonRpcProvider | JsonRpcBatchProvider,
     soloNonComp: StakerSolo,
     coingecko: CoinGecko,
     protocol: NetworkEnum,
@@ -79,7 +79,7 @@ export class SoloStakerWrapper {
       return this._stake(userWallet, campaign, amountToStake);
     }
 
-    return this.soloNonComp.stake(campaignAddress, amountToStake, false);
+    return this.soloNonComp.stake(campaignAddress, amountToStake, userWallet);
   }
 
   async _stake(
@@ -100,7 +100,7 @@ export class SoloStakerWrapper {
     );
 
     const stakeTokenAmountInBN = await parseToken(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       stakeTokenAmountIn,
       stakeTokenAddress,
     );
@@ -115,7 +115,7 @@ export class SoloStakerWrapper {
       return this._exit(userWallet, campaign);
     }
 
-    return this.soloNonComp.exit(campaignAddress);
+    return this.soloNonComp.exit(campaignAddress, userWallet);
   }
 
   async _exit(userWallet: JsonRpcSigner, campaign: StakingInterface) {
@@ -136,7 +136,7 @@ export class SoloStakerWrapper {
       return this._completeExit(userWallet, campaign);
     }
 
-    return this.soloNonComp.completeExit(campaignAddress);
+    return this.soloNonComp.completeExit(campaignAddress, userWallet);
   }
 
   async _completeExit(userWallet: JsonRpcSigner, campaign: StakingInterface) {
@@ -217,7 +217,11 @@ export class SoloStakerWrapper {
     const state = this.getState(userWallet, stakerCampaignAddress, compounding);
 
     let stakingTokenPrice = this.coingecko.getTokenPrice(stakingTokenId, 'usd');
-    let userBalance = getBalance(this.provider as Web3Provider, campaignTokenAddress, userAddress);
+    let userBalance = getBalance(
+      this.provider as JsonRpcProvider,
+      campaignTokenAddress,
+      userAddress,
+    );
 
     const result: Result = await Promise.all([
       rAndD,
@@ -277,19 +281,19 @@ export class SoloStakerWrapper {
 
     // format tokens
     const userStakedAmount = await formatToken(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       userStakedTokens,
       campaignTokenAddress,
     );
 
     totalStaked = await formatToken(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       totalStaked,
       campaignTokenAddress,
     );
 
     const userWalletTokensBalance = await formatToken(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       userBalance,
       campaignTokenAddress,
     );
@@ -297,12 +301,16 @@ export class SoloStakerWrapper {
     const contractStakeLimitBN = contractStakeLimit;
 
     contractStakeLimit = await formatToken(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       contractStakeLimit,
       campaignTokenAddress,
     );
 
-    stakeLimit = await formatToken(this.provider as Web3Provider, stakeLimit, campaignTokenAddress);
+    stakeLimit = await formatToken(
+      this.provider as JsonRpcProvider,
+      stakeLimit,
+      campaignTokenAddress,
+    );
 
     const totalStakedBN = BigNumber.from(parseInt(totalStaked));
     const zeroBN = BigNumber.from(0);
@@ -403,17 +411,17 @@ export class SoloStakerWrapper {
     const state = await this.getState(userWallet, campaignAddress, false, version);
 
     // Get user data
-    const userData = await this.soloNonComp.getUserData(campaignAddress);
+    const userData = await this.soloNonComp.getUserData(campaignAddress, userWallet);
 
     const userAddress = await getAddressFromWallet(userWallet);
     const userWalletTokensBalanceBN = await getBalance(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       campaignTokenAddress,
       userAddress,
     );
 
     const tokenDecimals = await getTokenDecimals(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       campaignTokenAddress,
     );
 
@@ -641,16 +649,20 @@ export class SoloStakerWrapper {
 
     // format tokens
     totalStaked = await formatToken(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       totalStaked,
       campaignTokenAddress,
     );
     contractStakeLimit = await formatToken(
-      this.provider as Web3Provider,
+      this.provider as JsonRpcProvider,
       contractStakeLimit,
       campaignTokenAddress,
     );
-    stakeLimit = await formatToken(this.provider as Web3Provider, stakeLimit, campaignTokenAddress);
+    stakeLimit = await formatToken(
+      this.provider as JsonRpcProvider,
+      stakeLimit,
+      campaignTokenAddress,
+    );
 
     const totalStakedBN = BigNumber.from(parseInt(totalStaked));
     const zeroBN = BigNumber.from('0');
@@ -859,7 +871,7 @@ export class SoloStakerWrapper {
     const totalSupply = await poolContract.totalSupply();
     const pool = poolTupleToString(tokenNames);
     const result: Result = {};
-    result[pool] = await formatToken(this.provider as Web3Provider, totalSupply, poolAddress);
+    result[pool] = await formatToken(this.provider as JsonRpcProvider, totalSupply, poolAddress);
 
     for (let index = 0; index < tokenNames.length; index++) {
       const tokenName = tokenNames[index];
@@ -870,7 +882,7 @@ export class SoloStakerWrapper {
       ).address;
 
       result[tokenName] = await formatToken(
-        this.provider as Web3Provider,
+        this.provider as JsonRpcProvider,
         reserves[index],
         tokenAddress,
       );
@@ -885,7 +897,7 @@ export class SoloStakerWrapper {
     poolContract: Contract,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider as JsonRpcProvider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(
@@ -922,7 +934,7 @@ export class SoloStakerWrapper {
     poolContract: Contract,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await getTotalSupply(this.provider as Web3Provider, poolAddress);
+    const liquidityPoolSupply = await getTotalSupply(this.provider as JsonRpcProvider, poolAddress);
     const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
 
     const reservesBalances = await this.getPoolReserveBalances(
@@ -992,7 +1004,7 @@ export class SoloStakerWrapper {
       ).symbol;
 
       const totalRewardAmount = await formatToken(
-        this.provider as Web3Provider,
+        this.provider as JsonRpcProvider,
         rewardAmountPerBlock.mul(durationInBlocks).toString(),
         rewardTokenAddress,
       );
@@ -1000,7 +1012,7 @@ export class SoloStakerWrapper {
       totalRewards[rewardTokenName] = totalRewardAmount;
 
       const weeklyRewardAmount = await formatToken(
-        this.provider as Web3Provider,
+        this.provider as JsonRpcProvider,
         rewardAmountPerBlock.mul(BLOCKS_COUNT[this.protocol].PER_WEEK),
         rewardTokenAddress,
       );
@@ -1057,7 +1069,7 @@ export class SoloStakerWrapper {
       );
 
       rewardAmountPerBlock = await formatToken(
-        this.provider as Web3Provider,
+        this.provider as JsonRpcProvider,
         rewardAmountPerBlock,
         rewardTokenAddress,
       );
@@ -1072,7 +1084,7 @@ export class SoloStakerWrapper {
     }
 
     stakingToken = result[1];
-    totalStaked = await formatToken(this.provider as Web3Provider, result[0], stakingToken);
+    totalStaked = await formatToken(this.provider as JsonRpcProvider, result[0], stakingToken);
     startBlock = result[2];
     endBlock = result[3];
 
@@ -1186,9 +1198,9 @@ export class SoloStakerWrapper {
       }
     } else {
       const { hasCampaignStarted, hasCampaignEnded } =
-        await this.soloNonComp.getCampaignStatusActive(stakerCampaignAddress);
+        await this.soloNonComp.getCampaignStatusActive(stakerCampaignAddress, userWallet);
 
-      const userData = await this.soloNonComp.getUserData(stakerCampaignAddress);
+      const userData = await this.soloNonComp.getUserData(stakerCampaignAddress, userWallet);
 
       const { exitTimestamp: exitTimestampBN, exitStake } = userData;
 
@@ -1262,7 +1274,7 @@ export class SoloStakerWrapper {
         reward = compounding
           ? await stakerInstance.getUserAccumulatedRewards(userAddress)
           : await stakerInstance.getUserAccumulatedReward(userAddress, 0);
-        reward = await formatToken(this.provider as Web3Provider, reward, rewardTokenAddress);
+        reward = await formatToken(this.provider as JsonRpcProvider, reward, rewardTokenAddress);
       }
 
       userRewards[rewardTokenName] = reward.toString();
@@ -1288,7 +1300,7 @@ export class SoloStakerWrapper {
       let rewardTokenAmount = await getPendingReward(i);
 
       rewardTokenAmount = await formatToken(
-        this.provider as Web3Provider,
+        this.provider as JsonRpcProvider,
         rewardTokenAmount,
         rewardTokenAddress,
       );
@@ -1695,7 +1707,7 @@ export class SoloStakerWrapper {
           }
         }
       } else {
-        const userData = await this.soloNonComp.getUserData(stakerCampaignAddress);
+        const userData = await this.soloNonComp.getUserData(stakerCampaignAddress, userWallet);
 
         userStakedTokens = userData.userStakedAmount as BigNumber;
         userRewards = userStakedTokens.gt(0)
@@ -1737,7 +1749,7 @@ export class SoloStakerWrapper {
     return getAllowance(userWallet, stakeTokenAddress, stakerContractAddress);
   }
 
-  async approveToken(userWallet: Web3Provider, campaign: StakingInterface) {
+  async approveToken(userWallet: JsonRpcSigner, campaign: StakingInterface) {
     const { campaignAddress: stakerContractAddress, campaignTokenAddress: stakeTokenAddress } =
       campaign;
 

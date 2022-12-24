@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { Web3Provider } from '@ethersproject/providers';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { parseEther } from '@ethersproject/units';
 import { providers } from 'ethers';
 
@@ -18,14 +18,14 @@ import LiquidityMiningCampaignTierABI from '../abi/LiquidityMiningCampaignTier.j
  *  Represents a class that can interact with LMC's
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider with the global interaction.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class StakerLM {
   protected protocol: NetworkEnum;
-  protected provider: Web3Provider;
+  protected provider: JsonRpcProvider;
 
-  constructor(provider: Web3Provider, protocol: NetworkEnum) {
+  constructor(provider: JsonRpcProvider, protocol: NetworkEnum) {
     this.provider = provider;
     this.protocol = protocol;
   }
@@ -138,6 +138,7 @@ export class StakerLM {
   public async getCampaignStatus(
     campaignAddress: string,
     active: boolean,
+    signerProvider: JsonRpcSigner,
   ): Promise<CampaingStatusData> {
     const campaignContract = new Contract(
       campaignAddress,
@@ -158,11 +159,8 @@ export class StakerLM {
     let hasUserStaked = false;
 
     if (active) {
-      const signer = this.provider.getSigner();
-      const walletAddress = await signer.getAddress();
-
+      const walletAddress = await signerProvider.getAddress();
       const userStakedAmount = await campaignContract.balanceOf(walletAddress);
-
       hasUserStaked = userStakedAmount.gt(0);
     }
 
@@ -179,11 +177,17 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {UserData} UserData object
    */
-  public async getUserData(campaignAddress: string): Promise<UserDataLM> {
-    const signer = this.provider.getSigner();
-    const walletAddress = await signer.getAddress();
+  public async getUserData(
+    campaignAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<UserDataLM> {
+    const walletAddress = await signerProvider.getAddress();
 
-    const campaignContract = new Contract(campaignAddress, LiquidityMiningCampaignABI, signer);
+    const campaignContract = new Contract(
+      campaignAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     // Get raw user data
     const userStakedAmount = await campaignContract.balanceOf(walletAddress);
@@ -228,9 +232,13 @@ export class StakerLM {
   public async stake(
     contractAddress: string,
     amountToStake: string,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
     const amountToStakeParsed = parseEther(amountToStake);
 
     const transaction = await campaignContract.stake(amountToStakeParsed);
@@ -254,9 +262,13 @@ export class StakerLM {
     signature: string,
     maxTier: number,
     deadline: number,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignTierABI, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignTierABI,
+      signerProvider,
+    );
     const amountToStakeParsed = parseEther(amountToStake);
 
     const transaction = await campaignContract.stakeWithTier(
@@ -275,9 +287,15 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async exit(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+  public async exit(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.exit();
 
@@ -290,9 +308,15 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async claim(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+  public async claim(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.claim();
 
@@ -311,9 +335,13 @@ export class StakerLM {
     contractAddress: string,
     duration: number,
     rewardsPerSecond: string,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     const rewardsPerSecondParsed = parseEther(rewardsPerSecond);
 
