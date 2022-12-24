@@ -1577,7 +1577,7 @@ export class SoloStakerWrapper {
   }
 
   async getMigrationWhitelist(
-    userWallet: JsonRpcSigner,
+    provider: JsonRpcProvider,
     campaign: StakingInterface,
     campaignsArr: string[],
   ) {
@@ -1585,7 +1585,7 @@ export class SoloStakerWrapper {
     const campaignInstance = new Contract(
       stakerContractAddress,
       NonCompoundingRewardsPoolABI,
-      userWallet,
+      provider,
     );
 
     const whiteList = await Promise.all(
