@@ -98,7 +98,7 @@ export const formatValuesToString = (values: BigNumber[], decimals = 18): string
 };
 
 export const approveToken = async (
-  wallet: JsonRpcProvider | JsonRpcSigner,
+  wallet: JsonRpcSigner,
   tokenAddress: string,
   spenderAddress: string,
   amountToApprove?: string,

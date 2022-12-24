@@ -1749,7 +1749,7 @@ export class SoloStakerWrapper {
     return getAllowance(userWallet, stakeTokenAddress, stakerContractAddress);
   }
 
-  async approveToken(userWallet: JsonRpcProvider, campaign: StakingInterface) {
+  async approveToken(userWallet: JsonRpcSigner, campaign: StakingInterface) {
     const { campaignAddress: stakerContractAddress, campaignTokenAddress: stakeTokenAddress } =
       campaign;
 
