@@ -574,10 +574,15 @@ export class DexWrapper {
    * @param {array} provisionTokensAddresses - Array of underlying token addresses
    * @return {object} price output
    */
-  async getAllPriceRates(poolAddress: string, provisionTokensAddresses: string[], dex: DexEnum) {
+  async getAllPriceRates(
+    poolAddress: string,
+    provisionTokensAddresses: string[],
+    dex: DexEnum,
+    signerProvider: JsonRpcSigner,
+  ) {
     const { dexes } = dexByNetworkMapping[this.network];
     const { poolABI } = dexes[dex];
-    const sdkAbDex = await initSDK(this.provider);
+    const sdkAbDex = await initSDK(signerProvider);
 
     if (dex === DexEnum.balancer) {
       const output: { [key: string]: GeneralStringToString } = {};
