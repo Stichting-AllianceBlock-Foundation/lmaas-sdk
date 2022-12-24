@@ -232,9 +232,13 @@ export class StakerLM {
   public async stake(
     contractAddress: string,
     amountToStake: string,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
     const amountToStakeParsed = parseEther(amountToStake);
 
     const transaction = await campaignContract.stake(amountToStakeParsed);
@@ -258,9 +262,13 @@ export class StakerLM {
     signature: string,
     maxTier: number,
     deadline: number,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignTierABI, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignTierABI,
+      signerProvider,
+    );
     const amountToStakeParsed = parseEther(amountToStake);
 
     const transaction = await campaignContract.stakeWithTier(
@@ -279,9 +287,15 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async exit(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+  public async exit(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.exit();
 
@@ -294,9 +308,15 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async claim(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+  public async claim(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.claim();
 
@@ -315,9 +335,13 @@ export class StakerLM {
     contractAddress: string,
     duration: number,
     rewardsPerSecond: string,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, LiquidityMiningCampaignABI, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      LiquidityMiningCampaignABI,
+      signerProvider,
+    );
 
     const rewardsPerSecondParsed = parseEther(rewardsPerSecond);
 

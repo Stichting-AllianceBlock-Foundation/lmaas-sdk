@@ -258,16 +258,14 @@ export class StakerSolo {
   public async stake(
     contractAddress: string,
     amountToStake: string,
-    isNativeSupported: boolean,
+    signerProvider: JsonRpcSigner,
   ): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+    const campaignContract = new Contract(
+      contractAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
     const amountToStakeParsed = parseEther(amountToStake);
-
-    if (isNativeSupported)
-      return await campaignContract.stakeNative({
-        value: amountToStakeParsed,
-      });
 
     return await campaignContract.stake(amountToStakeParsed);
   }
@@ -278,9 +276,15 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async exit(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+  public async exit(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.exit();
 
@@ -293,9 +297,15 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {object} transaction object
    */
-  public async completeExit(contractAddress: string): Promise<providers.TransactionResponse> {
-    const signer = this.provider.getSigner();
-    const campaignContract = new Contract(contractAddress, NonCompoundingRewardsPool, signer);
+  public async completeExit(
+    contractAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<providers.TransactionResponse> {
+    const campaignContract = new Contract(
+      contractAddress,
+      NonCompoundingRewardsPool,
+      signerProvider,
+    );
 
     const transaction = await campaignContract.completeExit();
 

@@ -9,7 +9,7 @@ import {
 import { BigNumber, FixedNumber } from '@ethersproject/bignumber';
 import { MaxUint256 } from '@ethersproject/constants';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcProvider,JsonRpcSigner } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import { BigNumber as BigNumberJS } from 'bignumber.js';
 
@@ -574,10 +574,15 @@ export class DexWrapper {
    * @param {array} provisionTokensAddresses - Array of underlying token addresses
    * @return {object} price output
    */
-  async getAllPriceRates(poolAddress: string, provisionTokensAddresses: string[], dex: DexEnum) {
+  async getAllPriceRates(
+    poolAddress: string,
+    provisionTokensAddresses: string[],
+    dex: DexEnum,
+    signerProvider: JsonRpcSigner,
+  ) {
     const { dexes } = dexByNetworkMapping[this.network];
     const { poolABI } = dexes[dex];
-    const sdkAbDex = await initSDK(this.provider.getSigner());
+    const sdkAbDex = await initSDK(signerProvider);
 
     if (dex === DexEnum.balancer) {
       const output: { [key: string]: GeneralStringToString } = {};

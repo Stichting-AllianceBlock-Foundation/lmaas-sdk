@@ -79,7 +79,7 @@ export class SoloStakerWrapper {
       return this._stake(userWallet, campaign, amountToStake);
     }
 
-    return this.soloNonComp.stake(campaignAddress, amountToStake, false);
+    return this.soloNonComp.stake(campaignAddress, amountToStake, userWallet);
   }
 
   async _stake(
@@ -115,7 +115,7 @@ export class SoloStakerWrapper {
       return this._exit(userWallet, campaign);
     }
 
-    return this.soloNonComp.exit(campaignAddress);
+    return this.soloNonComp.exit(campaignAddress, userWallet);
   }
 
   async _exit(userWallet: JsonRpcSigner, campaign: StakingInterface) {
@@ -136,7 +136,7 @@ export class SoloStakerWrapper {
       return this._completeExit(userWallet, campaign);
     }
 
-    return this.soloNonComp.completeExit(campaignAddress);
+    return this.soloNonComp.completeExit(campaignAddress, userWallet);
   }
 
   async _completeExit(userWallet: JsonRpcSigner, campaign: StakingInterface) {
