@@ -32,6 +32,16 @@ export interface StakingInterface {
   wrappedNativeToken: string;
   isNativeSupported: boolean;
 }
+
+export interface InfiniteStakingInterface {
+  network: NetworkEnum;
+  campaignAddress: string;
+  campaignTokenAddress: string;
+  rewardsAddresses: string[];
+  compounding: boolean;
+  version: string;
+  campaignMessage?: string;
+}
 export interface CampaingData {
   totalStaked: bigint;
   campaignStartTimestamp: bigint;

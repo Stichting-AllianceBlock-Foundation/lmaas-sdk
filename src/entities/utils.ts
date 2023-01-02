@@ -1,4 +1,4 @@
-import { LMInterface, NetworkEnum, StakingInterface } from '.';
+import { InfiniteStakingInterface, LMInterface, NetworkEnum, StakingInterface } from '.';
 
 export interface Result {
   [key: string]: any;
@@ -52,5 +52,6 @@ export interface Config {
 export interface BlockchainConfig {
   campaignsLM: LMInterface[];
   campaignsStaking: StakingInterface[];
+  campaignsInfiniteStaking: InfiniteStakingInterface[];
   tokens: Token[];
 }
