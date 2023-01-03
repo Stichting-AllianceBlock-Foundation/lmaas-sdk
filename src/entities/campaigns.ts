@@ -42,6 +42,10 @@ export interface InfiniteStakingInterface {
   version: string;
   campaignMessage?: string;
 }
+
+export interface InfiniteCampaignData {
+    
+}
 export interface CampaingData {
   totalStaked: bigint;
   campaignStartTimestamp: bigint;
