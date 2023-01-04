@@ -41,10 +41,12 @@ export interface InfiniteStakingInterface {
   compounding: boolean;
   version: string;
   campaignMessage?: string;
+  name?: string;
+  isLpToken: boolean;
 }
 
-export interface InfiniteCampaignData {
-    
+export interface InfiniteCampaignData extends CampaingData {
+  rewardsDistributing: boolean;
 }
 export interface CampaingData {
   totalStaked: bigint;
@@ -63,6 +65,10 @@ export interface CampaingData {
   rewardsCount: bigint;
   name: string;
   wrappedNativeToken: string;
+}
+
+export interface InfiniteCampaingStatusData extends CampaingStatusData {
+  rewardsDistributing: boolean;
 }
 
 export interface CampaingStatusData {
