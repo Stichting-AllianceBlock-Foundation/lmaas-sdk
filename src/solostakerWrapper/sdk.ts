@@ -614,7 +614,7 @@ export class SoloStakerWrapper {
     let stakingTokenPrice = this.coingecko.getTokenPrice(stakingTokenId, 'usd');
 
     // Get state
-    const state = this.getDisconnectedState(stakerCampaignAddress);
+    const state = this.getDisconnectedState(stakerCampaignAddress, '1.0', compounding);
 
     const result = await Promise.all([
       rAndD,
@@ -1536,29 +1536,43 @@ export class SoloStakerWrapper {
     return nowInSeconds + deltaCooldown;
   }
 
-  async getDisconnectedState(campaignAddress: string, version = '1.0'): Promise<any> {
+  async getDisconnectedState(
+    campaignAddress: string,
+    version = '1.0',
+    compounding = false,
+  ): Promise<any> {
     if (version === '1.0') {
-      const campaignInstance = new Contract(
+      let currentBlock: any = this.provider.getBlock('latest');
+
+      const stakerInstance = new Contract(
         campaignAddress,
-        NonCompoundingRewardsPoolABI,
+        compounding ? CompoundingRewardsPoolABI : NonCompoundingRewardsPoolABI,
         this.provider,
       );
 
-      const promisesArray = [
-        this.provider.getBlock('latest'),
-        campaignInstance.startBlock(),
-        campaignInstance.endBlock(),
-      ];
+      let startBlock, endBlock;
 
-      const [currentBlock, startBlock, endBlock] = await Promise.all(promisesArray);
+      if (compounding) {
+        const campaignAddress = await stakerInstance.rewardPool();
+        const campaignInstance = new Contract(campaignAddress, CompoundingPoolABI, this.provider);
 
-      const currentBlockBN = BigNumber.from(currentBlock.number);
+        startBlock = campaignInstance.startBlock();
+        endBlock = campaignInstance.endBlock();
+      } else {
+        startBlock = stakerInstance.startBlock();
+        endBlock = stakerInstance.endBlock();
+      }
 
-      if (currentBlockBN.lt(startBlock)) {
+      const result = await Promise.all([currentBlock, startBlock, endBlock]);
+      currentBlock = BigNumber.from(result[0].number);
+      startBlock = result[1];
+      endBlock = result[2];
+
+      if (currentBlock.lt(startBlock)) {
         return -1; // "StakingHasNotStartedYet"
       }
 
-      if (currentBlockBN.lt(endBlock)) {
+      if (currentBlock.lt(endBlock)) {
         return 0; // "StakingInProgress"
       }
     } else {
