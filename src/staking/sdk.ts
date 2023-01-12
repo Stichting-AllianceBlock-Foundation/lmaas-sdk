@@ -1,14 +1,15 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { parseEther } from '@ethersproject/units';
 import { providers } from 'ethers';
+import { parseUnits } from 'ethers/lib/utils';
 
 import {
   CampaingData,
   CampaingStatusData,
   CampaingStatusDataActive,
   checkMaxStakingLimit,
+  getTokenDecimals,
   NetworkEnum,
   UserDataStaking,
 } from '..';
@@ -265,7 +266,9 @@ export class StakerSolo {
       NonCompoundingRewardsPool,
       signerProvider,
     );
-    const amountToStakeParsed = parseEther(amountToStake);
+    const stakingToken = await campaignContract.stakingToken();
+    const tokenDecimals = await getTokenDecimals(signerProvider, stakingToken);
+    const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
     return await campaignContract.stake(amountToStakeParsed);
   }
