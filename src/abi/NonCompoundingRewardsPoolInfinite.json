@@ -787,6 +787,19 @@
                 "internalType": "address",
                 "name": "_recipient",
                 "type": "address"
+            }
+        ],
+        "name": "withdrawExcessRewards",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_recipient",
+                "type": "address"
             },
             {
                 "internalType": "address",

@@ -10,9 +10,12 @@ import {
   formatStakingDuration,
   formatToken,
   formatValuesToString,
+  getAddressFromWallet,
+  getBalance,
   getTokenByPropName,
   getTotalSupply,
   InfiniteStakingInterface,
+  InfiniteStakingState,
   NetworkEnum,
   poolTupleToString,
   Result,
@@ -22,6 +25,7 @@ import {
   year,
 } from '..';
 import LpABI from '../abi/AllianceBlockDexPoolABI.json';
+import NonCompoundingRewardsPoolInfiniteABI from '../abi/NonCompoundingRewardsPoolInfinite.json';
 import { InfiniteStaker } from '../istaking/sdk';
 
 export class InfiniteStakingWrapper {
@@ -59,8 +63,73 @@ export class InfiniteStakingWrapper {
     return this.nonComp.exit(campaign.campaignAddress, userWallet);
   }
 
+  async getCardDataCommon(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
+    const userAddress = await getAddressFromWallet(userWallet);
+    const { campaignTokenAddress } = campaign;
+
+    const userBalance = await getBalance(
+      this.provider as JsonRpcProvider,
+      campaignTokenAddress,
+      userAddress,
+    );
+    const userWalletTokensBalance = await formatToken(
+      this.provider as JsonRpcProvider,
+      userBalance,
+      campaignTokenAddress,
+    );
+
+    const userStakedTokens = await this._getUserStakedTokens(userWallet, campaignTokenAddress);
+    // format tokens
+    const userStakedAmount = await formatToken(
+      this.provider as JsonRpcProvider,
+      userStakedTokens,
+      campaignTokenAddress,
+    );
+
+    const emptyCardData = await this._getCampaignData(campaign);
+
+    // TODO: add user rewards fetcher
+    return {
+      ...emptyCardData,
+      emptyCardData: false,
+      userStakedAmount,
+      userWalletTokensBalance,
+      userRewards: {},
+    };
+  }
+
   async getEmptyCardDataCommon(campaign: InfiniteStakingInterface) {
     return this._getCampaignData(campaign);
+  }
+
+  async getState(
+    userWallet: JsonRpcSigner,
+    campaignAddress: string,
+  ): Promise<InfiniteStakingState> {
+    const state = await this.getDisconnectedState(campaignAddress);
+    const userData = await this.nonComp.getUserData(campaignAddress, userWallet);
+
+    if (userData.userStakedAmount.gt(0)) {
+      return state === InfiniteStakingState.STARTED_WITH_REWARDS
+        ? InfiniteStakingState.STAKED_WITH_REWARDS
+        : InfiniteStakingState.STAKED_WITHOUT_REWARDS;
+    }
+
+    return state;
+  }
+
+  async getDisconnectedState(campaignAddress: string): Promise<InfiniteStakingState> {
+    const { hasCampaignStarted, rewardsDistributing } = await this.nonComp.getCampaignStatus(
+      campaignAddress,
+    );
+
+    if (!hasCampaignStarted) {
+      return InfiniteStakingState.NOT_STARTED;
+    }
+
+    return rewardsDistributing
+      ? InfiniteStakingState.STARTED_WITH_REWARDS
+      : InfiniteStakingState.STARTED_WITHOUT_REWARDS;
   }
 
   async _getCampaignData(campaign: InfiniteStakingInterface) {
@@ -115,6 +184,8 @@ export class InfiniteStakingWrapper {
       deltaDuration,
       campaignRewards: campaignRewardsBN,
       name,
+      campaignStartTimestamp: campaignStartTimestampBN,
+      campaignEndTimestamp: campaignEndTimestampBN,
     } = campaignData;
 
     if (!hasCampaignStarted) {
@@ -133,6 +204,9 @@ export class InfiniteStakingWrapper {
       deltaDuration.toNumber(),
       deltaExpiration.toNumber(),
     );
+
+    const campaignStartTimestamp = campaignStartTimestampBN.toNumber() * 1000;
+    const campaignEndTimestamp = campaignEndTimestampBN.toNumber() * 1000;
 
     const duration = formatStakingDuration(durationMilliseconds);
 
@@ -182,9 +256,10 @@ export class InfiniteStakingWrapper {
 
     return {
       apy,
-      autoCompounding: false,
       campaign: { ...campaign, name, isLpToken },
       contractStakeLimit,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       emptyCardData: true,
       expirationTime,
       duration,
@@ -212,6 +287,17 @@ export class InfiniteStakingWrapper {
       durationDays,
       expirationTime,
     };
+  }
+
+  async _getUserStakedTokens(userWallet: JsonRpcSigner, campaignAddress: string) {
+    const userAddress = await getAddressFromWallet(userWallet);
+    const campaignContract = new Contract(
+      campaignAddress,
+      NonCompoundingRewardsPoolInfiniteABI,
+      userWallet,
+    );
+
+    return campaignContract.balanceOf(userAddress);
   }
 
   async _formatCampaignRewards(rewardsCount: number, campaignRewardsBN: CampaignRewardsNew[]) {

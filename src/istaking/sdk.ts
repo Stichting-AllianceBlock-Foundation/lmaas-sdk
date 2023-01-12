@@ -3,7 +3,12 @@ import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { Contract, providers } from 'ethers';
 
 import NonCompoundingRewardsPoolInfiniteABI from '../abi/NonCompoundingRewardsPoolInfinite.json';
-import { InfiniteCampaignData, InfiniteCampaingStatusData, NetworkEnum } from '../entities';
+import {
+  InfiniteCampaignData,
+  InfiniteCampaingStatusData,
+  NetworkEnum,
+  UserDataIStaking,
+} from '../entities';
 import { checkMaxStakingLimit, parseToken } from '../utils';
 
 /**
@@ -37,7 +42,7 @@ export class InfiniteStaker {
     );
 
     // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now());
+    const now = Math.floor(Date.now() / 1000);
     const nowBN = BigNumber.from(now);
 
     // Get raw contract data
@@ -53,85 +58,29 @@ export class InfiniteStaker {
       name: namePR,
     } = campaignContract;
 
-    // const promiseArray = [
-    //   totalStakedPR(),
-    //   startTimestampPR(),
-    //   endTimestampPR(),
-    //   epochDurationPR(),
-    //   hasStakingStartedPR(),
-    //   contractStakeLimitPR(),
-    //   stakeLimitPR(),
-    //   getRewardTokensCountPR(),
-    //   namePR(),
-    // ];
+    const promiseArray = [
+      totalStakedPR(),
+      startTimestampPR(),
+      endTimestampPR(),
+      epochDurationPR(),
+      hasStakingStartedPR(),
+      contractStakeLimitPR(),
+      stakeLimitPR(),
+      getRewardTokensCountPR(),
+      namePR(),
+    ];
 
-    let totalStaked;
-    let campaignStartTimestamp;
-    let campaignEndTimestamp;
-    let epochDuration;
-    let hasCampaignStarted;
-    let contractStakeLimit;
-    let walletStakeLimit;
-    let rewardsCount;
-    let name;
-
-    try {
-      totalStaked = await totalStakedPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      campaignStartTimestamp = await startTimestampPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      campaignEndTimestamp = await endTimestampPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      epochDuration = await epochDurationPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      hasCampaignStarted = await hasStakingStartedPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      contractStakeLimit = await contractStakeLimitPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      walletStakeLimit = await stakeLimitPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      rewardsCount = await getRewardTokensCountPR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-    try {
-      name = await namePR();
-    } catch (err) {
-      console.error('totalstaked');
-    }
-
-    // const [
-    //   totalStaked,
-    //   campaignStartTimestamp,
-    //   campaignEndTimestamp,
-    //   epochDuration,
-    //   hasCampaignStarted,
-    //   contractStakeLimit,
-    //   walletStakeLimit,
-    //   rewardsCount,
-    //   name,
-    // ] = await Promise.all(promiseArray);
+    const [
+      totalStaked,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
+      epochDuration,
+      hasCampaignStarted,
+      contractStakeLimit,
+      walletStakeLimit,
+      rewardsCount,
+      name,
+    ] = await Promise.all(promiseArray);
 
     const rewardsCountNum = Number(rewardsCount);
 
@@ -206,20 +155,23 @@ export class InfiniteStaker {
     const campaignEndTimestamp = await campaignContract.endTimestamp();
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
 
-    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const currentEpochAssigned = campaignEndTimestamp.gt(nowBN);
 
+    // TODO: add support to show staking info when epoch settings are not updated
+    // Wait for smart contract updates as this can be bugged at the moment
     const tokensCount: BigNumber = await campaignContract.getRewardTokensCount();
 
-    let rewardsDistributing = tokensCount.gt(0) && hasCampaignStarted;
+    const rewardsCanDistribute = tokensCount.gt(0) && hasCampaignStarted;
+    let rewardsDistributing = false;
     for (let index = 0; index < tokensCount.toNumber(); index++) {
       const rewardsPerSecond: BigNumber = await campaignContract.rewardPerSecond(index);
 
-      rewardsDistributing = rewardsDistributing && rewardsPerSecond.gt(0);
+      rewardsDistributing = rewardsCanDistribute && (rewardsDistributing || rewardsPerSecond.gt(0));
     }
 
     return {
       hasCampaignStarted,
-      hasCampaignEnded,
+      currentEpochAssigned,
       rewardsDistributing,
     };
   }
@@ -273,5 +225,53 @@ export class InfiniteStaker {
     const transaction = await campaignContract.exit();
 
     return transaction;
+  }
+
+  /**
+   * Get user data
+   * @public
+   * @param {string} contractAddress - Address of the camapaign contract
+   * @return {UserData} UserData object
+   */
+  public async getUserData(
+    campaignAddress: string,
+    signerProvider: JsonRpcSigner,
+  ): Promise<UserDataIStaking> {
+    const walletAddress = await signerProvider.getAddress();
+
+    // Get now in seconds and convert to BN
+    const now = Math.floor(Date.now() / 1000);
+    const zeroBN = BigNumber.from(0);
+
+    const campaignContract = new Contract(
+      campaignAddress,
+      NonCompoundingRewardsPoolInfiniteABI,
+      signerProvider,
+    );
+
+    const userStakedAmount = await campaignContract.balanceOf(walletAddress);
+    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
+    const userRewards = [];
+
+    if (userStakedAmount.gt(zeroBN)) {
+      for (let i = 0; i < rewardsCount; i++) {
+        const tokenAddress = await campaignContract.rewardsTokens(i);
+        const currentAmount = await campaignContract.getUserAccumulatedReward(
+          walletAddress,
+          i,
+          now,
+        );
+
+        userRewards.push({
+          tokenAddress,
+          currentAmount,
+        });
+      }
+    }
+
+    return {
+      userRewards,
+      userStakedAmount,
+    };
   }
 }

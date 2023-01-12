@@ -67,8 +67,11 @@ export interface CampaingData {
   wrappedNativeToken: string;
 }
 
-export interface InfiniteCampaingStatusData extends CampaingStatusData {
+export interface InfiniteCampaingStatusData {
+  hasCampaignStarted: boolean;
+  currentEpochAssigned: boolean;
   rewardsDistributing: boolean;
+  hasUserStaked?: boolean;
 }
 
 export interface CampaingStatusData {
@@ -96,6 +99,11 @@ export interface UserDataStaking {
   exitTimestamp: bigint;
   exitStake: bigint;
   userStakedAmount: bigint;
+  userRewards: UserRewards[];
+}
+
+export interface UserDataIStaking {
+  userStakedAmount: BigNumber;
   userRewards: UserRewards[];
 }
 
@@ -127,4 +135,12 @@ export interface Reward {
   tokenAmount: string;
   tokenName: string;
   tokenAddress: string;
+}
+
+export enum InfiniteStakingState {
+  NOT_STARTED,
+  STARTED_WITH_REWARDS,
+  STARTED_WITHOUT_REWARDS,
+  STAKED_WITH_REWARDS,
+  STAKED_WITHOUT_REWARDS,
 }
