@@ -65,7 +65,7 @@ export class InfiniteStakingWrapper {
 
   async getCardDataCommon(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
     const userAddress = await getAddressFromWallet(userWallet);
-    const { campaignTokenAddress } = campaign;
+    const { campaignAddress, campaignTokenAddress } = campaign;
 
     const userBalance = await getBalance(
       this.provider as JsonRpcProvider,
@@ -88,10 +88,13 @@ export class InfiniteStakingWrapper {
 
     const emptyCardData = await this._getCampaignData(campaign);
 
+    const state = await this.getState(userWallet, campaignAddress);
+
     // TODO: add user rewards fetcher
     return {
       ...emptyCardData,
       emptyCardData: false,
+      state,
       userStakedAmount,
       userWalletTokensBalance,
       userRewards: {},
@@ -254,6 +257,8 @@ export class InfiniteStakingWrapper {
       address: rewardTokenData.address,
     };
 
+    const state = await this.getDisconnectedState(campaignAddress);
+
     return {
       apy,
       campaign: { ...campaign, name, isLpToken },
@@ -269,6 +274,7 @@ export class InfiniteStakingWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
+      state,
       totalRewards,
       totalStaked,
       totalStakedUSD,
