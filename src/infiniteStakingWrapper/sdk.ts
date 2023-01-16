@@ -5,12 +5,14 @@ import { BigNumber, providers } from 'ethers';
 import { formatEther, formatUnits } from 'ethers/lib/utils';
 
 import {
+  approveToken,
   CampaignRewardsNew,
   CoinGecko,
   formatStakingDuration,
   formatToken,
   formatValuesToString,
   getAddressFromWallet,
+  getAllowance,
   getBalance,
   getTokenByPropName,
   getTotalSupply,
@@ -78,7 +80,7 @@ export class InfiniteStakingWrapper {
       campaignTokenAddress,
     );
 
-    const userStakedTokens = await this._getUserStakedTokens(userWallet, campaignTokenAddress);
+    const userStakedTokens = await this._getUserStakedTokens(userWallet, campaignAddress);
     // format tokens
     const userStakedAmount = await formatToken(
       this.provider as JsonRpcProvider,
@@ -460,5 +462,19 @@ export class InfiniteStakingWrapper {
       );
     }
     return result;
+  }
+
+  async getAllowance(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
+    const { campaignAddress: stakerContractAddress, campaignTokenAddress: stakeTokenAddress } =
+      campaign;
+
+    return getAllowance(userWallet, stakeTokenAddress, stakerContractAddress);
+  }
+
+  async approveToken(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
+    const { campaignAddress: stakerContractAddress, campaignTokenAddress: stakeTokenAddress } =
+      campaign;
+
+    return approveToken(userWallet, stakeTokenAddress, stakerContractAddress);
   }
 }
