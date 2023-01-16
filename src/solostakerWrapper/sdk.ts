@@ -298,8 +298,6 @@ export class SoloStakerWrapper {
       campaignTokenAddress,
     );
 
-    const contractStakeLimitBN = contractStakeLimit;
-
     contractStakeLimit = await formatToken(
       this.provider as JsonRpcProvider,
       contractStakeLimit,
@@ -313,14 +311,12 @@ export class SoloStakerWrapper {
     );
 
     const totalStakedBN = BigNumber.from(parseInt(totalStaked));
-    const zeroBN = BigNumber.from(0);
 
-    const percentageBN =
-      totalStakedBN.gt(zeroBN) && contractStakeLimitBN.gt(zeroBN)
-        ? totalStakedBN.div(contractStakeLimitBN)
-        : zeroBN;
-
-    const percentage = Number(percentageBN.toString()) * 100;
+    // Calculate percentage limit
+    const percentage = this._calculatePercentageLimit(
+      Number(totalStaked),
+      Number(contractStakeLimit),
+    );
 
     const totalStakedUSD = String(Number(totalStakedBN) * Number(stakingTokenPrice));
 
@@ -645,8 +641,6 @@ export class SoloStakerWrapper {
     const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     const hasUserStakeLimit = !checkMaxStakingLimit(stakeLimit);
 
-    const contractStakeLimitBN = contractStakeLimit;
-
     // format tokens
     totalStaked = await formatToken(
       this.provider as JsonRpcProvider,
@@ -665,14 +659,12 @@ export class SoloStakerWrapper {
     );
 
     const totalStakedBN = BigNumber.from(parseInt(totalStaked));
-    const zeroBN = BigNumber.from('0');
 
-    const percentageBN =
-      totalStakedBN.gt(zeroBN) && contractStakeLimitBN.gt(zeroBN)
-        ? totalStakedBN.div(contractStakeLimitBN)
-        : zeroBN;
-
-    const percentage = Number(percentageBN.toString()) * 100;
+    // Calculate percentage limit
+    const percentage = this._calculatePercentageLimit(
+      Number(totalStaked),
+      Number(contractStakeLimit),
+    );
 
     const totalStakedUSD = Number(totalStakedBN) * Number(stakingTokenPrice);
 
