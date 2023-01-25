@@ -104,6 +104,7 @@ export interface UserDataStaking {
 }
 
 export interface UserDataIStaking {
+  userCanExit: boolean;
   userStakedAmount: BigNumber;
   userRewards: UserRewards[];
 }

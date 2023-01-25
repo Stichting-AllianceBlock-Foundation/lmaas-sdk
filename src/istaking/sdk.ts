@@ -254,12 +254,29 @@ export class InfiniteStaker {
       signerProvider,
     );
 
-    const userStakedAmount = await campaignContract.balanceOf(walletAddress);
-    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
+    const {
+      balanceOf: balanceOfPR,
+      userStakedEpoch: userStakedEpochPR,
+      endTimestamp: endTimestampPR,
+      epochCount: epochCountPR,
+      getRewardTokensCount: getRewardTokensCountPR,
+    } = campaignContract;
+    const promiseArray = [
+      balanceOfPR(walletAddress),
+      userStakedEpochPR(walletAddress),
+      endTimestampPR(),
+      epochCountPR(),
+      getRewardTokensCountPR(),
+    ];
+
+    const [userStakedAmount, userStakedEpoch, endTimestamp, epochCount, rewardsCount]: BigNumber[] =
+      await Promise.all(promiseArray);
+    const userCanExit = userStakedEpoch.lt(epochCount) || endTimestamp.lt(now);
+
     const userRewards = [];
 
     if (userStakedAmount.gt(zeroBN)) {
-      for (let i = 0; i < rewardsCount; i++) {
+      for (let i = 0; i < rewardsCount.toNumber(); i++) {
         const tokenAddress = await campaignContract.rewardsTokens(i);
         const currentAmount = await campaignContract.getUserAccumulatedReward(
           walletAddress,
@@ -275,6 +292,7 @@ export class InfiniteStaker {
     }
 
     return {
+      userCanExit,
       userRewards,
       userStakedAmount,
     };

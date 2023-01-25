@@ -89,8 +89,11 @@ export class InfiniteStakingWrapper {
 
     const state = await this.getState(userWallet, campaignAddress);
 
-    const { userStakedAmount: userStakedAmountBN, userRewards } =
-      await this.infiniteStaker.getUserData(campaignAddress, userWallet);
+    const {
+      userStakedAmount: userStakedAmountBN,
+      userRewards,
+      userCanExit,
+    } = await this.infiniteStaker.getUserData(campaignAddress, userWallet);
 
     const userStakedAmount = await formatToken(
       this.provider as JsonRpcProvider,
@@ -104,6 +107,7 @@ export class InfiniteStakingWrapper {
       ...emptyCardData,
       emptyCardData: false,
       state,
+      userCanExit,
       userStakedAmount,
       userWalletTokensBalance,
       rewards,
