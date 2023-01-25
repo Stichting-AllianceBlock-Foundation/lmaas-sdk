@@ -247,24 +247,6 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_staker",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_amount",
-                "type": "uint256"
-            }
-        ],
-        "name": "delegateStake",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [],
         "name": "endTimestamp",
         "outputs": [
@@ -306,19 +288,6 @@
     {
         "inputs": [],
         "name": "exit",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "transferTo",
-                "type": "address"
-            }
-        ],
-        "name": "exitAndTransfer",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -547,25 +516,6 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "name": "receiversWhitelist",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [],
         "name": "renounceOwnership",
         "outputs": [],
@@ -608,24 +558,6 @@
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_receiver",
-                "type": "address"
-            },
-            {
-                "internalType": "bool",
-                "name": "_whitelisted",
-                "type": "bool"
-            }
-        ],
-        "name": "setReceiverWhitelisted",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
     },
     {

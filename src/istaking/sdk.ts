@@ -157,22 +157,27 @@ export class InfiniteStaker {
 
     const currentEpochAssigned = campaignEndTimestamp.gt(nowBN);
 
-    // TODO: add support to show staking info when epoch settings are not updated
-    // Wait for smart contract updates as this can be bugged at the moment
     const tokensCount: BigNumber = await campaignContract.getRewardTokensCount();
+    const epochDuration: BigNumber = await campaignContract.epochDuration();
 
-    const rewardsCanDistribute = tokensCount.gt(0) && hasCampaignStarted;
+    const rewardsCanDistribute = tokensCount.gt(0) && hasCampaignStarted && currentEpochAssigned;
     let rewardsDistributing = false;
+    let unlockedRewards = false;
     for (let index = 0; index < tokensCount.toNumber(); index++) {
       const rewardsPerSecond: BigNumber = await campaignContract.rewardPerSecond(index);
 
-      rewardsDistributing = rewardsCanDistribute && (rewardsDistributing || rewardsPerSecond.gt(0));
+      rewardsDistributing = rewardsCanDistribute || rewardsPerSecond.gt(0);
+
+      const availableBalance: BigNumber = await campaignContract.getAvailableBalance(index);
+
+      unlockedRewards = unlockedRewards || availableBalance.div(epochDuration).gt(0);
     }
 
     return {
       hasCampaignStarted,
       currentEpochAssigned,
       rewardsDistributing,
+      unlockedRewards,
     };
   }
 

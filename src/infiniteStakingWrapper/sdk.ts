@@ -24,28 +24,28 @@ import {
   stableCoinsIds,
   TokenConfigs,
   TokenConfigsProps,
+  UserRewards,
   year,
 } from '..';
 import LpABI from '../abi/AllianceBlockDexPoolABI.json';
-import NonCompoundingRewardsPoolInfiniteABI from '../abi/NonCompoundingRewardsPoolInfinite.json';
 import { InfiniteStaker } from '../istaking/sdk';
 
 export class InfiniteStakingWrapper {
   provider: JsonRpcProvider | JsonRpcBatchProvider;
-  nonComp: InfiniteStaker;
+  infiniteStaker: InfiniteStaker;
   coingecko: CoinGecko;
   tokenConfigs: TokenConfigs;
   protocol: NetworkEnum;
 
   constructor(
     provider: JsonRpcProvider | JsonRpcBatchProvider,
-    nonComp: InfiniteStaker,
+    infiniteStaker: InfiniteStaker,
     coingecko: CoinGecko,
     protocol: NetworkEnum,
     tokenConfigs: TokenConfigs,
   ) {
     this.provider = provider;
-    this.nonComp = nonComp;
+    this.infiniteStaker = infiniteStaker;
     this.coingecko = coingecko;
     this.protocol = protocol;
     this.tokenConfigs = tokenConfigs;
@@ -58,11 +58,16 @@ export class InfiniteStakingWrapper {
   ): Promise<providers.TransactionResponse> {
     const { campaignAddress, campaignTokenAddress } = campaign;
 
-    return this.nonComp.stake(campaignAddress, campaignTokenAddress, amountToStake, userWallet);
+    return this.infiniteStaker.stake(
+      campaignAddress,
+      campaignTokenAddress,
+      amountToStake,
+      userWallet,
+    );
   }
 
   async exit(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
-    return this.nonComp.exit(campaign.campaignAddress, userWallet);
+    return this.infiniteStaker.exit(campaign.campaignAddress, userWallet);
   }
 
   async getCardDataCommon(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
@@ -80,26 +85,28 @@ export class InfiniteStakingWrapper {
       campaignTokenAddress,
     );
 
-    const userStakedTokens = await this._getUserStakedTokens(userWallet, campaignAddress);
-    // format tokens
-    const userStakedAmount = await formatToken(
-      this.provider as JsonRpcProvider,
-      userStakedTokens,
-      campaignTokenAddress,
-    );
-
     const emptyCardData = await this._getCampaignData(campaign);
 
     const state = await this.getState(userWallet, campaignAddress);
 
-    // TODO: add user rewards fetcher
+    const { userStakedAmount: userStakedAmountBN, userRewards } =
+      await this.infiniteStaker.getUserData(campaignAddress, userWallet);
+
+    const userStakedAmount = await formatToken(
+      this.provider as JsonRpcProvider,
+      userStakedAmountBN,
+      campaignTokenAddress,
+    );
+
+    const rewards = this._formatUserRewards(userRewards);
+
     return {
       ...emptyCardData,
       emptyCardData: false,
       state,
       userStakedAmount,
       userWalletTokensBalance,
-      userRewards: {},
+      rewards,
     };
   }
 
@@ -112,11 +119,13 @@ export class InfiniteStakingWrapper {
     campaignAddress: string,
   ): Promise<InfiniteStakingState> {
     const state = await this.getDisconnectedState(campaignAddress);
-    const userData = await this.nonComp.getUserData(campaignAddress, userWallet);
+    const userData = await this.infiniteStaker.getUserData(campaignAddress, userWallet);
 
     if (userData.userStakedAmount.gt(0)) {
       return state === InfiniteStakingState.STARTED_WITH_REWARDS
         ? InfiniteStakingState.STAKED_WITH_REWARDS
+        : state === InfiniteStakingState.STARTED_WITH_UNLOCKED_REWARDS
+        ? InfiniteStakingState.STAKED_WITH_UNLOCKED_REWARDS
         : InfiniteStakingState.STAKED_WITHOUT_REWARDS;
     }
 
@@ -124,9 +133,8 @@ export class InfiniteStakingWrapper {
   }
 
   async getDisconnectedState(campaignAddress: string): Promise<InfiniteStakingState> {
-    const { hasCampaignStarted, rewardsDistributing } = await this.nonComp.getCampaignStatus(
-      campaignAddress,
-    );
+    const { hasCampaignStarted, rewardsDistributing, unlockedRewards } =
+      await this.infiniteStaker.getCampaignStatus(campaignAddress);
 
     if (!hasCampaignStarted) {
       return InfiniteStakingState.NOT_STARTED;
@@ -134,12 +142,14 @@ export class InfiniteStakingWrapper {
 
     return rewardsDistributing
       ? InfiniteStakingState.STARTED_WITH_REWARDS
+      : unlockedRewards
+      ? InfiniteStakingState.STARTED_WITH_UNLOCKED_REWARDS
       : InfiniteStakingState.STARTED_WITHOUT_REWARDS;
   }
 
   async _getCampaignData(campaign: InfiniteStakingInterface) {
     //Get campaign data
-    const { campaignAddress, campaignTokenAddress, rewardsAddresses } = campaign;
+    const { campaignAddress, campaignTokenAddress } = campaign;
 
     // Get tokenInstance
     const tokenLpInstance = new Contract(campaignTokenAddress, LpABI, this.provider);
@@ -176,7 +186,7 @@ export class InfiniteStakingWrapper {
     }
 
     // Get data from new SDK
-    const campaignData = await this.nonComp.getCampaignData(campaignAddress);
+    const campaignData = await this.infiniteStaker.getCampaignData(campaignAddress);
 
     const {
       totalStaked: totalStakedBN,
@@ -191,6 +201,7 @@ export class InfiniteStakingWrapper {
       name,
       campaignStartTimestamp: campaignStartTimestampBN,
       campaignEndTimestamp: campaignEndTimestampBN,
+      rewardsCount,
     } = campaignData;
 
     if (!hasCampaignStarted) {
@@ -216,11 +227,11 @@ export class InfiniteStakingWrapper {
     const duration = formatStakingDuration(durationMilliseconds);
 
     // Format campaign rewards
-    const {
-      campaignRewardsTotal: totalRewards,
-      campaignRewardsWeekly: weeklyRewards,
-      campaignRewardsPerDayUSD,
-    } = await this._formatCampaignRewards(1, campaignRewardsBN);
+    const { campaignRewards, campaignRewardsUSD } = await this._formatCampaignRewards(
+      rewardsCount,
+      campaignRewardsBN,
+    );
+    const campaignRewardsPerDayUSD = (campaignRewardsUSD * 24 * 3600) / deltaDuration.toNumber();
 
     // Calculate percentage limit
     const percentage = this._calculatePercentageLimit(
@@ -248,17 +259,6 @@ export class InfiniteStakingWrapper {
       address: campaignTokenAddress.toLowerCase(),
     };
 
-    //assuming we have only one reward
-    const rewardTokenData = getTokenByPropName(
-      this.tokenConfigs,
-      TokenConfigsProps.ADDRESS,
-      rewardsAddresses[0],
-    );
-    const rewardToken = {
-      symbol: rewardTokenData.symbol,
-      address: rewardTokenData.address,
-    };
-
     const state = await this.getDisconnectedState(campaignAddress);
 
     return {
@@ -267,9 +267,12 @@ export class InfiniteStakingWrapper {
       contractStakeLimit,
       campaignStartTimestamp,
       campaignEndTimestamp,
+      campaignRewards,
       emptyCardData: true,
       expirationTime,
+      expired: expirationTime < 0,
       duration,
+      rawDuration: durationMilliseconds,
       hasContractStakeLimit,
       hasUserStakeLimit,
       hasCampaignStarted,
@@ -277,11 +280,8 @@ export class InfiniteStakingWrapper {
       percentage,
       stakeLimit: walletStakeLimit,
       state,
-      totalRewards,
       totalStaked,
       totalStakedUSD,
-      weeklyRewards,
-      rewardToken,
     };
   }
 
@@ -297,26 +297,33 @@ export class InfiniteStakingWrapper {
     };
   }
 
-  async _getUserStakedTokens(userWallet: JsonRpcSigner, campaignAddress: string) {
-    const userAddress = await getAddressFromWallet(userWallet);
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPoolInfiniteABI,
-      userWallet,
-    );
+  _formatUserRewards(userRewards: UserRewards[]) {
+    const rewards = userRewards.map(r => {
+      const tokenAddress = r.tokenAddress.toLowerCase();
+      const { symbol: tokenName, decimals: tokenDecimals } = getTokenByPropName(
+        this.tokenConfigs,
+        TokenConfigsProps.ADDRESS,
+        tokenAddress,
+      );
+      const tokenAmount = formatUnits(r.currentAmount.toString(), tokenDecimals);
 
-    return campaignContract.balanceOf(userAddress);
+      return {
+        tokenAmount,
+        tokenName,
+        tokenAddress,
+      };
+    });
+
+    return rewards;
   }
 
   async _formatCampaignRewards(rewardsCount: number, campaignRewardsBN: CampaignRewardsNew[]) {
-    const secondsInDay = 86400;
     const secondsInWeek = 604800;
-    const secondsInDayBN = BigNumber.from(secondsInDay);
     const secondsInWeekBN = BigNumber.from(secondsInWeek);
 
-    const weekly = [];
     const total = [];
-    let campaignRewardsPerDayUSD = 0;
+    const weekly = [];
+    let campaignRewardsUSD = 0;
 
     for (let i = 0; i < rewardsCount; i++) {
       const currentReward = campaignRewardsBN[i];
@@ -327,21 +334,15 @@ export class InfiniteStakingWrapper {
         decimals: tokenDecimals,
       } = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
 
-      const tokenAmountTotal = formatUnits(currentReward.totalRewards, tokenDecimals);
-      const rewardPerSecond = currentReward.rewardPerSecond as BigNumber;
-      const tokenAmountDaily = formatUnits(
-        rewardPerSecond.mul(secondsInDayBN).toString(),
-        tokenDecimals,
-      );
-
+      const tokenAmount = formatUnits(currentReward.totalRewards.toString(), tokenDecimals);
       const tokenAmountWeekly = formatUnits(
-        rewardPerSecond.mul(secondsInWeekBN).toString(),
+        BigNumber.from(currentReward.rewardPerSecond).mul(secondsInWeekBN).toString(),
         tokenDecimals,
       );
 
       total.push({
         tokenAddress,
-        tokenAmount: tokenAmountTotal,
+        tokenAmount,
         tokenName,
       });
 
@@ -355,23 +356,18 @@ export class InfiniteStakingWrapper {
       const priceUSD = stableCoinsIds.includes(tokenId)
         ? 1
         : await this.coingecko.getTokenPrice(tokenId, 'usd');
-      const amountUSD = priceUSD * Number(tokenAmountDaily);
-      campaignRewardsPerDayUSD = campaignRewardsPerDayUSD + amountUSD;
+      const amountUSD = priceUSD * Number(tokenAmount);
+      campaignRewardsUSD = campaignRewardsUSD + amountUSD;
     }
 
-    // Adapter for current reward format
-    const campaignRewardsWeekly = {
-      [weekly[0].tokenName]: weekly[0].tokenAmount,
-    };
-
-    const campaignRewardsTotal = {
-      [total[0].tokenName]: total[0].tokenAmount,
+    const campaignRewards = {
+      total,
+      weekly,
     };
 
     return {
-      campaignRewardsTotal,
-      campaignRewardsWeekly,
-      campaignRewardsPerDayUSD,
+      campaignRewards,
+      campaignRewardsUSD,
     };
   }
 
