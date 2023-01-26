@@ -80,7 +80,17 @@ export class InfiniteStaker {
       walletStakeLimit,
       rewardsCount,
       name,
-    ] = await Promise.all(promiseArray);
+    ] = (await Promise.all(promiseArray)) as [
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      boolean,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      string,
+    ];
 
     const rewardsCountNum = Number(rewardsCount);
 
@@ -89,6 +99,7 @@ export class InfiniteStaker {
 
     const campaignRewards = [];
 
+    let rewardsDistributing = rewardsCount.gt(0) && hasCampaignStarted;
     if (hasCampaignStarted) {
       // Get rewards info
       for (let i = 0; i < rewardsCountNum; i++) {
@@ -101,19 +112,13 @@ export class InfiniteStaker {
           rewardPerSecond,
           totalRewards,
         });
+        rewardsDistributing = rewardsDistributing && rewardPerSecond.gt(0);
       }
     }
 
     const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
     const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     const hasWalletStakeLimit = !checkMaxStakingLimit(walletStakeLimit);
-
-    let rewardsDistributing = rewardsCount.gt(0) && hasCampaignStarted;
-    for (let index = 0; index < rewardsCount.toNumber(); index++) {
-      const rewardsPerSecond: BigNumber = await campaignContract.rewardPerSecond(index);
-
-      rewardsDistributing = rewardsDistributing && rewardsPerSecond.gt(0);
-    }
 
     return {
       totalStaked,
@@ -163,14 +168,16 @@ export class InfiniteStaker {
     const rewardsCanDistribute = tokensCount.gt(0) && hasCampaignStarted && currentEpochAssigned;
     let rewardsDistributing = false;
     let unlockedRewards = false;
-    for (let index = 0; index < tokensCount.toNumber(); index++) {
-      const rewardsPerSecond: BigNumber = await campaignContract.rewardPerSecond(index);
+    if (hasCampaignStarted) {
+      for (let index = 0; index < tokensCount.toNumber(); index++) {
+        const rewardsPerSecond: BigNumber = await campaignContract.rewardPerSecond(index);
 
-      rewardsDistributing = rewardsCanDistribute || rewardsPerSecond.gt(0);
+        rewardsDistributing = rewardsCanDistribute || rewardsPerSecond.gt(0);
 
-      const availableBalance: BigNumber = await campaignContract.getAvailableBalance(index);
+        const availableBalance: BigNumber = await campaignContract.getAvailableBalance(index);
 
-      unlockedRewards = unlockedRewards || availableBalance.div(epochDuration).gt(0);
+        unlockedRewards = unlockedRewards || availableBalance.div(epochDuration).gt(0);
+      }
     }
 
     return {
