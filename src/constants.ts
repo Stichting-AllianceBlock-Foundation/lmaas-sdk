@@ -99,7 +99,7 @@ export const dexByNetworkMapping: DexByNetworkMapping = {
       arrakis: {
         routerABI: arrakisRouterABI,
         poolABI: arrakisPoolABI,
-        routerAddress: '0x477E509B9d08862baEb8Ab69e901Ae72b13efcA0',
+        routerAddress: '0xc73fb100a995b33f9fA181d420f4C8D74506dF66',
         interactWithNativeSuffix: 'ETH',
       },
     },

@@ -354,6 +354,16 @@ export class DexWrapper {
       configuredArgs.splice(0, 2, poolAddress);
       configuredArgs.splice(6, 1);
 
+      // calculating the mintedAmount by arrakis vault
+      const { mintAmount } = await poolContract.getMintAmounts(
+        configuredArgs[1],
+        configuredArgs[2],
+      );
+
+      const amountSharesMin = mintAmount.mul(5).div(100); // 0,5% slippage
+
+      configuredArgs.splice(4, 0, amountSharesMin);
+
       const transaction = await routerContract[methodName](...configuredArgs);
 
       return transaction;
