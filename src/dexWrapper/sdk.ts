@@ -340,10 +340,22 @@ export class DexWrapper {
     if (dex === DexEnum.arrakis) {
       const configuredArgs = [...args];
 
+      // this is only an extra step that takes the arrakis router
+      configuredArgs.splice(0, 2, poolAddress);
+
+      // calculating the minAmounts and minMintedAmount by arrakis vault
+      const { amount0, amount1, mintAmount } = await poolContract.getMintAmounts(
+        configuredArgs[1],
+        configuredArgs[2],
+      );
+
+      const amount0Min = amount0.mul(95).div(100);
+      const amount1Min = amount1.mul(95).div(100);
+      const amountSharesMin = mintAmount.mul(98).div(100);
+
       if (action === 'removeLiquidity') {
-        // this is only an extra step that takes the arrakis router
-        configuredArgs.splice(0, 2, poolAddress);
         configuredArgs.splice(5, 1);
+        configuredArgs.splice(2, 2, amount0Min, amount1Min);
 
         const transaction = await routerContract[methodName](...configuredArgs);
 
@@ -351,18 +363,10 @@ export class DexWrapper {
       }
 
       // this is only an extra step that takes the arrakis router
-      configuredArgs.splice(0, 2, poolAddress);
       configuredArgs.splice(6, 1);
 
-      // calculating the mintedAmount by arrakis vault
-      const { mintAmount } = await poolContract.getMintAmounts(
-        configuredArgs[1],
-        configuredArgs[2],
-      );
-
-      const amountSharesMin = mintAmount.mul(5).div(100); // 0,5% slippage
-
-      configuredArgs.splice(4, 0, amountSharesMin);
+      configuredArgs.splice(3, 2, amount0Min, amount1Min);
+      configuredArgs.splice(5, 0, amountSharesMin);
 
       const transaction = await routerContract[methodName](...configuredArgs);
 
