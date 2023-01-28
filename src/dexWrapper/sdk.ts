@@ -1024,7 +1024,7 @@ export class DexWrapper {
 
     const deadline = Math.floor(Date.now() / 1000) + 60 * 60;
 
-    if (tokensArr.some(item => item.isNativeToken)) {
+    if (tokensArr[0].isNativeToken) {
       const minAmountNative = [argsObject['minAmounts'][1], argsObject['minAmounts'][0]];
 
       const args = [
