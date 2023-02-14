@@ -324,6 +324,8 @@ export class DexWrapper {
       nativeToken,
     );
 
+    console.log('tokensArr', tokensArr);
+
     // Check for provide native liquidity
     const methodName = hasNativeToken ? `${action}${interactWithNativeSuffix}` : `${action}`;
 
@@ -345,13 +347,13 @@ export class DexWrapper {
 
       // calculating the minAmounts and minMintedAmount by arrakis vault
       const { amount0, amount1, mintAmount } = await poolContract.getMintAmounts(
-        configuredArgs[1],
-        configuredArgs[2],
+        action === 'addLiquidity' ? configuredArgs[1] : configuredArgs[2],
+        action === 'addLiquidity' ? configuredArgs[2] : configuredArgs[3],
       );
 
       const amount0Min = amount0.mul(95).div(100);
       const amount1Min = amount1.mul(95).div(100);
-      const amountSharesMin = mintAmount.mul(98).div(100);
+      const amountSharesMin = mintAmount.mul(95).div(100);
 
       if (action === 'removeLiquidity') {
         configuredArgs.splice(5, 1);
