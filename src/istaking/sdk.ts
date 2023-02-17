@@ -2,7 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { Contract, providers } from 'ethers';
 
-import NonCompoundingRewardsPoolInfiniteABI from '../abi/NonCompoundingRewardsPoolInfinite.json';
+import { NonCompoundingRewardsPoolInfiniteABI } from '../abi/NonCompoundingRewardsPoolInfinite';
 import {
   InfiniteCampaignData,
   InfiniteCampaingStatusData,
