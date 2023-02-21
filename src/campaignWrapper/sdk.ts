@@ -2,6 +2,7 @@ import { GetWalletClientResult } from '@wagmi/core';
 import { formatEther, formatUnits, parseAbi, PublicClient, WalletClient } from 'viem';
 
 import {
+  accuracy,
   ALBStaker,
   CampaignRewards,
   CampaignRewardsNew,
@@ -17,6 +18,7 @@ import {
   LMInterface,
   NetworkEnum,
   poolTupleToString,
+  PoolVersion,
   Result,
   stableCoinsIds,
   StakerLM,
@@ -71,13 +73,12 @@ export class CampaignWrapper {
     campaignAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
-    isNativeSupported = false,
   ) {
     if (!version || version === '1.0') {
       return this.albStaker.stake(wallet, campaignAddress, lockSchemeAddress, amountToStake);
     }
 
-    return this.lmcStaker.stake(campaignAddress, amountToStake, wallet, isNativeSupported);
+    return this.lmcStaker.stake(campaignAddress, amountToStake, wallet);
   }
 
   public stakeWithTier(
@@ -215,13 +216,14 @@ export class CampaignWrapper {
       campaignAddress,
       provisionTokensAddresses,
       dex,
+      version,
     } = campaign;
 
     // Get tuple & pairs
     const { tuple, pairs } = this._formatTuplePairs(provisionTokensAddresses);
 
     // Get data from new SDK
-    const campaignData = await this.lmcStaker.getCampaignData(campaignAddress);
+    const campaignData = await this.lmcStaker.getCampaignData(campaignAddress, version);
 
     const {
       deltaDuration,
@@ -254,6 +256,7 @@ export class CampaignWrapper {
     const { campaignRewardsUSD, campaignRewards } = await this._formatCampaignRewards(
       rewardsCount,
       campaignRewardsBN,
+      campaign.version,
     );
 
     // Get total staked in USD
@@ -431,6 +434,7 @@ export class CampaignWrapper {
       provisionTokensAddresses,
       dex,
       network,
+      version,
     } = campaign;
 
     // Get tuple & pairs
@@ -442,7 +446,7 @@ export class CampaignWrapper {
     const LPTokens = formatEther(await this._getPoolBalance(wallet, poolAddress, dex));
 
     // Get data from new SDK
-    const campaignData = await this.lmcStaker.getCampaignData(campaignAddress);
+    const campaignData = await this.lmcStaker.getCampaignData(campaignAddress, version);
     const userData: UserDataLM = await this.lmcStaker.getUserData(campaignAddress, wallet);
 
     const {
@@ -460,7 +464,6 @@ export class CampaignWrapper {
       campaignStartTimestamp,
       campaignEndTimestamp,
       name,
-      wrappedNativeToken,
     } = campaignData;
 
     const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
@@ -489,6 +492,7 @@ export class CampaignWrapper {
     const { campaignRewards, campaignRewardsUSD } = await this._formatCampaignRewards(
       rewardsCount,
       campaignRewardsBN,
+      campaign.version,
     );
 
     // Format user rewards
@@ -515,7 +519,6 @@ export class CampaignWrapper {
         name,
         campaignStart: Number(campaignStartTimestamp),
         campaignEnd: Number(campaignEndTimestamp),
-        wrappedNativeToken,
       },
       contractStakeLimit,
       dex,
@@ -783,6 +786,7 @@ export class CampaignWrapper {
   private async _formatCampaignRewards(
     rewardsCount: bigint,
     campaignRewardsBN: CampaignRewardsNew[],
+    version?: PoolVersion,
   ) {
     const secondsInWeek = 604800n;
 
@@ -798,10 +802,9 @@ export class CampaignWrapper {
         coinGeckoID: tokenId,
         decimals: tokenDecimals,
       } = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
-
       const tokenAmount = formatUnits(currentReward.totalRewards, tokenDecimals);
       const tokenAmountWeekly = formatUnits(
-        currentReward.rewardPerSecond * secondsInWeek,
+        (currentReward.rewardPerSecond * secondsInWeek) / (version === '4.0' ? accuracy : 1n),
         tokenDecimals,
       );
 

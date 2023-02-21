@@ -1,6 +1,7 @@
 import { getContract, parseUnits, PublicClient, WalletClient } from 'viem';
 
 import {
+  accuracy,
   CampaingData,
   CampaingStatusData,
   CampaingStatusDataActive,
@@ -8,6 +9,7 @@ import {
   getAddressFromWallet,
   getTokenDecimals,
   NetworkEnum,
+  PoolVersion,
   UserDataStaking,
 } from '..';
 import { NonCompoundingRewardsPoolABI } from '../abi/NonCompoundingRewardsPool';
@@ -34,7 +36,10 @@ export class StakerSolo {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {CampaingData} CampaingData object
    */
-  public async getCampaignData(campaignAddress: string): Promise<CampaingData> {
+  public async getCampaignData(
+    campaignAddress: string,
+    version: PoolVersion,
+  ): Promise<CampaingData> {
     const campaignContract = getContract({
       abi: NonCompoundingRewardsPoolABI,
       address: campaignAddress as `0x${string}`,
@@ -54,20 +59,7 @@ export class StakerSolo {
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
-      wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract.read;
-
-    let wrappedNativeToken: string = '';
-
-    /*
-     @REMOVE this when the version of the pool is fixed.
-     Some saving, because there are pools already deployed of v2.
-    */
-    try {
-      wrappedNativeToken = await wrappedNativeTokenPR();
-    } catch (e) {
-      console.error(e);
-    }
 
     const name = await namePR();
     const hasCampaignStarted = await hasStakingStartedPR();
@@ -103,7 +95,8 @@ export class StakerSolo {
       for (let i = 0n; i < rewardsCount; i++) {
         const tokenAddress = await campaignContract.read.rewardsTokens([i]);
         const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
-        const totalRewards = rewardPerSecond * deltaDuration;
+        const totalRewards =
+          (rewardPerSecond * deltaDuration) / (version === '4.0' ? accuracy : 1n);
 
         campaignRewards.push({
           tokenAddress,
@@ -132,7 +125,6 @@ export class StakerSolo {
       campaignRewards,
       rewardsCount,
       name,
-      wrappedNativeToken,
     };
   }
 
@@ -301,7 +293,6 @@ export class StakerSolo {
     contractAddress: string,
     amountToStake: string,
     wallet: WalletClient,
-    isNativeSupported: boolean,
   ): Promise<`0x${string}`> {
     const stakingToken = await this.provider.readContract({
       abi: NonCompoundingRewardsPoolABI,
@@ -312,18 +303,6 @@ export class StakerSolo {
     const walletAddress = await getAddressFromWallet(wallet);
     const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
-
-    if (isNativeSupported) {
-      const { request } = await this.provider.simulateContract({
-        abi: NonCompoundingRewardsPoolABI,
-        address: contractAddress as `0x${string}`,
-        functionName: 'stakeNative',
-        value: amountToStakeParsed,
-        account: walletAddress,
-      });
-
-      return await wallet.writeContract(request);
-    }
 
     const { request } = await this.provider.simulateContract({
       abi: NonCompoundingRewardsPoolABI,

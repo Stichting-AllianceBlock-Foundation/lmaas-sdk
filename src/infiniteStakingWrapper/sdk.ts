@@ -1,10 +1,8 @@
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { BigNumber as BigNumberJS } from 'bignumber.js';
-import { BigNumber, providers } from 'ethers';
-import { formatEther, formatUnits } from 'ethers/lib/utils';
+import Decimal from 'decimal.js';
+import { formatEther, formatUnits, PublicClient, WalletClient } from 'viem';
 
 import {
+  accuracy,
   approveToken,
   CampaignRewardsNew,
   CoinGecko,
@@ -20,6 +18,7 @@ import {
   InfiniteStakingState,
   NetworkEnum,
   poolTupleToString,
+  PoolVersion,
   Result,
   stableCoinsIds,
   TokenConfigs,
@@ -27,18 +26,18 @@ import {
   UserRewards,
   year,
 } from '..';
-import LpABI from '../abi/AllianceBlockDexPoolABI.json';
+import { AbPoolABI } from '../abi/AllianceBlockDexPoolABI';
 import { InfiniteStaker } from '../istaking/sdk';
 
 export class InfiniteStakingWrapper {
-  provider: JsonRpcProvider | JsonRpcBatchProvider;
+  provider: PublicClient;
   infiniteStaker: InfiniteStaker;
   coingecko: CoinGecko;
   tokenConfigs: TokenConfigs;
   protocol: NetworkEnum;
 
   constructor(
-    provider: JsonRpcProvider | JsonRpcBatchProvider,
+    provider: PublicClient,
     infiniteStaker: InfiniteStaker,
     coingecko: CoinGecko,
     protocol: NetworkEnum,
@@ -52,53 +51,48 @@ export class InfiniteStakingWrapper {
   }
 
   async stake(
-    userWallet: JsonRpcSigner,
+    wallet: WalletClient,
     campaign: InfiniteStakingInterface,
     amountToStake: string,
-  ): Promise<providers.TransactionResponse> {
+  ): Promise<`0x${string}`> {
     const { campaignAddress, campaignTokenAddress } = campaign;
 
-    return this.infiniteStaker.stake(
-      campaignAddress,
-      campaignTokenAddress,
-      amountToStake,
-      userWallet,
-    );
+    return this.infiniteStaker.stake(campaignAddress, campaignTokenAddress, amountToStake, wallet);
   }
 
-  async exit(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
-    return this.infiniteStaker.exit(campaign.campaignAddress, userWallet);
+  async exit(wallet: WalletClient, campaign: InfiniteStakingInterface) {
+    return this.infiniteStaker.exit(campaign.campaignAddress, wallet);
   }
 
-  async getCardDataCommon(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
-    const userAddress = await getAddressFromWallet(userWallet);
+  async getCardDataCommon(wallet: WalletClient, campaign: InfiniteStakingInterface) {
+    const walletAddress = await getAddressFromWallet(wallet);
     const { campaignAddress, campaignTokenAddress } = campaign;
 
     const userBalance = await getBalance(
-      this.provider as JsonRpcProvider,
-      campaignTokenAddress,
-      userAddress,
+      this.provider,
+      campaignTokenAddress as `0x${string}`,
+      walletAddress,
     );
     const userWalletTokensBalance = await formatToken(
-      this.provider as JsonRpcProvider,
+      this.provider,
       userBalance,
-      campaignTokenAddress,
+      campaignTokenAddress as `0x${string}`,
     );
 
     const emptyCardData = await this._getCampaignData(campaign);
 
-    const state = await this.getState(userWallet, campaignAddress);
+    const state = await this.getState(wallet, campaignAddress);
 
     const {
       userStakedAmount: userStakedAmountBN,
       userRewards,
       userCanExit,
-    } = await this.infiniteStaker.getUserData(campaignAddress, userWallet);
+    } = await this.infiniteStaker.getUserData(campaignAddress, wallet);
 
     const userStakedAmount = await formatToken(
-      this.provider as JsonRpcProvider,
+      this.provider,
       userStakedAmountBN,
-      campaignTokenAddress,
+      campaignTokenAddress as `0x${string}`,
     );
 
     const rewards = this._formatUserRewards(userRewards);
@@ -118,14 +112,11 @@ export class InfiniteStakingWrapper {
     return this._getCampaignData(campaign);
   }
 
-  async getState(
-    userWallet: JsonRpcSigner,
-    campaignAddress: string,
-  ): Promise<InfiniteStakingState> {
+  async getState(wallet: WalletClient, campaignAddress: string): Promise<InfiniteStakingState> {
     const state = await this.getDisconnectedState(campaignAddress);
-    const userData = await this.infiniteStaker.getUserData(campaignAddress, userWallet);
+    const userData = await this.infiniteStaker.getUserData(campaignAddress, wallet);
 
-    if (userData.userStakedAmount.gt(0)) {
+    if (userData.userStakedAmount > 0n) {
       return state === InfiniteStakingState.STARTED_WITH_REWARDS
         ? InfiniteStakingState.STAKED_WITH_REWARDS
         : state === InfiniteStakingState.STARTED_WITH_UNLOCKED_REWARDS
@@ -156,7 +147,6 @@ export class InfiniteStakingWrapper {
     const { campaignAddress, campaignTokenAddress } = campaign;
 
     // Get tokenInstance
-    const tokenLpInstance = new Contract(campaignTokenAddress, LpABI, this.provider);
 
     // If this is a liquidity provider, then try to get the function getReservers()
     let isLpToken: boolean = false;
@@ -164,8 +154,16 @@ export class InfiniteStakingWrapper {
     let token1: string = '';
 
     try {
-      token0 = await tokenLpInstance.token0();
-      token1 = await tokenLpInstance.token1();
+      token0 = await this.provider.readContract({
+        abi: AbPoolABI,
+        address: campaignTokenAddress as `0x${string}`,
+        functionName: 'token0',
+      });
+      token1 = await this.provider.readContract({
+        abi: AbPoolABI,
+        address: campaignTokenAddress as `0x${string}`,
+        functionName: 'token1',
+      });
 
       isLpToken = true;
     } catch (error) {}
@@ -221,12 +219,12 @@ export class InfiniteStakingWrapper {
 
     // Format durations
     const { duration: durationMilliseconds, expirationTime } = this._formatDurationExpiration(
-      deltaDuration.toNumber(),
-      deltaExpiration.toNumber(),
+      Number(deltaDuration),
+      Number(deltaExpiration),
     );
 
-    const campaignStartTimestamp = campaignStartTimestampBN.toNumber() * 1000;
-    const campaignEndTimestamp = campaignEndTimestampBN.toNumber() * 1000;
+    const campaignStartTimestamp = campaignStartTimestampBN * 1000n;
+    const campaignEndTimestamp = campaignEndTimestampBN * 1000n;
 
     const duration = formatStakingDuration(durationMilliseconds);
 
@@ -235,13 +233,11 @@ export class InfiniteStakingWrapper {
       rewardsCount,
       campaignRewardsBN,
     );
-    const campaignRewardsPerDayUSD = (campaignRewardsUSD * 24 * 3600) / deltaDuration.toNumber();
+
+    const campaignRewardsPerDayUSD = (campaignRewardsUSD * 24 * 3600) / Number(deltaDuration);
 
     // Calculate percentage limit
-    const percentage = this._calculatePercentageLimit(
-      Number(totalStaked),
-      Number(contractStakeLimit),
-    );
+    const percentage = this._calculatePercentageLimit(totalStaked, contractStakeLimit);
 
     // Get data for APY calculation
     let totalStakedUSD = Number(totalStaked) * stakingTokenPrice;
@@ -251,7 +247,6 @@ export class InfiniteStakingWrapper {
         campaignTokenAddress,
         [token0, token1],
         Number(totalStaked),
-        tokenLpInstance,
       );
     }
 
@@ -309,7 +304,7 @@ export class InfiniteStakingWrapper {
         TokenConfigsProps.ADDRESS,
         tokenAddress,
       );
-      const tokenAmount = formatUnits(r.currentAmount.toString(), tokenDecimals);
+      const tokenAmount = formatUnits(r.currentAmount, tokenDecimals);
 
       return {
         tokenAmount,
@@ -321,9 +316,12 @@ export class InfiniteStakingWrapper {
     return rewards;
   }
 
-  async _formatCampaignRewards(rewardsCount: number, campaignRewardsBN: CampaignRewardsNew[]) {
-    const secondsInWeek = 604800;
-    const secondsInWeekBN = BigNumber.from(secondsInWeek);
+  async _formatCampaignRewards(
+    rewardsCount: bigint,
+    campaignRewardsBN: CampaignRewardsNew[],
+    version?: PoolVersion,
+  ) {
+    const secondsInWeek = 604800n;
 
     const total = [];
     const weekly = [];
@@ -338,9 +336,9 @@ export class InfiniteStakingWrapper {
         decimals: tokenDecimals,
       } = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
 
-      const tokenAmount = formatUnits(currentReward.totalRewards.toString(), tokenDecimals);
+      const tokenAmount = formatUnits(currentReward.totalRewards, tokenDecimals);
       const tokenAmountWeekly = formatUnits(
-        BigNumber.from(currentReward.rewardPerSecond).mul(secondsInWeekBN).toString(),
+        (currentReward.rewardPerSecond / (version === '4.0' ? accuracy : 1n)) * secondsInWeek,
         tokenDecimals,
       );
 
@@ -375,10 +373,10 @@ export class InfiniteStakingWrapper {
     };
   }
 
-  _calculatePercentageLimit(totalStaked: number, contractStakeLimit: number) {
-    const zeroBN = new BigNumberJS(0);
-    const totalStakedBigNumber = new BigNumberJS(totalStaked);
-    const contractStakeLimitBigNumber = new BigNumberJS(contractStakeLimit);
+  _calculatePercentageLimit(totalStaked: string, contractStakeLimit: string) {
+    const zeroBN = new Decimal(0);
+    const totalStakedBigNumber = new Decimal(totalStaked);
+    const contractStakeLimitBigNumber = new Decimal(contractStakeLimit);
 
     const percentageBigNumber =
       totalStakedBigNumber.gt(zeroBN) && contractStakeLimitBigNumber.gt(zeroBN)
@@ -396,16 +394,14 @@ export class InfiniteStakingWrapper {
     poolAddress: string,
     provisionTokensAddresses: string[],
     totalStaked: number,
-    poolContract: Contract,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await getTotalSupply(this.provider as JsonRpcProvider, poolAddress);
-    const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
+    const liquidityPoolSupply = await getTotalSupply(this.provider, poolAddress as `0x${string}`);
+    const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply));
 
     const reservesBalances = await this.getPoolReserveBalances(
       poolAddress,
       provisionTokensAddresses,
-      poolContract,
     );
 
     const stakedRatio = totalStaked / liquidityPoolSupplyFormated;
@@ -433,19 +429,27 @@ export class InfiniteStakingWrapper {
   async getPoolReserveBalances(
     poolAddress: string,
     provisionTokensAddresses: string[],
-    poolContract: Contract,
   ): Promise<Result> {
-    const reserves = await poolContract.getReserves();
+    const reserves = await this.provider.readContract({
+      abi: AbPoolABI,
+      address: poolAddress as `0x${string}`,
+      functionName: 'getReserves',
+    });
+
     const tokenNames = provisionTokensAddresses.map(
       tokenAddress =>
         getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress.toLowerCase())
           .symbol,
     );
 
-    const totalSupply = await poolContract.totalSupply();
+    const totalSupply = await this.provider.readContract({
+      abi: AbPoolABI,
+      address: poolAddress as `0x${string}`,
+      functionName: 'totalSupply',
+    });
     const pool = poolTupleToString(tokenNames);
     const result: Result = {};
-    result[pool] = await formatToken(this.provider as JsonRpcProvider, totalSupply, poolAddress);
+    result[pool] = await formatToken(this.provider, totalSupply, poolAddress as `0x${string}`);
 
     for (let index = 0; index < tokenNames.length; index++) {
       const tokenName = tokenNames[index];
@@ -455,26 +459,32 @@ export class InfiniteStakingWrapper {
         tokenName,
       ).address;
 
-      result[tokenName] = await formatToken(
-        this.provider as JsonRpcProvider,
-        reserves[index],
-        tokenAddress,
-      );
+      result[tokenName] = await formatToken(this.provider, reserves[index], tokenAddress);
     }
     return result;
   }
 
-  async getAllowance(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
+  async getAllowance(wallet: WalletClient, campaign: InfiniteStakingInterface) {
     const { campaignAddress: stakerContractAddress, campaignTokenAddress: stakeTokenAddress } =
       campaign;
 
-    return getAllowance(userWallet, stakeTokenAddress, stakerContractAddress);
+    return getAllowance(
+      wallet,
+      this.provider,
+      stakeTokenAddress as `0x${string}`,
+      stakerContractAddress as `0x${string}`,
+    );
   }
 
-  async approveToken(userWallet: JsonRpcSigner, campaign: InfiniteStakingInterface) {
+  async approveToken(wallet: WalletClient, campaign: InfiniteStakingInterface) {
     const { campaignAddress: stakerContractAddress, campaignTokenAddress: stakeTokenAddress } =
       campaign;
 
-    return approveToken(userWallet, stakeTokenAddress, stakerContractAddress);
+    return approveToken(
+      wallet,
+      this.provider,
+      stakeTokenAddress as `0x${string}`,
+      stakerContractAddress as `0x${string}`,
+    );
   }
 }

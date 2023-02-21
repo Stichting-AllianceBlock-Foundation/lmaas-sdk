@@ -1,5 +1,7 @@
 import { DexEnum, NetworkEnum } from '..';
 
+export type PoolVersion = '1.0' | '2.0' | '3.0' | '4.0';
+
 export interface LMInterface {
   network: NetworkEnum;
   campaignAddress: string;
@@ -8,7 +10,7 @@ export interface LMInterface {
   provisionTokensAddresses: string[];
   rewardsAddresses: string[];
   lockSchemeAddress?: string;
-  version: string;
+  version: PoolVersion;
   routerAddress?: string;
   campaignMessage?: string;
   campaignStart?: number;
@@ -23,13 +25,12 @@ export interface StakingInterface {
   rewardsAddresses: string[];
   compounding: boolean;
   period: string;
-  version: string;
+  version: PoolVersion;
   campaignMessage?: string;
   campaignStart?: number;
   campaignEnd?: number;
   name?: string;
   isLpToken: boolean;
-  wrappedNativeToken: string;
   isNativeSupported: boolean;
 }
 
@@ -39,7 +40,7 @@ export interface InfiniteStakingInterface {
   campaignTokenAddress: string;
   rewardsAddresses: string[];
   compounding: boolean;
-  version: string;
+  version: PoolVersion;
   campaignMessage?: string;
   name?: string;
   isLpToken: boolean;
@@ -64,7 +65,6 @@ export interface CampaingData {
   campaignRewards: CampaignRewardsNew[];
   rewardsCount: bigint;
   name: string;
-  wrappedNativeToken: string;
 }
 
 export interface InfiniteCampaingStatusData {
@@ -105,7 +105,7 @@ export interface UserDataStaking {
 
 export interface UserDataIStaking {
   userCanExit: boolean;
-  userStakedAmount: BigNumber;
+  userStakedAmount: bigint;
   userRewards: UserRewards[];
 }
 

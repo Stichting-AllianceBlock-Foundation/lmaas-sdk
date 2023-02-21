@@ -1,29 +1,29 @@
-import { BigNumber } from '@ethersproject/bignumber';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { Contract, providers } from 'ethers';
+import { getContract, PublicClient, WalletClient } from 'viem';
 
+import { accuracy, getAddressFromWallet } from '..';
 import { NonCompoundingRewardsPoolInfiniteABI } from '../abi/NonCompoundingRewardsPoolInfinite';
 import {
   InfiniteCampaignData,
   InfiniteCampaingStatusData,
   NetworkEnum,
+  PoolVersion,
   UserDataIStaking,
 } from '../entities';
-import { checkMaxStakingLimit, parseToken } from '../utils';
+import { checkMaxStakingLimit, getTokenDecimals, parseToken } from '../utils';
 
 /**
  *  Represents a class that can interact with infiniteStaking campaigns
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider with the global interaction.
+ *  @param {PublicClient} provider - Provider with the global interaction.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 
 export class InfiniteStaker {
   protected protocol: NetworkEnum;
-  protected provider: JsonRpcProvider;
+  protected provider: PublicClient;
 
-  constructor(provider: JsonRpcProvider, protocol: NetworkEnum) {
+  constructor(provider: PublicClient, protocol: NetworkEnum) {
     this.provider = provider;
     this.protocol = protocol;
   }
@@ -35,15 +35,13 @@ export class InfiniteStaker {
    * @return {CampaingData} CampaingData object
    */
   public async getCampaignData(campaignAddress: string): Promise<InfiniteCampaignData> {
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPoolInfiniteABI,
-      this.provider,
-    );
+    const campaignContract = getContract({
+      abi: NonCompoundingRewardsPoolInfiniteABI,
+      address: campaignAddress as `0x${string}`,
+      publicClient: this.provider,
+    });
 
-    // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now() / 1000);
-    const nowBN = BigNumber.from(now);
+    const now = BigInt(Math.floor(Date.now() / 1000));
 
     // Get raw contract data
     const {
@@ -56,19 +54,7 @@ export class InfiniteStaker {
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
-    } = campaignContract;
-
-    const promiseArray = [
-      totalStakedPR(),
-      startTimestampPR(),
-      endTimestampPR(),
-      epochDurationPR(),
-      hasStakingStartedPR(),
-      contractStakeLimitPR(),
-      stakeLimitPR(),
-      getRewardTokensCountPR(),
-      namePR(),
-    ];
+    } = campaignContract.read;
 
     const [
       totalStaked,
@@ -80,43 +66,42 @@ export class InfiniteStaker {
       walletStakeLimit,
       rewardsCount,
       name,
-    ] = (await Promise.all(promiseArray)) as [
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      boolean,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      string,
-    ];
-
-    const rewardsCountNum = Number(rewardsCount);
+    ] = await Promise.all([
+      totalStakedPR(),
+      startTimestampPR(),
+      endTimestampPR(),
+      epochDurationPR(),
+      hasStakingStartedPR(),
+      contractStakeLimitPR(),
+      stakeLimitPR(),
+      getRewardTokensCountPR(),
+      namePR(),
+    ]);
 
     // Get deltas in seconds
-    const deltaEpochEnd = campaignEndTimestamp.sub(nowBN);
+    const deltaEpochEnd = campaignEndTimestamp - now;
 
     const campaignRewards = [];
 
-    let rewardsDistributing = rewardsCount.gt(0) && hasCampaignStarted;
+    let rewardsDistributing = rewardsCount > 0n && hasCampaignStarted;
     if (hasCampaignStarted) {
       // Get rewards info
-      for (let i = 0; i < rewardsCountNum; i++) {
-        const tokenAddress = await campaignContract.rewardsTokens(i);
-        const rewardPerSecond = await campaignContract.rewardPerSecond(i);
-        const totalRewards = rewardPerSecond.mul(epochDuration);
+      for (let i = 0n; i < rewardsCount; i++) {
+        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
+        const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
+        const totalRewards = (rewardPerSecond * epochDuration) / accuracy;
 
         campaignRewards.push({
           tokenAddress,
           rewardPerSecond,
           totalRewards,
         });
-        rewardsDistributing = rewardsDistributing && rewardPerSecond.gt(0);
+
+        rewardsDistributing = rewardsDistributing && rewardPerSecond > 0n;
       }
     }
 
-    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const hasCampaignEnded = campaignEndTimestamp < now;
     const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     const hasWalletStakeLimit = !checkMaxStakingLimit(walletStakeLimit);
 
@@ -133,7 +118,7 @@ export class InfiniteStaker {
       deltaExpiration: deltaEpochEnd,
       deltaDuration: epochDuration,
       campaignRewards,
-      rewardsCount: rewardsCountNum,
+      rewardsCount,
       rewardsDistributing,
       name,
     };
@@ -146,37 +131,37 @@ export class InfiniteStaker {
    * @return {CampaingStatusData} CampaingStatusData object
    */
   public async getCampaignStatus(campaignAddress: string): Promise<InfiniteCampaingStatusData> {
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPoolInfiniteABI,
-      this.provider,
-    );
+    const campaignContract = getContract({
+      abi: NonCompoundingRewardsPoolInfiniteABI,
+      address: campaignAddress as `0x${string}`,
+      publicClient: this.provider,
+    });
 
     // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now() / 1000);
-    const nowBN = BigNumber.from(now);
+    const now = BigInt(Math.floor(Date.now() / 1000));
 
     // Get raw contract data
-    const campaignEndTimestamp = await campaignContract.endTimestamp();
-    const hasCampaignStarted = await campaignContract.hasStakingStarted();
+    const campaignEndTimestamp = await campaignContract.read.endTimestamp();
+    const hasCampaignStarted = await campaignContract.read.hasStakingStarted();
 
-    const currentEpochAssigned = campaignEndTimestamp.gt(nowBN);
+    const currentEpochAssigned = campaignEndTimestamp > now;
 
-    const tokensCount: BigNumber = await campaignContract.getRewardTokensCount();
-    const epochDuration: BigNumber = await campaignContract.epochDuration();
+    const tokensCount = await campaignContract.read.getRewardTokensCount();
+    const epochDuration = await campaignContract.read.epochDuration();
 
-    const rewardsCanDistribute = tokensCount.gt(0) && hasCampaignStarted && currentEpochAssigned;
+    const rewardsCanDistribute = tokensCount > 0n && hasCampaignStarted && currentEpochAssigned;
     let rewardsDistributing = false;
     let unlockedRewards = false;
+
     if (hasCampaignStarted) {
-      for (let index = 0; index < tokensCount.toNumber(); index++) {
-        const rewardsPerSecond: BigNumber = await campaignContract.rewardPerSecond(index);
+      for (let i = 0n; i < tokensCount; i++) {
+        const rewardsPerSecond = await campaignContract.read.rewardPerSecond([i]);
 
-        rewardsDistributing = rewardsCanDistribute || rewardsPerSecond.gt(0);
+        rewardsDistributing = rewardsCanDistribute || rewardsPerSecond > 0n;
 
-        const availableBalance: BigNumber = await campaignContract.getAvailableBalance(index);
+        const availableBalance = await campaignContract.read.getAvailableBalance([i]);
 
-        unlockedRewards = unlockedRewards || availableBalance.div(epochDuration).gt(0);
+        unlockedRewards = unlockedRewards || availableBalance / epochDuration > 0n;
       }
     }
 
@@ -193,50 +178,50 @@ export class InfiniteStaker {
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @param {string} amountToStake - Amount to stake
-   * @return {object} transaction object
+   * @return {string} transaction has
    */
   public async stake(
     contractAddress: string,
     stakeTokenAddress: string,
     amountToStake: string,
-    signerProvider: JsonRpcSigner,
-  ): Promise<providers.TransactionResponse> {
-    const campaignContract = new Contract(
-      contractAddress,
-      NonCompoundingRewardsPoolInfiniteABI,
-      signerProvider,
-    );
+    wallet: WalletClient,
+  ): Promise<`0x${string}`> {
+    const walletAddress = await getAddressFromWallet(wallet);
 
-    const stakeTokenAmountInBN = await parseToken(
-      this.provider as JsonRpcProvider,
+    const amountToStakeParsed = await parseToken(
+      this.provider,
       amountToStake,
-      stakeTokenAddress,
+      stakeTokenAddress as `0x${string}`,
     );
 
-    const transaction = await campaignContract.stake(stakeTokenAmountInBN);
+    const { request } = await this.provider.simulateContract({
+      abi: NonCompoundingRewardsPoolInfiniteABI,
+      address: contractAddress as `0x${string}`,
+      functionName: 'stake',
+      args: [amountToStakeParsed],
+      account: walletAddress,
+    });
 
-    return transaction;
+    return await wallet.writeContract(request);
   }
 
   /**
    * Exit from campaign
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
-   * @return {object} transaction object
+   * @return {string} transaction has
    */
-  public async exit(
-    contractAddress: string,
-    signerProvider: JsonRpcSigner,
-  ): Promise<providers.TransactionResponse> {
-    const campaignContract = new Contract(
-      contractAddress,
-      NonCompoundingRewardsPoolInfiniteABI,
-      signerProvider,
-    );
+  public async exit(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
+    const walletAddress = await getAddressFromWallet(wallet);
 
-    const transaction = await campaignContract.exit();
+    const { request } = await this.provider.simulateContract({
+      abi: NonCompoundingRewardsPoolInfiniteABI,
+      address: contractAddress as `0x${string}`,
+      functionName: 'exit',
+      account: walletAddress,
+    });
 
-    return transaction;
+    return await wallet.writeContract(request);
   }
 
   /**
@@ -247,19 +232,19 @@ export class InfiniteStaker {
    */
   public async getUserData(
     campaignAddress: string,
-    signerProvider: JsonRpcSigner,
+    wallet: WalletClient,
+    version?: PoolVersion,
   ): Promise<UserDataIStaking> {
-    const walletAddress = await signerProvider.getAddress();
+    const walletAddress = await getAddressFromWallet(wallet);
 
     // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now() / 1000);
-    const zeroBN = BigNumber.from(0);
+    const now = BigInt(Math.floor(Date.now() / 1000));
 
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPoolInfiniteABI,
-      signerProvider,
-    );
+    const campaignContract = getContract({
+      abi: NonCompoundingRewardsPoolInfiniteABI,
+      address: campaignAddress as `0x${string}`,
+      publicClient: this.provider,
+    });
 
     const {
       balanceOf: balanceOfPR,
@@ -267,29 +252,35 @@ export class InfiniteStaker {
       endTimestamp: endTimestampPR,
       epochCount: epochCountPR,
       getRewardTokensCount: getRewardTokensCountPR,
-    } = campaignContract;
-    const promiseArray = [
-      balanceOfPR(walletAddress),
-      userStakedEpochPR(walletAddress),
-      endTimestampPR(),
-      epochCountPR(),
-      getRewardTokensCountPR(),
-    ];
+    } = campaignContract.read;
 
-    const [userStakedAmount, userStakedEpoch, endTimestamp, epochCount, rewardsCount]: BigNumber[] =
-      await Promise.all(promiseArray);
-    const userCanExit = userStakedEpoch.lt(epochCount) || endTimestamp.lt(now);
+    const [userStakedAmount, userStakedEpoch, endTimestamp, epochCount, rewardsCount] =
+      await Promise.all([
+        balanceOfPR([walletAddress]),
+        userStakedEpochPR([walletAddress]),
+        endTimestampPR(),
+        epochCountPR(),
+        getRewardTokensCountPR(),
+      ]);
+
+    const userCanExit = userStakedEpoch < epochCount || endTimestamp < now;
 
     const userRewards = [];
 
-    if (userStakedAmount.gt(zeroBN)) {
-      for (let i = 0; i < rewardsCount.toNumber(); i++) {
-        const tokenAddress = await campaignContract.rewardsTokens(i);
-        const currentAmount = await campaignContract.getUserAccumulatedReward(
+    if (userStakedAmount < 0n) {
+      for (let i = 0n; i < rewardsCount; i++) {
+        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
+        let currentAmount = await campaignContract.read.getUserAccumulatedReward([
           walletAddress,
           i,
           now,
-        );
+        ]);
+
+        if (version === '4.0') {
+          const decimals = await getTokenDecimals(this.provider, tokenAddress);
+
+          currentAmount = (currentAmount * 10n ** BigInt(decimals)) / accuracy;
+        }
 
         userRewards.push({
           tokenAddress,

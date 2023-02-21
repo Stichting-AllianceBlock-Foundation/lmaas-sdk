@@ -18,16 +18,6 @@ export const LiquidityMiningCampaignABI = [
       },
       {
         internalType: 'uint256',
-        name: '_throttleRoundSeconds',
-        type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
-        name: '_throttleRoundCap',
-        type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
         name: '_contractStakeLimit',
         type: 'uint256',
       },
@@ -63,44 +53,6 @@ export const LiquidityMiningCampaignABI = [
       },
     ],
     name: 'Claimed',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'address',
-        name: 'user',
-        type: 'address',
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'stake',
-        type: 'uint256',
-      },
-    ],
-    name: 'ExitCompleted',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'address',
-        name: 'user',
-        type: 'address',
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'exitTimestamp',
-        type: 'uint256',
-      },
-    ],
-    name: 'ExitRequested',
     type: 'event',
   },
   {
@@ -268,8 +220,19 @@ export const LiquidityMiningCampaignABI = [
     type: 'function',
   },
   {
-    inputs: [],
-    name: 'campaignEndTimestamp',
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_currentTimestamp',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: '_index',
+        type: 'uint256',
+      },
+    ],
+    name: 'calculateLeftoverRewards',
     outputs: [
       {
         internalType: 'uint256',
@@ -303,13 +266,6 @@ export const LiquidityMiningCampaignABI = [
   },
   {
     inputs: [],
-    name: 'completeExit',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
     name: 'contractStakeLimit',
     outputs: [
       {
@@ -319,24 +275,6 @@ export const LiquidityMiningCampaignABI = [
       },
     ],
     stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_staker',
-        type: 'address',
-      },
-      {
-        internalType: 'uint256',
-        name: '_amount',
-        type: 'uint256',
-      },
-    ],
-    name: 'delegateStake',
-    outputs: [],
-    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
@@ -375,37 +313,13 @@ export const LiquidityMiningCampaignABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    name: 'exitInfo',
-    outputs: [
-      {
         internalType: 'uint256',
-        name: 'exitTimestamp',
-        type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
-        name: 'exitStake',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: '',
+        name: '_durationTime',
         type: 'uint256',
       },
       {
         internalType: 'uint256[]',
-        name: '',
+        name: '_rewardPerSecond',
         type: 'uint256[]',
       },
     ],
@@ -455,25 +369,6 @@ export const LiquidityMiningCampaignABI = [
       },
     ],
     name: 'getAvailableBalance',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: '_tokenIndex',
-        type: 'uint256',
-      },
-    ],
-    name: 'getPendingReward',
     outputs: [
       {
         internalType: 'uint256',
@@ -639,8 +534,14 @@ export const LiquidityMiningCampaignABI = [
     type: 'function',
   },
   {
-    inputs: [],
-    name: 'lockEndTimestamp',
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    name: 'leftoverRewards',
     outputs: [
       {
         internalType: 'uint256',
@@ -659,32 +560,6 @@ export const LiquidityMiningCampaignABI = [
         internalType: 'string',
         name: '',
         type: 'string',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'nextAvailableExitTimestamp',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'nextAvailableRoundExitVolume',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
       },
     ],
     stateMutability: 'view',
@@ -906,32 +781,6 @@ export const LiquidityMiningCampaignABI = [
   {
     inputs: [],
     name: 'startTimestamp',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'throttleRoundCap',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'throttleRoundSeconds',
     outputs: [
       {
         internalType: 'uint256',

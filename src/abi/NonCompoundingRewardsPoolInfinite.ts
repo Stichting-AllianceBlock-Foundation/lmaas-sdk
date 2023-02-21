@@ -220,8 +220,39 @@ export const NonCompoundingRewardsPoolInfiniteABI = [
     type: 'function',
   },
   {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_currentTimestamp',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: '_index',
+        type: 'uint256',
+      },
+    ],
+    name: 'calculateLeftoverRewards',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [],
     name: 'cancel',
+    outputs: [],
+    stateMutability: 'pure',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'cancelExtension',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -290,6 +321,56 @@ export const NonCompoundingRewardsPoolInfiniteABI = [
     name: 'exit',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256[]',
+        name: '',
+        type: 'uint256[]',
+      },
+    ],
+    name: 'extend',
+    outputs: [],
+    stateMutability: 'pure',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'extensionDuration',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    name: 'extensionRewardPerSecond',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
     type: 'function',
   },
   {
@@ -466,6 +547,25 @@ export const NonCompoundingRewardsPoolInfiniteABI = [
     type: 'function',
   },
   {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    name: 'leftoverRewards',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [],
     name: 'name',
     outputs: [
@@ -549,6 +649,25 @@ export const NonCompoundingRewardsPoolInfiniteABI = [
         type: 'uint256',
       },
     ],
+    name: 'rewardTokenDecimals',
+    outputs: [
+      {
+        internalType: 'uint8',
+        name: '',
+        type: 'uint8',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
     name: 'rewardsTokens',
     outputs: [
       {
@@ -600,6 +719,42 @@ export const NonCompoundingRewardsPoolInfiniteABI = [
     type: 'function',
   },
   {
+    inputs: [],
+    name: 'stakingTokenDecimals',
+    outputs: [
+      {
+        internalType: 'uint8',
+        name: '',
+        type: 'uint8',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_startTimestamp',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: '_endTimestamp',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256[]',
+        name: '_rewardPerSecond',
+        type: 'uint256[]',
+      },
+    ],
+    name: 'start',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     inputs: [
       {
         internalType: 'uint256',
@@ -608,7 +763,7 @@ export const NonCompoundingRewardsPoolInfiniteABI = [
       },
       {
         internalType: 'uint256',
-        name: '_startTimeStamp',
+        name: '_startTimestamp',
         type: 'uint256',
       },
     ],
