@@ -1,15 +1,14 @@
 import { getContract, PublicClient, WalletClient } from 'viem';
 
-import { accuracy, getAddressFromWallet } from '..';
+import { accuracy, getAddressFromWallet, getTokenDecimals, PoolVersion } from '..';
 import { NonCompoundingRewardsPoolInfiniteABI } from '../abi/NonCompoundingRewardsPoolInfinite';
 import {
   InfiniteCampaignData,
   InfiniteCampaingStatusData,
   NetworkEnum,
-  PoolVersion,
   UserDataIStaking,
 } from '../entities';
-import { checkMaxStakingLimit, getTokenDecimals, parseToken } from '../utils';
+import { checkMaxStakingLimit, parseToken } from '../utils';
 
 /**
  *  Represents a class that can interact with infiniteStaking campaigns
