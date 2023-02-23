@@ -13,6 +13,7 @@ import {
   getAllowance,
   getBalance,
   getTokenByPropName,
+  getTokenDecimals,
   getTotalSupply,
   InfiniteStakingInterface,
   InfiniteStakingState,
@@ -210,12 +211,16 @@ export class InfiniteStakingWrapper {
       return {};
     }
 
+    const tokenDecimals = await getTokenDecimals(
+      this.provider,
+      campaignTokenAddress as `0x${string}`,
+    );
+
     // Format values
-    const [totalStaked, contractStakeLimit, walletStakeLimit] = formatValuesToString([
-      totalStakedBN,
-      contractStakeLimitBN,
-      walletStakeLimitBN,
-    ]);
+    const [totalStaked, contractStakeLimit, walletStakeLimit] = formatValuesToString(
+      [totalStakedBN, contractStakeLimitBN, walletStakeLimitBN],
+      tokenDecimals,
+    );
 
     // Format durations
     const { duration: durationMilliseconds, expirationTime } = this._formatDurationExpiration(
