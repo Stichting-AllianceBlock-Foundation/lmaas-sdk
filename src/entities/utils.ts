@@ -37,6 +37,9 @@ export interface Config {
     [key: string]: string;
   };
   thirdPartyIntegrations: string;
+  dappsIntegration: {
+    [dapp: string]: boolean;
+  };
   showFiatWidget: boolean;
   theme: 'dark' | 'light' | 'dark_red' | 'dark_blue';
   token: string;
