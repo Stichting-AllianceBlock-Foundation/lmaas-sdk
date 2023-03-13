@@ -1,13 +1,14 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { parseEther } from '@ethersproject/units';
+import { parseUnits } from '@ethersproject/units';
 import { providers } from 'ethers';
 
 import {
   CampaingData,
   CampaingStatusData,
   checkMaxStakingLimit,
+  getTokenDecimals,
   NetworkEnum,
   UserDataLM,
 } from '..';
@@ -239,7 +240,10 @@ export class StakerLM {
       LiquidityMiningCampaignABI,
       signerProvider,
     );
-    const amountToStakeParsed = parseEther(amountToStake);
+
+    const stakingToken = await campaignContract.stakingToken();
+    const tokenDecimals = await getTokenDecimals(signerProvider, stakingToken);
+    const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
     const transaction = await campaignContract.stake(amountToStakeParsed);
 
@@ -269,7 +273,10 @@ export class StakerLM {
       LiquidityMiningCampaignTierABI,
       signerProvider,
     );
-    const amountToStakeParsed = parseEther(amountToStake);
+
+    const stakingToken = await campaignContract.stakingToken();
+    const tokenDecimals = await getTokenDecimals(signerProvider, stakingToken);
+    const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
     const transaction = await campaignContract.stakeWithTier(
       amountToStakeParsed,
@@ -343,7 +350,9 @@ export class StakerLM {
       signerProvider,
     );
 
-    const rewardsPerSecondParsed = parseEther(rewardsPerSecond);
+    const stakingToken = await campaignContract.stakingToken();
+    const tokenDecimals = await getTokenDecimals(signerProvider, stakingToken);
+    const rewardsPerSecondParsed = parseUnits(rewardsPerSecond, tokenDecimals);
 
     const transaction = await campaignContract.extend(duration, [rewardsPerSecondParsed]);
 

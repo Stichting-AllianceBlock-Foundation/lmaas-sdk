@@ -1,6 +1,6 @@
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { formatUnits, parseEther, parseUnits } from '@ethersproject/units';
+import { formatUnits, parseUnits } from '@ethersproject/units';
 import { BigNumber, constants, providers } from 'ethers';
 
 import ERC20ABI from '../abi/ERC20.json';
@@ -105,8 +105,9 @@ export const approveToken = async (
 ): Promise<providers.TransactionResponse> => {
   const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
 
+  const tokenDecimals = await getTokenDecimals(wallet, tokenAddress);
   const amountToApproveParsed = amountToApprove
-    ? parseEther(amountToApprove)
+    ? parseUnits(amountToApprove, tokenDecimals)
     : constants.MaxUint256;
 
   return tokenContract.approve(spenderAddress, amountToApproveParsed);
