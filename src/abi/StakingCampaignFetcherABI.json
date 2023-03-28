@@ -1,0 +1,245 @@
+[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "network",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "campaignAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address[]",
+            "name": "rewardsAddresses",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "campaignTokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "compounding",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "period",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "version",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct stakingCampaignObject[]",
+        "name": "stakingCampaigns",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "stakedUsd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "rewardsUsd",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "fetchData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "campaignAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "campaignTokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address[]",
+            "name": "rewardsAddresses",
+            "type": "address[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "autoCompounding",
+            "type": "bool"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "network",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "campaignAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address[]",
+                "name": "rewardsAddresses",
+                "type": "address[]"
+              },
+              {
+                "internalType": "address",
+                "name": "campaignTokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "bool",
+                "name": "compounding",
+                "type": "bool"
+              },
+              {
+                "internalType": "string",
+                "name": "period",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "version",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct stakingCampaignObject",
+            "name": "campaign",
+            "type": "tuple"
+          },
+          {
+            "internalType": "uint256",
+            "name": "contractStakeLimit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "expirationTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasContractStakeLimit",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasUserStakeLimit",
+            "type": "bool"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct pairObject[]",
+            "name": "pair",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "percentage",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stakeLimit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalStaked",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "tokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct rewardObject[]",
+            "name": "totalRewards",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "tokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct rewardObject[]",
+            "name": "weeklyRewards",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct pairObject[]",
+            "name": "rewardToken",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "apy",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct resultObject[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

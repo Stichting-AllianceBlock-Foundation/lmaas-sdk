@@ -35,6 +35,7 @@ import {
   UserRewards,
   year,
 } from '..';
+import ScfABI from '../abi/StakingCampaignFetcherABI.json';
 import LpABI from '../abi/AllianceBlockDexPoolABI.json';
 import CompoundingPoolABI from '../abi/CompoundingRewardsPool.json';
 import CompoundingRewardsPoolABI from '../abi/CompoundingRewardsPoolStaker.json';
@@ -704,6 +705,42 @@ export class SoloStakerWrapper {
       weeklyRewards,
       rewardToken,
     };
+  }
+
+  async getEmptyCardDataNewBatch(campaigns: any[][]) {
+    const ScfContract = new Contract(
+      '0xA607477e20e20dE70C9254Da92E24254a5654f06',
+      ScfABI,
+      this.provider,
+    );
+
+    // Get data from new SDK
+    const campaignData = await ScfContract.fetchData(campaigns, 1, [1]);
+
+    console.log(campaignData);
+
+    /*
+    return {
+      apy,
+      autoCompounding: false,
+      campaign: { ...campaign, name, isLpToken },
+      contractStakeLimit,
+      emptyCardData: true,
+      expirationTime,
+      duration,
+      hasContractStakeLimit,
+      hasUserStakeLimit,
+      pair,
+      percentage,
+      stakeLimit: walletStakeLimit,
+      state,
+      totalRewards,
+      totalStaked,
+      totalStakedUSD,
+      weeklyRewards,
+      rewardToken,
+    };
+    */
   }
 
   async getEmptyCardDataNew(campaign: StakingInterface) {
