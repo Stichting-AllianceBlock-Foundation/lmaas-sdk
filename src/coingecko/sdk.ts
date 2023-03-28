@@ -4,6 +4,8 @@ const coingeckoAPI = 'https://api.coingecko.com/api/v3';
 
 export class CoinGecko {
   minutesForExpiration: number;
+  httpStatus?: number;
+  errorCode?: string;
 
   constructor(minutesToExpire: number) {
     this.minutesForExpiration = minutesToExpire;
@@ -34,36 +36,44 @@ export class CoinGecko {
       }
     }
 
-    const response = await axios.get(coingeckoAPI + `/simple/price`, {
-      params: {
-        ids: tokenId,
-        vs_currencies: currency,
-      },
-    });
+    let price = 0;
+
+    try {
+      const response = await axios.get(coingeckoAPI + `/simple/price`, {
+        params: {
+          ids: tokenId,
+          vs_currencies: currency,
+        },
+      });
+      price = response.data[tokenId][currency];
+    } catch (error) {
+      this.errorCode = error.code;
+      this.httpStatus = 500;
+    }
 
     if (usdPrices) {
       usdPrices = {
         ...usdPrices,
         [tokenId]: {
-          [currency]: response.data[tokenId][currency],
+          [currency]: price,
           expiration: currentTimestamp + secondsForExpiration,
         },
       };
 
       localStorage.setItem('usd_prices', JSON.stringify(usdPrices));
 
-      return response.data[tokenId][currency];
+      return price;
     }
 
     usdPrices = {
       [tokenId]: {
-        [currency]: response.data[tokenId][currency],
+        [currency]: price,
         expiration: currentTimestamp + secondsForExpiration,
       },
     };
 
     localStorage.setItem('usd_prices', JSON.stringify(usdPrices));
 
-    return response.data[tokenId][currency];
+    return price;
   }
 }
