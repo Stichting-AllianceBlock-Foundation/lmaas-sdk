@@ -45,10 +45,28 @@ export class CoinGecko {
           vs_currencies: currency,
         },
       });
+
+      const statusCode = response.status;
+
+      this.httpStatus = statusCode;
+
+      if (statusCode >= 300 || statusCode < 200) {
+        this.errorCode = statusCode.toString();
+      }
+      console.log(response);
       price = response.data[tokenId][currency];
     } catch (error) {
+      console.log('error', error);
       this.errorCode = error.code;
       this.httpStatus = 500;
+
+      console.log('old this.errorCode', this.errorCode);
+      console.log('old this.httpStatus', this.httpStatus);
+
+      this.errorCode = error.code;
+      this.httpStatus = error.response.status;
+      console.log('new this.errorCode', this.errorCode);
+      console.log('new this.httpStatus', this.httpStatus);
     }
 
     if (usdPrices) {
