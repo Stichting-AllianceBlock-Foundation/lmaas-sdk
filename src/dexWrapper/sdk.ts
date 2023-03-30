@@ -9,7 +9,7 @@ import {
 import { BigNumber, FixedNumber } from '@ethersproject/bignumber';
 import { MaxUint256 } from '@ethersproject/constants';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
+import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import { BigNumber as BigNumberJS } from 'bignumber.js';
 
@@ -80,18 +80,18 @@ const getChainIdByNetwork = (network: NetworkEnum): ChainId => {
  *  Represents a class that can interact with DEX's
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | Web3Provider} provider - Provider with the global interaction.
+ *  @param {JsonRpcBatchProvider | } provider - Provider with the global interaction.
  *  @param {NetworkEnum} network - Network on which the class DEX has the instance.
  *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
  */
 export class DexWrapper {
-  provider: JsonRpcBatchProvider | Web3Provider;
+  provider: JsonRpcBatchProvider | JsonRpcProvider;
   network: NetworkEnum;
   tokenConfigs: TokenConfigs;
   [key: string]: any;
 
   constructor(
-    provider: JsonRpcBatchProvider | Web3Provider,
+    provider: JsonRpcBatchProvider | JsonRpcProvider,
     network: NetworkEnum,
     tokenConfigs: TokenConfigs,
   ) {
@@ -324,6 +324,8 @@ export class DexWrapper {
       nativeToken,
     );
 
+    console.log('tokensArr', tokensArr);
+
     // Check for provide native liquidity
     const methodName = hasNativeToken ? `${action}${interactWithNativeSuffix}` : `${action}`;
 
@@ -340,10 +342,22 @@ export class DexWrapper {
     if (dex === DexEnum.arrakis) {
       const configuredArgs = [...args];
 
+      // this is only an extra step that takes the arrakis router
+      configuredArgs.splice(0, 2, poolAddress);
+
+      // calculating the minAmounts and minMintedAmount by arrakis vault
+      const { amount0, amount1, mintAmount } = await poolContract.getMintAmounts(
+        action === 'addLiquidity' ? configuredArgs[1] : configuredArgs[2],
+        action === 'addLiquidity' ? configuredArgs[2] : configuredArgs[3],
+      );
+
+      const amount0Min = amount0.mul(95).div(100);
+      const amount1Min = amount1.mul(95).div(100);
+      const amountSharesMin = mintAmount.mul(95).div(100);
+
       if (action === 'removeLiquidity') {
-        // this is only an extra step that takes the arrakis router
-        configuredArgs.splice(0, 2, poolAddress);
         configuredArgs.splice(5, 1);
+        configuredArgs.splice(2, 2, amount0Min, amount1Min);
 
         const transaction = await routerContract[methodName](...configuredArgs);
 
@@ -351,8 +365,10 @@ export class DexWrapper {
       }
 
       // this is only an extra step that takes the arrakis router
-      configuredArgs.splice(0, 2, poolAddress);
       configuredArgs.splice(6, 1);
+
+      configuredArgs.splice(3, 2, amount0Min, amount1Min);
+      configuredArgs.splice(5, 0, amountSharesMin);
 
       const transaction = await routerContract[methodName](...configuredArgs);
 
@@ -404,11 +420,7 @@ export class DexWrapper {
       const tokenBalance = await poolContract.getBalance(currentTokens[0]);
 
       let tokenAmountIn = _tokensAmountsIn[symbol];
-      tokenAmountIn = await parseToken(
-        this.provider as Web3Provider,
-        tokenAmountIn.toString(),
-        currentTokens[0],
-      );
+      tokenAmountIn = await parseToken(this.provider, tokenAmountIn.toString(), currentTokens[0]);
 
       const ratio = bnum(tokenAmountIn.toString()).div(tokenBalance.toString());
       const ratioSplitted = ratio.toString().split('.');
@@ -439,7 +451,7 @@ export class DexWrapper {
         const currentTokenBalance = await getBalance(provider, tokenAddress, walletAddress);
 
         let amount = _tokensAmountsIn[tokenName];
-        amount = await parseToken(this.provider as Web3Provider, amount.toString(), tokenAddress);
+        amount = await parseToken(this.provider, amount.toString(), tokenAddress);
         //increase the amounts with 1% from what is currently provided
         const amountBN = BigNumber.from(amount).mul(100).div(99);
 
@@ -459,7 +471,7 @@ export class DexWrapper {
       }
 
       const bPoolAmountIn = await parseToken(
-        this.provider as Web3Provider,
+        this.provider,
         _tokensAmountsIn.toString(),
         poolAddress,
       );
@@ -533,7 +545,7 @@ export class DexWrapper {
       throw `getBalanceOf: ${tokenName} is not found in configuration`;
     }
 
-    balance = await getBalance(this.provider as Web3Provider, tokenAddress, userAddress);
+    balance = await getBalance(this.provider, tokenAddress, userAddress);
 
     return balance;
   }
@@ -566,7 +578,7 @@ export class DexWrapper {
       }
     }
 
-    const decimals = await getTokenDecimals(this.provider as Web3Provider, tokenAddress);
+    const decimals = await getTokenDecimals(this.provider, tokenAddress);
 
     return decimals;
   }
@@ -578,10 +590,15 @@ export class DexWrapper {
    * @param {array} provisionTokensAddresses - Array of underlying token addresses
    * @return {object} price output
    */
-  async getAllPriceRates(poolAddress: string, provisionTokensAddresses: string[], dex: DexEnum) {
+  async getAllPriceRates(
+    poolAddress: string,
+    provisionTokensAddresses: string[],
+    dex: DexEnum,
+    signerProvider: JsonRpcSigner,
+  ) {
     const { dexes } = dexByNetworkMapping[this.network];
     const { poolABI } = dexes[dex];
-    const sdkAbDex = await initSDK(this.provider.getSigner());
+    const sdkAbDex = await initSDK(signerProvider);
 
     if (dex === DexEnum.balancer) {
       const output: { [key: string]: GeneralStringToString } = {};
@@ -743,7 +760,7 @@ export class DexWrapper {
       tokenName,
     ).address;
 
-    const tokenInDecimals = await getTokenDecimals(this.provider as Web3Provider, tokenInAddress);
+    const tokenInDecimals = await getTokenDecimals(this.provider, tokenInAddress);
     const tokenInBalance = await poolContract.getBalance(tokenInAddress);
 
     const bTokenInBalance = new BigNumberJS(tokenInBalance.toString());
@@ -767,17 +784,10 @@ export class DexWrapper {
       let priceFormatted: string;
       // check if divisor has less than 18 decimals
       if (tokenInDecimals != 18) {
-        const tokenOutDecimals = await getTokenDecimals(
-          this.provider as Web3Provider,
-          tokenOutAddress,
-        );
+        const tokenOutDecimals = await getTokenDecimals(this.provider, tokenOutAddress);
         priceFormatted = formatUnits(price.toString(10), tokenOutDecimals + (18 - tokenInDecimals));
       } else {
-        priceFormatted = await formatToken(
-          this.provider as Web3Provider,
-          price.toString(10),
-          tokenOutAddress,
-        );
+        priceFormatted = await formatToken(this.provider, price.toString(10), tokenOutAddress);
       }
 
       results[tokenOutName] = priceFormatted;
@@ -814,7 +824,7 @@ export class DexWrapper {
       token0Name,
     ).address;
 
-    rate = await formatToken(this.provider as Web3Provider, rate.toString(10), token0Address);
+    rate = await formatToken(this.provider, rate.toString(10), token0Address);
 
     return rate;
   }
@@ -855,7 +865,7 @@ export class DexWrapper {
       token0Name,
     ).address;
 
-    rate = await formatToken(this.provider as Web3Provider, rate.toString(10), token0Address);
+    rate = await formatToken(this.provider, rate.toString(10), token0Address);
 
     return rate;
   }
@@ -1015,6 +1025,20 @@ export class DexWrapper {
     const argsObject = tokensArr.reduce(reduceTokenArgs, initialAgrsState);
 
     const deadline = Math.floor(Date.now() / 1000) + 60 * 60;
+
+    if (tokensArr[0].isNativeToken) {
+      const minAmountNative = [argsObject['minAmounts'][1], argsObject['minAmounts'][0]];
+
+      const args = [
+        ...argsObject['addresses'],
+        amountLP,
+        ...minAmountNative,
+        walletAddress,
+        deadline,
+      ];
+
+      return args;
+    }
 
     const args = [
       ...argsObject['addresses'],

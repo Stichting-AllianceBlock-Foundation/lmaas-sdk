@@ -1,6 +1,6 @@
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers';
-import { formatUnits, parseEther, parseUnits } from '@ethersproject/units';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
+import { formatUnits, parseUnits } from '@ethersproject/units';
 import { BigNumber, constants, providers } from 'ethers';
 
 import ERC20ABI from '../abi/ERC20.json';
@@ -98,15 +98,16 @@ export const formatValuesToString = (values: BigNumber[], decimals = 18): string
 };
 
 export const approveToken = async (
-  wallet: Web3Provider | JsonRpcSigner,
+  wallet: JsonRpcSigner,
   tokenAddress: string,
   spenderAddress: string,
   amountToApprove?: string,
 ): Promise<providers.TransactionResponse> => {
   const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
 
+  const tokenDecimals = await getTokenDecimals(wallet, tokenAddress);
   const amountToApproveParsed = amountToApprove
-    ? parseEther(amountToApprove)
+    ? parseUnits(amountToApprove, tokenDecimals)
     : constants.MaxUint256;
 
   return tokenContract.approve(spenderAddress, amountToApproveParsed);
@@ -125,7 +126,7 @@ export const getAllowance = async (
 
 // formatUnits ( wei , decimalsOrUnitName ) => string
 export const formatToken = async (
-  walletOrProvider: Web3Provider | JsonRpcSigner,
+  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
   value: any,
   tokenAddress: string,
 ) => {
@@ -134,7 +135,7 @@ export const formatToken = async (
 
 // parseUnits ( valueString , decimalsOrUnitName ) => BigNumber
 export const parseToken = async (
-  walletOrProvider: Web3Provider | JsonRpcSigner,
+  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
   valueString: string,
   tokenAddress: string,
 ) => {
@@ -142,7 +143,7 @@ export const parseToken = async (
 };
 
 export const getBalance = async (
-  walletOrProvider: Web3Provider | JsonRpcSigner,
+  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
   tokenAddress: string,
   addressToCheck: string,
 ) => {
@@ -153,7 +154,7 @@ export const getBalance = async (
 };
 
 export const getTotalSupply = async (
-  walletOrProvider: Web3Provider | JsonRpcSigner,
+  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
   tokenAddress: string,
 ) => {
   const tokenContract = new Contract(tokenAddress, ERC20ABI, walletOrProvider);
@@ -163,7 +164,7 @@ export const getTotalSupply = async (
 };
 
 export const getTokenDecimals = async (
-  walletOrProvider: Web3Provider | JsonRpcSigner,
+  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
   tokenAddress: string,
 ) => {
   const ethToken = String('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE').toLowerCase();

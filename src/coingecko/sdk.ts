@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 const coingeckoAPI = 'https://api.coingecko.com/api/v3';
-const transposeAPI = 'https://api.transpose.io/sql';
 
 export class CoinGecko {
   minutesForExpiration: number;
+  httpStatus?: number;
+  errorCode?: string;
 
   constructor(minutesToExpire: number) {
     this.minutesForExpiration = minutesToExpire;
@@ -35,76 +36,52 @@ export class CoinGecko {
       }
     }
 
-    let response;
+    let price = 0;
 
-    // note: this is only for BEUR, delete in the future if not needed anymore
-    if (tokenId === 'bonq') {
-      response = {
-        data: {
-          bonq: {
-            usd: 0.03,
-          },
-        },
-      };
-    } else if (tokenId === 'beur') {
-      // call to an external API
-      const resultTranspose = await axios.post(
-        transposeAPI,
-        {
-          sql: `SELECT effective_price FROM polygon.dex_swaps
-          WHERE contract_address IN (
-          '0x0792130d3c17c58B6320a4aeb70DF8b5eE559ECc',
-          '0x4f5f469781cE3A294EE22759B0c4822F0C6178A1')
-          AND from_token_address = '0x338Eb4d394a4327E5dB80d08628fa56EA2FD4B81'
-          ORDER BY timestamp DESC
-          LIMIT 1`,
-        },
-        {
-          headers: {
-            'X-API-KEY': 'xBqXAdus6ETXuEKKlAxPTPQBnfg8V2tM',
-          },
-        },
-      );
-
-      response = {
-        data: {
-          beur: {
-            usd: resultTranspose.data.results[0].effective_price,
-          },
-        },
-      };
-    } else {
-      response = await axios.get(coingeckoAPI + `/simple/price`, {
+    try {
+      const response = await axios.get(coingeckoAPI + `/simple/price`, {
         params: {
           ids: tokenId,
           vs_currencies: currency,
         },
       });
+
+      const statusCode = response.status;
+
+      this.httpStatus = statusCode;
+
+      if (statusCode >= 300 || statusCode < 200) {
+        this.errorCode = statusCode.toString();
+      }
+      price = response.data[tokenId][currency];
+    } catch (error: any) {
+      this.httpStatus = error.response.status || 0;
+      this.errorCode = error.code || '';
     }
 
     if (usdPrices) {
       usdPrices = {
         ...usdPrices,
         [tokenId]: {
-          [currency]: response.data[tokenId][currency],
+          [currency]: price,
           expiration: currentTimestamp + secondsForExpiration,
         },
       };
 
       localStorage.setItem('usd_prices', JSON.stringify(usdPrices));
 
-      return response.data[tokenId][currency];
+      return price;
     }
 
     usdPrices = {
       [tokenId]: {
-        [currency]: response.data[tokenId][currency],
+        [currency]: price,
         expiration: currentTimestamp + secondsForExpiration,
       },
     };
 
     localStorage.setItem('usd_prices', JSON.stringify(usdPrices));
 
-    return response.data[tokenId][currency];
+    return price;
   }
 }
