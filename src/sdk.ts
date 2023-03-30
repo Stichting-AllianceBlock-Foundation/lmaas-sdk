@@ -85,6 +85,7 @@ export function getProtocolByChainId(chainId: number) {
     case 3:
     case 4:
     case 5:
+    case 11155111:
       return NetworkEnum.eth;
     case 56:
       return NetworkEnum.bsc;
