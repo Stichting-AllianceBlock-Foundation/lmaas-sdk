@@ -54,9 +54,9 @@ export class CoinGecko {
         this.errorCode = statusCode.toString();
       }
       price = response.data[tokenId][currency];
-    } catch (error: any) {
-      this.httpStatus = error.response.status || 0;
-      this.errorCode = error.code || '';
+    } catch (error) {
+      this.httpStatus = (error as any).response.status || 0;
+      this.errorCode = (error as any).code || '';
     }
 
     if (usdPrices) {
