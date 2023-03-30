@@ -37,7 +37,7 @@ export interface Config {
     [key: string]: string;
   };
   thirdPartyIntegrations: string;
-  dappsIntegration: {
+  dappsIntegration?: {
     [dapp: string]: boolean;
   };
   showFiatWidget: boolean;
