@@ -709,7 +709,7 @@ export class SoloStakerWrapper {
 
   async getEmptyCardDataNewBatch(campaigns: any[][]) {
     const ScfContract = new Contract(
-      '0xA607477e20e20dE70C9254Da92E24254a5654f06',
+      '0xb30f933BC7E4827F47431fdCeaA8958d6869cC53',
       ScfABI,
       this.provider,
     );
@@ -717,7 +717,7 @@ export class SoloStakerWrapper {
     // Get data from new SDK
     const campaignData = await ScfContract.fetchData(campaigns, 1, [1]);
 
-    console.log(campaignData);
+    return campaignData;
 
     /*
     return {
