@@ -92,8 +92,10 @@ export class StakerLM {
 
     const campaignRewards = [];
 
+    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
     // Get rewards info
-    if (hasCampaignStarted) {
+    if (hasCampaignStarted || countdown) {
       for (let i = 0; i < rewardsCountNum; i++) {
         const tokenAddress = await campaignContract.rewardsTokens(i);
         const rewardPerSecond = await campaignContract.rewardPerSecond(i);

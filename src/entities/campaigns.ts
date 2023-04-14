@@ -13,6 +13,8 @@ export interface LMInterface {
   version: string;
   routerAddress?: string;
   campaignMessage?: string;
+  campaignStart?: number;
+  campaignEnd?: number;
   name?: string;
 }
 
@@ -25,6 +27,8 @@ export interface StakingInterface {
   period: string;
   version: string;
   campaignMessage?: string;
+  campaignStart?: number;
+  campaignEnd?: number;
   name?: string;
   isLpToken: boolean;
 }

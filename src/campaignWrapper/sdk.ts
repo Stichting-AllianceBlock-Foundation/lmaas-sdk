@@ -236,10 +236,14 @@ export class CampaignWrapper {
       campaignRewards: campaignRewardsBN,
       totalStaked: totalStakedBN,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !countdown) {
       return {};
     }
 
@@ -270,8 +274,8 @@ export class CampaignWrapper {
     const apy = this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
     return {
-      apy,
-      campaign: { ...campaign, name },
+      apy: !countdown ? apy : 0,
+      campaign: { ...campaign, name, campaignEnd: Number(campaignEndTimestamp) },
       campaignRewards,
       dex,
       duration,
@@ -281,6 +285,7 @@ export class CampaignWrapper {
       tuple,
       totalStaked,
       totalStakedUSD,
+      countdown
     };
   }
 
@@ -452,10 +457,14 @@ export class CampaignWrapper {
       totalStaked: totalStakedBN,
       extensionDuration,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !countdown) {
       return {};
     }
 
@@ -498,8 +507,14 @@ export class CampaignWrapper {
     const willBeExtended = BigNumber.from(extensionDuration).gt(BigNumber.from(0));
 
     return {
-      apy,
-      campaign: { ...campaign, routerAddress, name },
+      apy: !countdown ? apy : 0,
+      campaign: {
+        ...campaign,
+        routerAddress,
+        name,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+      },
       contractStakeLimit,
       dex,
       duration,
@@ -517,6 +532,7 @@ export class CampaignWrapper {
       campaignRewards,
       userStakeLimit,
       willBeExtended,
+      countdown,
     };
   }
 

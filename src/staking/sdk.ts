@@ -90,7 +90,9 @@ export class StakerSolo {
 
     const campaignRewards = [];
 
-    if (hasCampaignStarted) {
+    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (hasCampaignStarted || countdown) {
       // Get rewards info
       for (let i = 0; i < rewardsCountNum; i++) {
         const tokenAddress = await campaignContract.rewardsTokens(i);

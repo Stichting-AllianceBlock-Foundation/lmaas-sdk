@@ -431,10 +431,14 @@ export class SoloStakerWrapper {
       hasContractStakeLimit,
       hasWalletStakeLimit: hasUserStakeLimit,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !countdown) {
       return {};
     }
 
@@ -520,9 +524,15 @@ export class SoloStakerWrapper {
     };
 
     return {
-      apy,
+      apy: !countdown ? apy : 0,
       autoCompounding: false,
-      campaign: { ...campaign, name, isLpToken },
+      campaign: {
+        ...campaign,
+        name,
+        isLpToken,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+      },
       contractStakeLimit,
       cooldownPeriod,
       emptyCardData: false,
@@ -533,7 +543,7 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state,
+      state: !countdown ? state : 0,
       totalRewards,
       totalStaked,
       totalStakedUSD,
@@ -607,7 +617,7 @@ export class SoloStakerWrapper {
     let contractStakeLimit = stakerCampaignInstance.contractStakeLimit();
     let stakeLimit = stakerCampaignInstance.stakeLimit();
 
-    let stakingTokenPrice = this.coingecko.getTokenPrice(stakingTokenId, 'usd');
+    let stakingTokenPrice: any = this.coingecko.getTokenPrice(stakingTokenId, 'usd');
 
     // Get state
     const state = this.getDisconnectedState(stakerCampaignAddress, '1.0', compounding);
@@ -760,10 +770,14 @@ export class SoloStakerWrapper {
       hasContractStakeLimit,
       hasWalletStakeLimit: hasUserStakeLimit,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !countdown) {
       return {};
     }
 
@@ -827,9 +841,15 @@ export class SoloStakerWrapper {
     };
 
     return {
-      apy,
+      apy: !countdown ? apy : 0,
       autoCompounding: false,
-      campaign: { ...campaign, name, isLpToken },
+      campaign: {
+        ...campaign,
+        name,
+        isLpToken,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+      },
       contractStakeLimit,
       emptyCardData: true,
       expirationTime,
@@ -839,7 +859,7 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state,
+      state: !countdown ? state : 0,
       totalRewards,
       totalStaked,
       totalStakedUSD,
