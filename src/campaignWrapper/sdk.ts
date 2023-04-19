@@ -31,6 +31,7 @@ import {
 import ArrakisPoolABI from '../abi/ArrakisPoolABI.json';
 import BalancerBPoolContractABI from '../abi/BalancerBPoolABI.json';
 import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
+import LcfABI from '../abi/LPCampaignFetcherABI.json';
 
 /**
  *  Represents a class that can interact with LMC's
@@ -212,6 +213,43 @@ export class CampaignWrapper {
       totalStaked,
       totalStakedUSD,
     };
+  }
+
+  async getEmptyCardDataNewBatch(campaigns: any[][]) {
+    const LcfContract = new Contract(
+      '0x6E6e3582985D7184952BD8EC675e4bD8650E5d87',
+      //'0xb30f933BC7E4827F47431fdCeaA8958d6869cC53',
+      LcfABI,
+      this.provider,
+    );
+
+    // Get data from new SDK
+    const campaignData = await LcfContract.fetchData(campaigns, 1, [1]);
+
+    return campaignData;
+
+    /*
+    return {
+      apy,
+      autoCompounding: false,
+      campaign: { ...campaign, name, isLpToken },
+      contractStakeLimit,
+      emptyCardData: true,
+      expirationTime,
+      duration,
+      hasContractStakeLimit,
+      hasUserStakeLimit,
+      pair,
+      percentage,
+      stakeLimit: walletStakeLimit,
+      state,
+      totalRewards,
+      totalStaked,
+      totalStakedUSD,
+      weeklyRewards,
+      rewardToken,
+    };
+    */
   }
 
   async getEmptyCardDataNew(campaign: LMInterface) {

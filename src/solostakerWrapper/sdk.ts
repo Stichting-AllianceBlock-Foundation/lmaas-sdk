@@ -36,6 +36,7 @@ import {
   year,
 } from '..';
 import ScfABI from '../abi/StakingCampaignFetcherABI.json';
+import ScsABI from '../abi/StakingCampaignStatusesABI.json';
 import LpABI from '../abi/AllianceBlockDexPoolABI.json';
 import CompoundingPoolABI from '../abi/CompoundingRewardsPool.json';
 import CompoundingRewardsPoolABI from '../abi/CompoundingRewardsPoolStaker.json';
@@ -709,7 +710,8 @@ export class SoloStakerWrapper {
 
   async getEmptyCardDataNewBatch(campaigns: any[][]) {
     const ScfContract = new Contract(
-      '0xb30f933BC7E4827F47431fdCeaA8958d6869cC53',
+      '0x682C9742a190e17ec5d59f777654996d199F676C',
+      //'0xb30f933BC7E4827F47431fdCeaA8958d6869cC53',
       ScfABI,
       this.provider,
     );
@@ -1630,11 +1632,26 @@ export class SoloStakerWrapper {
     }
   }
 
+  async getDisconnectedStateBatch(campaignAddress: string[]): Promise<any> {
+    const ScsContract = new Contract(
+      '0xF5C9F622B8CA6851FBE95aC0b875F1d4e1D1d495',
+      //'0x3AAbF57BE71661028379A4CD1590d320EfDa08a8',
+      ScsABI,
+      this.provider,
+    );
+
+    // Get data from new SDK
+    const campaignData = await ScsContract.fetchData(campaignAddress);
+
+    return campaignData;
+  }
+
   async getMigrationWhitelist(
     provider: JsonRpcProvider,
     campaign: StakingInterface,
     campaignsArr: string[],
   ) {
+    // 0x6a988DC2Cc046cF66Eb4c4D39E632Ed5d5b9972A
     const { campaignAddress: stakerContractAddress } = campaign;
     const campaignInstance = new Contract(
       stakerContractAddress,

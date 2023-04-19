@@ -1,0 +1,208 @@
+[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "network",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "campaignAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address[]",
+            "name": "rewardsAddresses",
+            "type": "address[]"
+          },
+          {
+            "internalType": "string",
+            "name": "dex",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "liquidityPoolAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address[]",
+            "name": "provisionTokensAddresses",
+            "type": "address[]"
+          },
+          {
+            "internalType": "string",
+            "name": "version",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct liquidityCampaignObject[]",
+        "name": "liquidityCampaigns",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "stakedUsd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "rewardsUsd",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "fetchData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "apy",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "network",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "campaignAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address[]",
+                "name": "rewardsAddresses",
+                "type": "address[]"
+              },
+              {
+                "internalType": "string",
+                "name": "dex",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "liquidityPoolAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address[]",
+                "name": "provisionTokensAddresses",
+                "type": "address[]"
+              },
+              {
+                "internalType": "string",
+                "name": "version",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct liquidityCampaignObject",
+            "name": "campaign",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "tokenAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "tokenName",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct rewardObject[]",
+            "name": "total",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "tokenAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "tokenName",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct rewardObject[]",
+            "name": "weekly",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "string",
+            "name": "dex",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "expirationTime",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "symbol",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct pairObject[]",
+            "name": "pairs",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "string[]",
+            "name": "tuple",
+            "type": "string[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalStakedUSD",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct resultObject[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
