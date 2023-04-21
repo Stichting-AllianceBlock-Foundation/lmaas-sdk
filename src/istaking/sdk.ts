@@ -262,7 +262,7 @@ export class InfiniteStaker {
         getRewardTokensCountPR(),
       ]);
 
-    const userCanExit = userStakedEpoch < epochCount || endTimestamp < now;
+    const userCanExit = userStakedEpoch < epochCount - 2n || endTimestamp < now;
 
     const userRewards = [];
 
