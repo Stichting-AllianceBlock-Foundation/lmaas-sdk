@@ -436,9 +436,9 @@ export class SoloStakerWrapper {
       name,
     } = campaignData;
 
-    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
 
-    if (!hasCampaignStarted && !countdown) {
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -524,7 +524,7 @@ export class SoloStakerWrapper {
     };
 
     return {
-      apy: !countdown ? apy : 0,
+      apy: !upcoming ? apy : 0,
       autoCompounding: false,
       campaign: {
         ...campaign,
@@ -543,7 +543,7 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state: !countdown ? state : 0,
+      state: !upcoming ? state : 0,
       totalRewards,
       totalStaked,
       totalStakedUSD,
@@ -552,6 +552,7 @@ export class SoloStakerWrapper {
       userWalletTokensBalance,
       weeklyRewards,
       rewardToken,
+      upcoming,
     };
   }
 
@@ -775,9 +776,9 @@ export class SoloStakerWrapper {
       name,
     } = campaignData;
 
-    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
 
-    if (!hasCampaignStarted && !countdown) {
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -841,7 +842,7 @@ export class SoloStakerWrapper {
     };
 
     return {
-      apy: !countdown ? apy : 0,
+      apy: !upcoming ? apy : 0,
       autoCompounding: false,
       campaign: {
         ...campaign,
@@ -859,12 +860,13 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state: !countdown ? state : 0,
+      state: !upcoming ? state : 0,
       totalRewards,
       totalStaked,
       totalStakedUSD,
       weeklyRewards,
       rewardToken,
+      upcoming,
     };
   }
 
@@ -1209,8 +1211,12 @@ export class SoloStakerWrapper {
         return 4; //"StakingEnded/WithdrawTriggered/CooldownExpired/RewardClaimed"
       }
     } else {
-      const { hasCampaignStarted, hasCampaignEnded } =
+      const { hasCampaignStarted, hasCampaignEnded, upcoming } =
         await this.soloNonComp.getCampaignStatusActive(stakerCampaignAddress, userWallet);
+
+      if (upcoming) {
+        return 5;
+      }
 
       const userData = await this.soloNonComp.getUserData(stakerCampaignAddress, userWallet);
 

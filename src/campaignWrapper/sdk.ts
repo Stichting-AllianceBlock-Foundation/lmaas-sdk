@@ -241,9 +241,9 @@ export class CampaignWrapper {
       name,
     } = campaignData;
 
-    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
 
-    if (!hasCampaignStarted && !countdown) {
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -274,7 +274,7 @@ export class CampaignWrapper {
     const apy = this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
     return {
-      apy: !countdown ? apy : 0,
+      apy: !upcoming ? apy : 0,
       campaign: { ...campaign, name, campaignEnd: Number(campaignEndTimestamp) },
       campaignRewards,
       dex,
@@ -285,7 +285,7 @@ export class CampaignWrapper {
       tuple,
       totalStaked,
       totalStakedUSD,
-      countdown
+      upcoming,
     };
   }
 
@@ -462,9 +462,9 @@ export class CampaignWrapper {
       name,
     } = campaignData;
 
-    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
 
-    if (!hasCampaignStarted && !countdown) {
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -507,7 +507,7 @@ export class CampaignWrapper {
     const willBeExtended = BigNumber.from(extensionDuration).gt(BigNumber.from(0));
 
     return {
-      apy: !countdown ? apy : 0,
+      apy: !upcoming ? apy : 0,
       campaign: {
         ...campaign,
         routerAddress,
@@ -532,7 +532,7 @@ export class CampaignWrapper {
       campaignRewards,
       userStakeLimit,
       willBeExtended,
-      countdown,
+      upcoming,
     };
   }
 
@@ -718,10 +718,10 @@ export class CampaignWrapper {
   ) {
     const { campaignAddress } = campaign;
 
-    const { hasCampaignStarted, hasCampaignEnded, hasUserStaked } =
+    const { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming } =
       await this.lmcStaker.getCampaignStatus(campaignAddress, connected, signerProvider);
 
-    return { hasCampaignStarted, hasCampaignEnded, hasUserStaked };
+    return { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming };
   }
 
   _calculateAPY_new(

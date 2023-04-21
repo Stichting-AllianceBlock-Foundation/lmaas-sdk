@@ -92,10 +92,10 @@ export class StakerLM {
 
     const campaignRewards = [];
 
-    const countdown = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
 
     // Get rewards info
-    if (hasCampaignStarted || countdown) {
+    if (hasCampaignStarted || upcoming) {
       for (let i = 0; i < rewardsCountNum; i++) {
         const tokenAddress = await campaignContract.rewardsTokens(i);
         const rewardPerSecond = await campaignContract.rewardPerSecond(i);
@@ -154,10 +154,13 @@ export class StakerLM {
     const nowBN = BigNumber.from(now);
 
     // Get raw contract data
+    const campaignStartTimestamp = await campaignContract.startTimestamp();
     const campaignEndTimestamp = await campaignContract.endTimestamp();
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
 
     const hasCampaignEnded = hasCampaignStarted ? campaignEndTimestamp.lt(nowBN) : false;
+
+    const upcoming = Number(campaignStartTimestamp) > now;
 
     let hasUserStaked = false;
 
@@ -171,6 +174,7 @@ export class StakerLM {
       hasCampaignStarted,
       hasCampaignEnded,
       hasUserStaked,
+      upcoming,
     };
   }
 

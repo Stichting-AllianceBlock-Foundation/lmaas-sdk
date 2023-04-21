@@ -54,6 +54,7 @@ export interface CampaingStatusData {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
   hasUserStaked?: boolean;
+  upcoming?: boolean;
 }
 
 export interface CampaingStatusDataActive {
@@ -61,6 +62,7 @@ export interface CampaingStatusDataActive {
   hasCampaignEnded: boolean;
   exitTimestamp: BigNumber;
   exitStake: BigNumber;
+  upcoming?: boolean;
 }
 
 export interface UserDataLM {
