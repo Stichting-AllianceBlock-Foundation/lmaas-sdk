@@ -543,7 +543,7 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state: !upcoming ? state : 0,
+      state: !upcoming ? state : 5,
       totalRewards,
       totalStaked,
       totalStakedUSD,
@@ -860,7 +860,7 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state: !upcoming ? state : 0,
+      state: !upcoming ? state : 5,
       totalRewards,
       totalStaked,
       totalStakedUSD,
@@ -1605,9 +1605,12 @@ export class SoloStakerWrapper {
         return 0; // "StakingInProgress"
       }
     } else {
-      const { hasCampaignStarted, hasCampaignEnded } = await this.soloNonComp.getCampaignStatus(
-        campaignAddress,
-      );
+      const { hasCampaignStarted, hasCampaignEnded, upcoming } =
+        await this.soloNonComp.getCampaignStatus(campaignAddress);
+
+      if (upcoming) {
+        return 5;
+      }
 
       if (!hasCampaignStarted) {
         return -1;
