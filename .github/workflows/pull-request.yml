@@ -18,7 +18,7 @@ env:
 jobs:
   version:
     name: version check
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     if: github.base_ref == 'main'
     steps:
       - uses: actions/checkout@v3
@@ -53,7 +53,7 @@ jobs:
             }
 
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
