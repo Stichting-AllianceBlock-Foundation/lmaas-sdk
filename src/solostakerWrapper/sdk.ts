@@ -615,7 +615,7 @@ export class SoloStakerWrapper {
       ? stakerCampaignInstance.totalAmountStaked()
       : stakerCampaignInstance.totalStaked();
 
-    let contractStakeLimit = stakerCampaignInstance.contractStakeLimit();
+    let contractStakeLimit: any = stakerCampaignInstance.contractStakeLimit();
     let stakeLimit = stakerCampaignInstance.stakeLimit();
 
     let stakingTokenPrice: any = this.coingecko.getTokenPrice(stakingTokenId, 'usd');
