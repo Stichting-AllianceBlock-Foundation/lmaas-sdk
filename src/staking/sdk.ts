@@ -279,7 +279,7 @@ export class StakerSolo {
     contractAddress: string,
     amountToStake: string,
     signerProvider: JsonRpcSigner,
-    isNativeSupported = false,
+    isNativeSupported: boolean,
   ): Promise<providers.TransactionResponse> {
     const campaignContract = new Contract(
       contractAddress,

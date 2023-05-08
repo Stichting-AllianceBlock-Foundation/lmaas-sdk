@@ -72,14 +72,19 @@ export class SoloStakerWrapper {
     this.tokenConfigs = tokenConfigs;
   }
 
-  stake(userWallet: JsonRpcSigner, campaign: StakingInterface, amountToStake: string) {
+  stake(
+    userWallet: JsonRpcSigner,
+    campaign: StakingInterface,
+    amountToStake: string,
+    isNativeSupported = false,
+  ) {
     const { campaignAddress, version = '1.0' } = campaign;
 
     if (version === '1.0') {
       return this._stake(userWallet, campaign, amountToStake);
     }
 
-    return this.soloNonComp.stake(campaignAddress, amountToStake, userWallet);
+    return this.soloNonComp.stake(campaignAddress, amountToStake, userWallet, isNativeSupported);
   }
 
   async _stake(

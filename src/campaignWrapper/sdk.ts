@@ -73,12 +73,13 @@ export class CampaignWrapper {
     campaignAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
+    isNativeSupported = false,
   ) {
     if (!version || version === '1.0') {
       return this.albStaker.stake(userWallet, campaignAddress, lockSchemeAddress, amountToStake);
     }
 
-    return this.lmcStaker.stake(campaignAddress, amountToStake, userWallet);
+    return this.lmcStaker.stake(campaignAddress, amountToStake, userWallet, isNativeSupported);
   }
 
   stakeWithTier(
