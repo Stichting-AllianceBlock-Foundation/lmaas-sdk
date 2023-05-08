@@ -13,6 +13,7 @@ import {
   CoinGecko,
   convertBlockToSeconds,
   day,
+  dexByNetworkMapping,
   formatStakingDuration,
   formatToken,
   formatValuesToString,
@@ -370,6 +371,10 @@ export class SoloStakerWrapper {
   async getCardDataNew(userWallet: JsonRpcSigner, campaign: StakingInterface) {
     //Get campaign data
     const { campaignAddress, campaignTokenAddress, rewardsAddresses, version } = campaign;
+    const nativeTokenName = dexByNetworkMapping[campaign.network].nativeToken;
+    let isNativeSupported: boolean = false;
+
+    const userAddress = await getAddressFromWallet(userWallet);
 
     // Get tokenInstance
     const tokenLpInstance = new Contract(campaignTokenAddress, LpABI, this.provider);
@@ -401,6 +406,9 @@ export class SoloStakerWrapper {
       const { coinGeckoID: stakingTokenId } = stakingToken;
       symbol = stakingToken.symbol;
       stakingTokenPrice = await this.coingecko.getTokenPrice(stakingTokenId, 'usd');
+
+      if (nativeTokenName === symbol || nativeTokenName === symbol.substring(1))
+        isNativeSupported = true;
     } else {
       symbol = 'LP';
     }
@@ -414,12 +422,9 @@ export class SoloStakerWrapper {
     // Get user data
     const userData = await this.soloNonComp.getUserData(campaignAddress, userWallet);
 
-    const userAddress = await getAddressFromWallet(userWallet);
-    const userWalletTokensBalanceBN = await getBalance(
-      this.provider as JsonRpcProvider,
-      campaignTokenAddress,
-      userAddress,
-    );
+    const userWalletTokensBalanceBN = isNativeSupported
+      ? await this.provider.getBalance(userAddress)
+      : await getBalance(this.provider as JsonRpcProvider, campaignTokenAddress, userAddress);
 
     const tokenDecimals = await getTokenDecimals(
       this.provider as JsonRpcProvider,
@@ -439,6 +444,7 @@ export class SoloStakerWrapper {
       campaignStartTimestamp,
       campaignEndTimestamp,
       name,
+      wrappedNativeToken,
     } = campaignData;
 
     const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
@@ -537,6 +543,8 @@ export class SoloStakerWrapper {
         isLpToken,
         campaignStart: Number(campaignStartTimestamp),
         campaignEnd: Number(campaignEndTimestamp),
+        wrappedNativeToken,
+        isNativeSupported,
       },
       contractStakeLimit,
       cooldownPeriod,

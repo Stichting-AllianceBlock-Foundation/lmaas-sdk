@@ -461,6 +461,7 @@ export class CampaignWrapper {
       campaignStartTimestamp,
       campaignEndTimestamp,
       name,
+      wrappedNativeToken,
     } = campaignData;
 
     const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
@@ -515,6 +516,7 @@ export class CampaignWrapper {
         name,
         campaignStart: Number(campaignStartTimestamp),
         campaignEnd: Number(campaignEndTimestamp),
+        wrappedNativeToken,
       },
       contractStakeLimit,
       dex,
