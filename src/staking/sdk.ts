@@ -90,7 +90,9 @@ export class StakerSolo {
 
     const campaignRewards = [];
 
-    if (hasCampaignStarted) {
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (hasCampaignStarted || upcoming) {
       // Get rewards info
       for (let i = 0; i < rewardsCountNum; i++) {
         const tokenAddress = await campaignContract.rewardsTokens(i);
@@ -179,17 +181,20 @@ export class StakerSolo {
     const nowBN = BigNumber.from(now);
 
     // Get raw contract data
+    const campaignStartTimestamp = await campaignContract.startTimestamp();
     const campaignEndTimestamp = await campaignContract.endTimestamp();
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
     const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
 
     const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const upcoming = campaignStartTimestamp > now;
 
     return {
       hasCampaignStarted,
       hasCampaignEnded,
       exitTimestamp,
       exitStake,
+      upcoming,
     };
   }
 
