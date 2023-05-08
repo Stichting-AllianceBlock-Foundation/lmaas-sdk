@@ -32,7 +32,7 @@ export interface StakingInterface {
   name?: string;
   isLpToken: boolean;
   wrappedNativeToken: string;
-  isWrappedNativeToken: boolean;
+  isNativeSupported: boolean;
 }
 export interface CampaingData {
   totalStaked: BigNumber;
