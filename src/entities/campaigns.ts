@@ -31,6 +31,8 @@ export interface StakingInterface {
   campaignEnd?: number;
   name?: string;
   isLpToken: boolean;
+  wrappedNativeToken: string;
+  isWrappedNativeToken: boolean;
 }
 export interface CampaingData {
   totalStaked: BigNumber;
