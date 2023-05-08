@@ -31,6 +31,8 @@ export interface StakingInterface {
   campaignEnd?: number;
   name?: string;
   isLpToken: boolean;
+  wrappedNativeToken: string;
+  isNativeSupported: boolean;
 }
 export interface CampaingData {
   totalStaked: BigNumber;
@@ -48,6 +50,7 @@ export interface CampaingData {
   campaignRewards: CampaignRewardsNew[];
   rewardsCount: number;
   name: string;
+  wrappedNativeToken: string;
 }
 
 export interface CampaingStatusData {

@@ -73,12 +73,13 @@ export class CampaignWrapper {
     campaignAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
+    isNativeSupported = false,
   ) {
     if (!version || version === '1.0') {
       return this.albStaker.stake(userWallet, campaignAddress, lockSchemeAddress, amountToStake);
     }
 
-    return this.lmcStaker.stake(campaignAddress, amountToStake, userWallet);
+    return this.lmcStaker.stake(campaignAddress, amountToStake, userWallet, isNativeSupported);
   }
 
   stakeWithTier(
@@ -460,6 +461,7 @@ export class CampaignWrapper {
       campaignStartTimestamp,
       campaignEndTimestamp,
       name,
+      wrappedNativeToken,
     } = campaignData;
 
     const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
@@ -514,6 +516,7 @@ export class CampaignWrapper {
         name,
         campaignStart: Number(campaignStartTimestamp),
         campaignEnd: Number(campaignEndTimestamp),
+        wrappedNativeToken,
       },
       contractStakeLimit,
       dex,

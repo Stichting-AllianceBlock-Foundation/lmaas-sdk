@@ -40,6 +40,11 @@
         "internalType": "enum LiquidityMiningCampaignPaymentTier.TierList",
         "name": "_tierCampaign",
         "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "_wrappedNativeToken",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -229,6 +234,25 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "burnCheck",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -558,6 +582,19 @@
   },
   {
     "inputs": [],
+    "name": "lastRewardTimestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "name",
     "outputs": [
       {
@@ -725,6 +762,13 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "stakeNative",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -939,6 +983,19 @@
     "name": "withdrawTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "wrappedNativeToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
