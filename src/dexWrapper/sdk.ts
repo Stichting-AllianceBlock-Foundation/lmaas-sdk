@@ -6,7 +6,7 @@
 //   Token,
 //   TokenAmount,
 // } from '@allianceblock/abdex-sdk-v2';
-import { BigNumber, FixedNumber } from '@ethersproject/bignumber';
+import { BigNumber } from '@ethersproject/bignumber';
 import { MaxUint256 } from '@ethersproject/constants';
 import { Contract } from '@ethersproject/contracts';
 import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
