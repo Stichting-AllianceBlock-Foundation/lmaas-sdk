@@ -624,61 +624,61 @@ export class DexWrapper {
       });
 
       return output;
-    } else if (dex === DexEnum.alliancedex) {
-      // const token0Data = getTokenByPropName(
-      //   this.tokenConfigs,
-      //   TokenConfigsProps.ADDRESS,
-      //   provisionTokensAddresses[0].toLocaleLowerCase(),
-      // );
-      // const token1Data = getTokenByPropName(
-      //   this.tokenConfigs,
-      //   TokenConfigsProps.ADDRESS,
-      //   provisionTokensAddresses[1].toLocaleLowerCase(),
-      // );
-      // const token0 = new Token(
-      //   getChainIdByNetwork(this.network),
-      //   token0Data.address,
-      //   token0Data.decimals,
-      //   token0Data.symbol,
-      //   token0Data.name,
-      // );
-      // const token1 = new Token(
-      //   getChainIdByNetwork(this.network),
-      //   token1Data.address,
-      //   token1Data.decimals,
-      //   token1Data.symbol,
-      //   token1Data.name,
-      // );
-      // const poolWeight = parseEther('0.75');
-      // const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
-      // const dexAb = new sdkAbDex.DEX();
-      // const token0Name: any = token0.symbol;
-      // const token1Name: any = token1.symbol;
-      // const baseRate0 = new TokenAmount(token0, parseEther('1').toBigInt());
-      // const baseRate1 = new TokenAmount(token1, parseEther('1').toBigInt());
-      // const rate0Quote = await dexAb.getQuote(poolAb, baseRate0);
-      // const rate1Quote = await dexAb.getQuote(poolAb, baseRate1);
-      // const rate0 = await this._getFormatRateAbDex(
-      //   token1Name,
-      //   token0Name,
-      //   rate0Quote.raw.toString(),
-      //   poolAddress,
-      // );
-      // const rate1 = await this._getFormatRateAbDex(
-      //   token0Name,
-      //   token1Name,
-      //   rate1Quote.raw.toString(),
-      //   poolAddress,
-      // );
-      // return {
-      //   [token0Name]: {
-      //     [token1Name]: rate0,
-      //   },
-      //   [token1Name]: {
-      //     [token0Name]: rate1,
-      //   },
-      // };
-    } else {
+    }
+    // const token0Data = getTokenByPropName(
+    //   this.tokenConfigs,
+    //   TokenConfigsProps.ADDRESS,
+    //   provisionTokensAddresses[0].toLocaleLowerCase(),
+    // );
+    // const token1Data = getTokenByPropName(
+    //   this.tokenConfigs,
+    //   TokenConfigsProps.ADDRESS,
+    //   provisionTokensAddresses[1].toLocaleLowerCase(),
+    // );
+    // const token0 = new Token(
+    //   getChainIdByNetwork(this.network),
+    //   token0Data.address,
+    //   token0Data.decimals,
+    //   token0Data.symbol,
+    //   token0Data.name,
+    // );
+    // const token1 = new Token(
+    //   getChainIdByNetwork(this.network),
+    //   token1Data.address,
+    //   token1Data.decimals,
+    //   token1Data.symbol,
+    //   token1Data.name,
+    // );
+    // const poolWeight = parseEther('0.75');
+    // const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
+    // const dexAb = new sdkAbDex.DEX();
+    // const token0Name: any = token0.symbol;
+    // const token1Name: any = token1.symbol;
+    // const baseRate0 = new TokenAmount(token0, parseEther('1').toBigInt());
+    // const baseRate1 = new TokenAmount(token1, parseEther('1').toBigInt());
+    // const rate0Quote = await dexAb.getQuote(poolAb, baseRate0);
+    // const rate1Quote = await dexAb.getQuote(poolAb, baseRate1);
+    // const rate0 = await this._getFormatRateAbDex(
+    //   token1Name,
+    //   token0Name,
+    //   rate0Quote.raw.toString(),
+    //   poolAddress,
+    // );
+    // const rate1 = await this._getFormatRateAbDex(
+    //   token0Name,
+    //   token1Name,
+    //   rate1Quote.raw.toString(),
+    //   poolAddress,
+    // );
+    // return {
+    //   [token0Name]: {
+    //     [token1Name]: rate0,
+    //   },
+    //   [token1Name]: {
+    //     [token0Name]: rate1,
+    //   },
+    // };
+    else {
       const poolContract = new Contract(poolAddress, poolABI, this.provider);
 
       const reserves =
