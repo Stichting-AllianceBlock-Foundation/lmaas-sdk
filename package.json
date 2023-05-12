@@ -1,10 +1,11 @@
 {
   "name": "@allianceblock/lmaas-sdk",
   "author": "AllianceBlock",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "module": "dist/lmaas-sdk.esm.js",
   "files": [
     "dist",
     "src"
