@@ -36,7 +36,6 @@
     }
   },
   "dependencies": {
-    "@allianceblock/abdex-sdk-v2": "^0.1.24",
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.2",
     "ethers": "^5.7.2"
@@ -65,11 +64,11 @@
   },
   "size-limit": [
     {
-      "path": "dist/ts-sdk.cjs.production.min.js",
+      "path": "dist/lmaas-sdk.cjs.production.min.js",
       "limit": "10 KB"
     },
     {
-      "path": "dist/ts-sdk.esm.js",
+      "path": "dist/lmaas-sdk.esm.js",
       "limit": "10 KB"
     }
   ],

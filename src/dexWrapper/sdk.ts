@@ -1,11 +1,11 @@
-import {
-  ChainId,
-  initSDK,
-  NativeCurrency,
-  Percent,
-  Token,
-  TokenAmount,
-} from '@allianceblock/abdex-sdk-v2';
+// import {
+//   ChainId,
+//   initSDK,
+//   NativeCurrency,
+//   Percent,
+//   Token,
+//   TokenAmount,
+// } from '@allianceblock/abdex-sdk-v2';
 import { BigNumber, FixedNumber } from '@ethersproject/bignumber';
 import { MaxUint256 } from '@ethersproject/constants';
 import { Contract } from '@ethersproject/contracts';
@@ -55,17 +55,17 @@ interface AccFormated {
   [key: string]: any;
 }
 
-// This function is only for AbDex
-const getChainIdByNetwork = (network: NetworkEnum): ChainId => {
-  switch (network) {
-    case NetworkEnum.polygon:
-      return ChainId.POLYGON;
-    case NetworkEnum.ewc:
-      return ChainId.MAIN_EWC;
-    default:
-      return ChainId.LOCAL;
-  }
-};
+// // This function is only for AbDex
+// const getChainIdByNetwork = (network: NetworkEnum): ChainId => {
+//   switch (network) {
+//     case NetworkEnum.polygon:
+//       return ChainId.POLYGON;
+//     case NetworkEnum.ewc:
+//       return ChainId.MAIN_EWC;
+//     default:
+//       return ChainId.LOCAL;
+//   }
+// };
 /*
   TODO:
 
@@ -136,128 +136,128 @@ export class DexWrapper {
     return this[dexMethod](action, dex, tokensAmountsIn, wallet, poolAddress, pair);
   }
 
-  /**
-   * Interact with AllianceBlock dex
-   * @private
-   * @param {string} action - Action type
-   * @param {object | string} _tokensAmountsIn - Tokens data
-   * @param {object} wallet - User waller
-   * @param {string} poolAddress - LP address
-   * @param {array} pair - Array with token symbols
-   * @return {object} - minimum token amount
-   */
-  async interactWithAbDex(
-    action: string,
-    _dex: DexEnum,
-    tokensAmountsIn: string | GeneralStringToString,
-    provider: JsonRpcSigner,
-    _poolAddress: string,
-    pair: string[],
-  ) {
-    const { nativeToken } = dexByNetworkMapping[this.network];
-    const walletAddress = await provider.getAddress();
-    const poolWeight = parseEther('0.75');
-    (provider as any).address = walletAddress; // @CHECK error inside of the provideLiquidity function, calling provider.address
-    const sdkAbDex = await initSDK(provider);
-    const dexAb = new sdkAbDex.DEX();
+  // /**
+  //  * Interact with AllianceBlock dex
+  //  * @private
+  //  * @param {string} action - Action type
+  //  * @param {object | string} _tokensAmountsIn - Tokens data
+  //  * @param {object} wallet - User waller
+  //  * @param {string} poolAddress - LP address
+  //  * @param {array} pair - Array with token symbols
+  //  * @return {object} - minimum token amount
+  //  */
+  // async interactWithAbDex(
+  //   action: string,
+  //   _dex: DexEnum,
+  //   tokensAmountsIn: string | GeneralStringToString,
+  //   provider: JsonRpcSigner,
+  //   _poolAddress: string,
+  //   pair: string[],
+  // ) {
+  //   const { nativeToken } = dexByNetworkMapping[this.network];
+  //   const walletAddress = await provider.getAddress();
+  //   const poolWeight = parseEther('0.75');
+  //   (provider as any).address = walletAddress; // @CHECK error inside of the provideLiquidity function, calling provider.address
+  //   const sdkAbDex = await initSDK(provider);
+  //   const dexAb = new sdkAbDex.DEX();
 
-    let transaction;
+  //   let transaction;
 
-    if (action === 'removeLiquidity') {
-      const token0Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[0]);
+  //   if (action === 'removeLiquidity') {
+  //     const token0Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[0]);
 
-      const token1Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[1]);
+  //     const token1Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[1]);
 
-      const token0 = new Token(
-        getChainIdByNetwork(this.network),
-        token0Data.address,
-        token0Data.decimals,
-        token0Data.symbol,
-        token0Data.name,
-      );
+  //     const token0 = new Token(
+  //       getChainIdByNetwork(this.network),
+  //       token0Data.address,
+  //       token0Data.decimals,
+  //       token0Data.symbol,
+  //       token0Data.name,
+  //     );
 
-      const token1 = new Token(
-        getChainIdByNetwork(this.network),
-        token1Data.address,
-        token1Data.decimals,
-        token1Data.symbol,
-        token1Data.name,
-      );
+  //     const token1 = new Token(
+  //       getChainIdByNetwork(this.network),
+  //       token1Data.address,
+  //       token1Data.decimals,
+  //       token1Data.symbol,
+  //       token1Data.name,
+  //     );
 
-      const hasNativeToken =
-        token0Data.symbol.substr(1) === nativeToken || token1Data.symbol.substr(1) === nativeToken;
+  //     const hasNativeToken =
+  //       token0Data.symbol.substr(1) === nativeToken || token1Data.symbol.substr(1) === nativeToken;
 
-      const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
-      const userPool = new sdkAbDex.UserContribution(poolAb);
+  //     const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
+  //     const userPool = new sdkAbDex.UserContribution(poolAb);
 
-      const tokensAmountsInBN = parseEther(tokensAmountsIn as string);
-      const liquidityBN = BigNumber.from((await userPool.liquidity()).raw.toString());
-      const fixedTokensAmountsIn = FixedNumber.from(tokensAmountsInBN);
-      const fixedLiquidity = FixedNumber.from(liquidityBN);
-      const percentage = fixedTokensAmountsIn
-        .mulUnsafe(FixedNumber.from('100'))
-        .divUnsafe(fixedLiquidity)
-        .ceiling()
-        .toString();
+  //     const tokensAmountsInBN = parseEther(tokensAmountsIn as string);
+  //     const liquidityBN = BigNumber.from((await userPool.liquidity()).raw.toString());
+  //     const fixedTokensAmountsIn = FixedNumber.from(tokensAmountsInBN);
+  //     const fixedLiquidity = FixedNumber.from(liquidityBN);
+  //     const percentage = fixedTokensAmountsIn
+  //       .mulUnsafe(FixedNumber.from('100'))
+  //       .divUnsafe(fixedLiquidity)
+  //       .ceiling()
+  //       .toString();
 
-      const formatedPercentage = tokensAmountsInBN.eq(liquidityBN)
-        ? '100'
-        : parseInt(percentage, 10).toString();
-      const percentToRemove = new Percent(formatedPercentage, '100');
-      const slippage = 50;
+  //     const formatedPercentage = tokensAmountsInBN.eq(liquidityBN)
+  //       ? '100'
+  //       : parseInt(percentage, 10).toString();
+  //     const percentToRemove = new Percent(formatedPercentage, '100');
+  //     const slippage = 50;
 
-      transaction = await dexAb.removeLiquidity(percentToRemove, userPool, slippage);
+  //     transaction = await dexAb.removeLiquidity(percentToRemove, userPool, slippage);
 
-      if (hasNativeToken) {
-        transaction = await dexAb.removeNativeLiquidity(percentToRemove, userPool, slippage);
-      }
-    } else {
-      const { hasNativeToken, tokensArr } = this._getTokensData(
-        tokensAmountsIn as GeneralStringToString,
-        nativeToken,
-      );
+  //     if (hasNativeToken) {
+  //       transaction = await dexAb.removeNativeLiquidity(percentToRemove, userPool, slippage);
+  //     }
+  //   } else {
+  //     const { hasNativeToken, tokensArr } = this._getTokensData(
+  //       tokensAmountsIn as GeneralStringToString,
+  //       nativeToken,
+  //     );
 
-      const token0 = new Token(
-        getChainIdByNetwork(this.network),
-        tokensArr[0].tokenAddress,
-        tokensArr[0].tokenDecimals,
-        tokensArr[0].tokenSymbol,
-        tokensArr[0].tokenName,
-      );
+  //     const token0 = new Token(
+  //       getChainIdByNetwork(this.network),
+  //       tokensArr[0].tokenAddress,
+  //       tokensArr[0].tokenDecimals,
+  //       tokensArr[0].tokenSymbol,
+  //       tokensArr[0].tokenName,
+  //     );
 
-      const token1 = new Token(
-        getChainIdByNetwork(this.network),
-        tokensArr[1].tokenAddress,
-        tokensArr[1].tokenDecimals,
-        tokensArr[1].tokenSymbol,
-        tokensArr[1].tokenName,
-      );
+  //     const token1 = new Token(
+  //       getChainIdByNetwork(this.network),
+  //       tokensArr[1].tokenAddress,
+  //       tokensArr[1].tokenDecimals,
+  //       tokensArr[1].tokenSymbol,
+  //       tokensArr[1].tokenName,
+  //     );
 
-      const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
+  //     const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
 
-      if (hasNativeToken) {
-        let amount0 = new TokenAmount(token0, tokensArr[0].convertedAmountBN.toBigInt());
-        let calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
-        let amount1 = NativeCurrency.native(calculatedAmountB, getChainIdByNetwork(this.network));
+  //     if (hasNativeToken) {
+  //       let amount0 = new TokenAmount(token0, tokensArr[0].convertedAmountBN.toBigInt());
+  //       let calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
+  //       let amount1 = NativeCurrency.native(calculatedAmountB, getChainIdByNetwork(this.network));
 
-        if (token0.symbol?.substring(1) === nativeToken) {
-          amount0 = new TokenAmount(token1, tokensArr[1].convertedAmountBN.toBigInt());
-          calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
-          amount1 = NativeCurrency.native(calculatedAmountB, getChainIdByNetwork(this.network));
-        }
+  //       if (token0.symbol?.substring(1) === nativeToken) {
+  //         amount0 = new TokenAmount(token1, tokensArr[1].convertedAmountBN.toBigInt());
+  //         calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
+  //         amount1 = NativeCurrency.native(calculatedAmountB, getChainIdByNetwork(this.network));
+  //       }
 
-        transaction = await dexAb.addNativeLiquidity(amount1, amount0, poolAb);
-      } else {
-        const amount0 = new TokenAmount(token0, tokensArr[0].convertedAmountBN.toBigInt());
-        const calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
-        const amount1 = new TokenAmount(token1, calculatedAmountB);
+  //       transaction = await dexAb.addNativeLiquidity(amount1, amount0, poolAb);
+  //     } else {
+  //       const amount0 = new TokenAmount(token0, tokensArr[0].convertedAmountBN.toBigInt());
+  //       const calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
+  //       const amount1 = new TokenAmount(token1, calculatedAmountB);
 
-        transaction = await dexAb.addLiquidity(amount0, amount1, poolAb);
-      }
-    }
+  //       transaction = await dexAb.addLiquidity(amount0, amount1, poolAb);
+  //     }
+  //   }
 
-    return await provider.sendTransaction(transaction);
-  }
+  //   return await provider.sendTransaction(transaction);
+  // }
 
   /**
    * Interact with Uniswap forks
@@ -594,11 +594,11 @@ export class DexWrapper {
     poolAddress: string,
     provisionTokensAddresses: string[],
     dex: DexEnum,
-    signerProvider: JsonRpcSigner,
+    _signerProvider: JsonRpcSigner,
   ) {
     const { dexes } = dexByNetworkMapping[this.network];
     const { poolABI } = dexes[dex];
-    const sdkAbDex = await initSDK(signerProvider);
+    // const sdkAbDex = await initSDK(signerProvider);
 
     if (dex === DexEnum.balancer) {
       const output: { [key: string]: GeneralStringToString } = {};
@@ -625,69 +625,59 @@ export class DexWrapper {
 
       return output;
     } else if (dex === DexEnum.alliancedex) {
-      const token0Data = getTokenByPropName(
-        this.tokenConfigs,
-        TokenConfigsProps.ADDRESS,
-        provisionTokensAddresses[0].toLocaleLowerCase(),
-      );
-
-      const token1Data = getTokenByPropName(
-        this.tokenConfigs,
-        TokenConfigsProps.ADDRESS,
-        provisionTokensAddresses[1].toLocaleLowerCase(),
-      );
-
-      const token0 = new Token(
-        getChainIdByNetwork(this.network),
-        token0Data.address,
-        token0Data.decimals,
-        token0Data.symbol,
-        token0Data.name,
-      );
-
-      const token1 = new Token(
-        getChainIdByNetwork(this.network),
-        token1Data.address,
-        token1Data.decimals,
-        token1Data.symbol,
-        token1Data.name,
-      );
-
-      const poolWeight = parseEther('0.75');
-      const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
-      const dexAb = new sdkAbDex.DEX();
-
-      const token0Name: any = token0.symbol;
-      const token1Name: any = token1.symbol;
-
-      const baseRate0 = new TokenAmount(token0, parseEther('1').toBigInt());
-      const baseRate1 = new TokenAmount(token1, parseEther('1').toBigInt());
-
-      const rate0Quote = await dexAb.getQuote(poolAb, baseRate0);
-      const rate1Quote = await dexAb.getQuote(poolAb, baseRate1);
-
-      const rate0 = await this._getFormatRateAbDex(
-        token1Name,
-        token0Name,
-        rate0Quote.raw.toString(),
-        poolAddress,
-      );
-
-      const rate1 = await this._getFormatRateAbDex(
-        token0Name,
-        token1Name,
-        rate1Quote.raw.toString(),
-        poolAddress,
-      );
-
-      return {
-        [token0Name]: {
-          [token1Name]: rate0,
-        },
-        [token1Name]: {
-          [token0Name]: rate1,
-        },
-      };
+      // const token0Data = getTokenByPropName(
+      //   this.tokenConfigs,
+      //   TokenConfigsProps.ADDRESS,
+      //   provisionTokensAddresses[0].toLocaleLowerCase(),
+      // );
+      // const token1Data = getTokenByPropName(
+      //   this.tokenConfigs,
+      //   TokenConfigsProps.ADDRESS,
+      //   provisionTokensAddresses[1].toLocaleLowerCase(),
+      // );
+      // const token0 = new Token(
+      //   getChainIdByNetwork(this.network),
+      //   token0Data.address,
+      //   token0Data.decimals,
+      //   token0Data.symbol,
+      //   token0Data.name,
+      // );
+      // const token1 = new Token(
+      //   getChainIdByNetwork(this.network),
+      //   token1Data.address,
+      //   token1Data.decimals,
+      //   token1Data.symbol,
+      //   token1Data.name,
+      // );
+      // const poolWeight = parseEther('0.75');
+      // const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
+      // const dexAb = new sdkAbDex.DEX();
+      // const token0Name: any = token0.symbol;
+      // const token1Name: any = token1.symbol;
+      // const baseRate0 = new TokenAmount(token0, parseEther('1').toBigInt());
+      // const baseRate1 = new TokenAmount(token1, parseEther('1').toBigInt());
+      // const rate0Quote = await dexAb.getQuote(poolAb, baseRate0);
+      // const rate1Quote = await dexAb.getQuote(poolAb, baseRate1);
+      // const rate0 = await this._getFormatRateAbDex(
+      //   token1Name,
+      //   token0Name,
+      //   rate0Quote.raw.toString(),
+      //   poolAddress,
+      // );
+      // const rate1 = await this._getFormatRateAbDex(
+      //   token0Name,
+      //   token1Name,
+      //   rate1Quote.raw.toString(),
+      //   poolAddress,
+      // );
+      // return {
+      //   [token0Name]: {
+      //     [token1Name]: rate0,
+      //   },
+      //   [token1Name]: {
+      //     [token0Name]: rate1,
+      //   },
+      // };
     } else {
       const poolContract = new Contract(poolAddress, poolABI, this.provider);
 
