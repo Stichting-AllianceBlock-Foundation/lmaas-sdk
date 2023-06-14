@@ -13,6 +13,8 @@ export interface LMInterface {
   version: string;
   routerAddress?: string;
   campaignMessage?: string;
+  campaignStart?: number;
+  campaignEnd?: number;
   name?: string;
 }
 
@@ -25,8 +27,12 @@ export interface StakingInterface {
   period: string;
   version: string;
   campaignMessage?: string;
+  campaignStart?: number;
+  campaignEnd?: number;
   name?: string;
   isLpToken: boolean;
+  wrappedNativeToken: string;
+  isNativeSupported: boolean;
 }
 export interface CampaingData {
   totalStaked: BigNumber;
@@ -44,12 +50,14 @@ export interface CampaingData {
   campaignRewards: CampaignRewardsNew[];
   rewardsCount: number;
   name: string;
+  wrappedNativeToken: string;
 }
 
 export interface CampaingStatusData {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
   hasUserStaked?: boolean;
+  upcoming?: boolean;
 }
 
 export interface CampaingStatusDataActive {
@@ -57,6 +65,7 @@ export interface CampaingStatusDataActive {
   hasCampaignEnded: boolean;
   exitTimestamp: BigNumber;
   exitStake: BigNumber;
+  upcoming?: boolean;
 }
 
 export interface UserDataLM {

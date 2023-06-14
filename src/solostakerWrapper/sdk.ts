@@ -13,6 +13,7 @@ import {
   CoinGecko,
   convertBlockToSeconds,
   day,
+  dexByNetworkMapping,
   formatStakingDuration,
   formatToken,
   formatValuesToString,
@@ -72,14 +73,19 @@ export class SoloStakerWrapper {
     this.tokenConfigs = tokenConfigs;
   }
 
-  stake(userWallet: JsonRpcSigner, campaign: StakingInterface, amountToStake: string) {
+  stake(
+    userWallet: JsonRpcSigner,
+    campaign: StakingInterface,
+    amountToStake: string,
+    isNativeSupported = false,
+  ) {
     const { campaignAddress, version = '1.0' } = campaign;
 
     if (version === '1.0') {
       return this._stake(userWallet, campaign, amountToStake);
     }
 
-    return this.soloNonComp.stake(campaignAddress, amountToStake, userWallet);
+    return this.soloNonComp.stake(campaignAddress, amountToStake, userWallet, isNativeSupported);
   }
 
   async _stake(
@@ -365,6 +371,10 @@ export class SoloStakerWrapper {
   async getCardDataNew(userWallet: JsonRpcSigner, campaign: StakingInterface) {
     //Get campaign data
     const { campaignAddress, campaignTokenAddress, rewardsAddresses, version } = campaign;
+    const nativeTokenName = dexByNetworkMapping[campaign.network].nativeToken;
+    let isNativeSupported: boolean = false;
+
+    const userAddress = await getAddressFromWallet(userWallet);
 
     // Get tokenInstance
     const tokenLpInstance = new Contract(campaignTokenAddress, LpABI, this.provider);
@@ -396,6 +406,9 @@ export class SoloStakerWrapper {
       const { coinGeckoID: stakingTokenId } = stakingToken;
       symbol = stakingToken.symbol;
       stakingTokenPrice = await this.coingecko.getTokenPrice(stakingTokenId, 'usd');
+
+      if (nativeTokenName === symbol || nativeTokenName === symbol.substring(1))
+        isNativeSupported = true;
     } else {
       symbol = 'LP';
     }
@@ -409,12 +422,9 @@ export class SoloStakerWrapper {
     // Get user data
     const userData = await this.soloNonComp.getUserData(campaignAddress, userWallet);
 
-    const userAddress = await getAddressFromWallet(userWallet);
-    const userWalletTokensBalanceBN = await getBalance(
-      this.provider as JsonRpcProvider,
-      campaignTokenAddress,
-      userAddress,
-    );
+    const userWalletTokensBalanceBN = isNativeSupported
+      ? await this.provider.getBalance(userAddress)
+      : await getBalance(this.provider as JsonRpcProvider, campaignTokenAddress, userAddress);
 
     const tokenDecimals = await getTokenDecimals(
       this.provider as JsonRpcProvider,
@@ -431,10 +441,15 @@ export class SoloStakerWrapper {
       hasContractStakeLimit,
       hasWalletStakeLimit: hasUserStakeLimit,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
+      wrappedNativeToken,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -520,9 +535,17 @@ export class SoloStakerWrapper {
     };
 
     return {
-      apy,
+      apy: !upcoming ? apy : 0,
       autoCompounding: false,
-      campaign: { ...campaign, name, isLpToken },
+      campaign: {
+        ...campaign,
+        name,
+        isLpToken,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+        wrappedNativeToken,
+        isNativeSupported,
+      },
       contractStakeLimit,
       cooldownPeriod,
       emptyCardData: false,
@@ -533,7 +556,7 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state,
+      state: !upcoming ? state : 5,
       totalRewards,
       totalStaked,
       totalStakedUSD,
@@ -542,6 +565,7 @@ export class SoloStakerWrapper {
       userWalletTokensBalance,
       weeklyRewards,
       rewardToken,
+      upcoming,
     };
   }
 
@@ -604,10 +628,10 @@ export class SoloStakerWrapper {
       ? stakerCampaignInstance.totalAmountStaked()
       : stakerCampaignInstance.totalStaked();
 
-    let contractStakeLimit = stakerCampaignInstance.contractStakeLimit();
+    let contractStakeLimit: any = stakerCampaignInstance.contractStakeLimit();
     let stakeLimit = stakerCampaignInstance.stakeLimit();
 
-    let stakingTokenPrice = this.coingecko.getTokenPrice(stakingTokenId, 'usd');
+    let stakingTokenPrice: any = this.coingecko.getTokenPrice(stakingTokenId, 'usd');
 
     // Get state
     const state = this.getDisconnectedState(stakerCampaignAddress, '1.0', compounding);
@@ -760,10 +784,14 @@ export class SoloStakerWrapper {
       hasContractStakeLimit,
       hasWalletStakeLimit: hasUserStakeLimit,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -827,9 +855,15 @@ export class SoloStakerWrapper {
     };
 
     return {
-      apy,
+      apy: !upcoming ? apy : 0,
       autoCompounding: false,
-      campaign: { ...campaign, name, isLpToken },
+      campaign: {
+        ...campaign,
+        name,
+        isLpToken,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+      },
       contractStakeLimit,
       emptyCardData: true,
       expirationTime,
@@ -839,12 +873,13 @@ export class SoloStakerWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state,
+      state: !upcoming ? state : 5,
       totalRewards,
       totalStaked,
       totalStakedUSD,
       weeklyRewards,
       rewardToken,
+      upcoming,
     };
   }
 
@@ -1189,8 +1224,12 @@ export class SoloStakerWrapper {
         return 4; //"StakingEnded/WithdrawTriggered/CooldownExpired/RewardClaimed"
       }
     } else {
-      const { hasCampaignStarted, hasCampaignEnded } =
+      const { hasCampaignStarted, hasCampaignEnded, upcoming } =
         await this.soloNonComp.getCampaignStatusActive(stakerCampaignAddress, userWallet);
+
+      if (upcoming) {
+        return 5;
+      }
 
       const userData = await this.soloNonComp.getUserData(stakerCampaignAddress, userWallet);
 
@@ -1579,9 +1618,12 @@ export class SoloStakerWrapper {
         return 0; // "StakingInProgress"
       }
     } else {
-      const { hasCampaignStarted, hasCampaignEnded } = await this.soloNonComp.getCampaignStatus(
-        campaignAddress,
-      );
+      const { hasCampaignStarted, hasCampaignEnded, upcoming } =
+        await this.soloNonComp.getCampaignStatus(campaignAddress);
+
+      if (upcoming) {
+        return 5;
+      }
 
       if (!hasCampaignStarted) {
         return -1;

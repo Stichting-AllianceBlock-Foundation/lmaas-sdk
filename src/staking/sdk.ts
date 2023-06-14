@@ -58,7 +58,20 @@ export class StakerSolo {
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
+      wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract;
+
+    let wrappedNativeToken: string = '';
+
+    /*
+     @REMOVE this when the version of the pool is fixed.
+     Some saving, because there are pools already deployed of v2.
+    */
+    try {
+      wrappedNativeToken = await wrappedNativeTokenPR();
+    } catch (e) {
+      console.error(e);
+    }
 
     const promiseArray = [
       totalStakedPR(),
@@ -90,7 +103,9 @@ export class StakerSolo {
 
     const campaignRewards = [];
 
-    if (hasCampaignStarted) {
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (hasCampaignStarted || upcoming) {
       // Get rewards info
       for (let i = 0; i < rewardsCountNum; i++) {
         const tokenAddress = await campaignContract.rewardsTokens(i);
@@ -124,6 +139,7 @@ export class StakerSolo {
       campaignRewards,
       rewardsCount: rewardsCountNum,
       name,
+      wrappedNativeToken,
     };
   }
 
@@ -179,17 +195,20 @@ export class StakerSolo {
     const nowBN = BigNumber.from(now);
 
     // Get raw contract data
+    const campaignStartTimestamp = await campaignContract.startTimestamp();
     const campaignEndTimestamp = await campaignContract.endTimestamp();
     const hasCampaignStarted = await campaignContract.hasStakingStarted();
     const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
 
     const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const upcoming = campaignStartTimestamp > now;
 
     return {
       hasCampaignStarted,
       hasCampaignEnded,
       exitTimestamp,
       exitStake,
+      upcoming,
     };
   }
 
@@ -260,6 +279,7 @@ export class StakerSolo {
     contractAddress: string,
     amountToStake: string,
     signerProvider: JsonRpcSigner,
+    isNativeSupported: boolean,
   ): Promise<providers.TransactionResponse> {
     const campaignContract = new Contract(
       contractAddress,
@@ -269,6 +289,12 @@ export class StakerSolo {
     const stakingToken = await campaignContract.stakingToken();
     const tokenDecimals = await getTokenDecimals(signerProvider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
+
+    if (isNativeSupported) {
+      return await campaignContract.stakeNative({
+        value: amountToStakeParsed,
+      });
+    }
 
     return await campaignContract.stake(amountToStakeParsed);
   }

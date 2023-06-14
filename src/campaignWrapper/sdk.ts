@@ -73,12 +73,13 @@ export class CampaignWrapper {
     campaignAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
+    isNativeSupported = false,
   ) {
     if (!version || version === '1.0') {
       return this.albStaker.stake(userWallet, campaignAddress, lockSchemeAddress, amountToStake);
     }
 
-    return this.lmcStaker.stake(campaignAddress, amountToStake, userWallet);
+    return this.lmcStaker.stake(campaignAddress, amountToStake, userWallet, isNativeSupported);
   }
 
   stakeWithTier(
@@ -236,10 +237,14 @@ export class CampaignWrapper {
       campaignRewards: campaignRewardsBN,
       totalStaked: totalStakedBN,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -270,8 +275,8 @@ export class CampaignWrapper {
     const apy = this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
     return {
-      apy,
-      campaign: { ...campaign, name },
+      apy: !upcoming ? apy : 0,
+      campaign: { ...campaign, name, campaignEnd: Number(campaignEndTimestamp) },
       campaignRewards,
       dex,
       duration,
@@ -281,6 +286,7 @@ export class CampaignWrapper {
       tuple,
       totalStaked,
       totalStakedUSD,
+      upcoming,
     };
   }
 
@@ -452,10 +458,15 @@ export class CampaignWrapper {
       totalStaked: totalStakedBN,
       extensionDuration,
       hasCampaignStarted,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       name,
+      wrappedNativeToken,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -498,8 +509,15 @@ export class CampaignWrapper {
     const willBeExtended = BigNumber.from(extensionDuration).gt(BigNumber.from(0));
 
     return {
-      apy,
-      campaign: { ...campaign, routerAddress, name },
+      apy: !upcoming ? apy : 0,
+      campaign: {
+        ...campaign,
+        routerAddress,
+        name,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+        wrappedNativeToken,
+      },
       contractStakeLimit,
       dex,
       duration,
@@ -517,6 +535,7 @@ export class CampaignWrapper {
       campaignRewards,
       userStakeLimit,
       willBeExtended,
+      upcoming,
     };
   }
 
@@ -702,10 +721,10 @@ export class CampaignWrapper {
   ) {
     const { campaignAddress } = campaign;
 
-    const { hasCampaignStarted, hasCampaignEnded, hasUserStaked } =
+    const { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming } =
       await this.lmcStaker.getCampaignStatus(campaignAddress, connected, signerProvider);
 
-    return { hasCampaignStarted, hasCampaignEnded, hasUserStaked };
+    return { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming };
   }
 
   _calculateAPY_new(

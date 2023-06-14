@@ -1,11 +1,11 @@
 {
   "name": "@allianceblock/lmaas-sdk",
   "author": "AllianceBlock",
-  "version": "1.4.6",
+  "version": "1.5.3",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
-  "module": "dist/ts-sdk.esm.js",
+  "module": "dist/lmaas-sdk.esm.js",
   "files": [
     "dist",
     "src"
@@ -37,40 +37,39 @@
     }
   },
   "dependencies": {
-    "@allianceblock/abdex-sdk-v2": "^0.1.24",
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.2",
-    "ethers": "^5.5.2"
+    "ethers": "^5.7.2"
   },
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.5",
-    "@typechain/ethers-v5": "^8.0.5",
+    "@size-limit/preset-small-lib": "^8.2.4",
+    "@typechain/ethers-v5": "^10.2.1",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "eslint": "^8.9.0",
     "eslint-config-prettier": "^8.4.0",
-    "eslint-config-standard-react": "^11.0.1",
+    "eslint-config-standard-react": "^13.0.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
-    "eslint-plugin-simple-import-sort": "^7.0.0",
-    "husky": "^7.0.4",
+    "eslint-plugin-simple-import-sort": "^10.0.0",
+    "husky": "^8.0.3",
     "prettier": "^2.5.1",
-    "size-limit": "^7.0.5",
+    "size-limit": "^8.2.4",
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",
-    "typechain": "^6.1.0",
-    "typescript": "^4.5.4"
+    "typechain": "^8.1.1",
+    "typescript": "^5.0.4"
   },
   "size-limit": [
     {
-      "path": "dist/ts-sdk.cjs.production.min.js",
+      "path": "dist/lmaas-sdk.cjs.production.min.js",
       "limit": "10 KB"
     },
     {
-      "path": "dist/ts-sdk.esm.js",
+      "path": "dist/lmaas-sdk.esm.js",
       "limit": "10 KB"
     }
   ],
