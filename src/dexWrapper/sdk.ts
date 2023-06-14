@@ -511,8 +511,13 @@ export class DexWrapper {
    * @param {string} spenderAddress - Spender address
    * @return {object} transaction object
    */
-  async approveToken(userWallet: JsonRpcSigner, spenderAddress: string, tokenAddress: string) {
-    const receipt = await approveToken(userWallet, tokenAddress, spenderAddress);
+  async approveToken(
+    userWallet: JsonRpcSigner,
+    spenderAddress: string,
+    tokenAddress: string,
+    amountToApprove?: string,
+  ) {
+    const receipt = await approveToken(userWallet, tokenAddress, spenderAddress, amountToApprove);
     return receipt;
   }
 
