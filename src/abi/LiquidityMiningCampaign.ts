@@ -1,4 +1,4 @@
-[
+export const LiquidityMiningCampaignABI = [
   {
     "inputs": [
       {
@@ -25,21 +25,6 @@
         "internalType": "string",
         "name": "_name",
         "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "_paymentContract",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_reputationContract",
-        "type": "address"
-      },
-      {
-        "internalType": "enum LiquidityMiningCampaignPaymentTier.TierList",
-        "name": "_tierCampaign",
-        "type": "uint8"
       },
       {
         "internalType": "address",
@@ -240,48 +225,15 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "burnCheck",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "cancel",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "cancelExtension",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "cancelExtensionWithPaymentContract",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "cancelWithPaymentContract",
+    "name": "cancelExtension",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -343,24 +295,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "extend",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "_durationTime",
         "type": "uint256"
       },
@@ -370,7 +304,7 @@
         "type": "uint256[]"
       }
     ],
-    "name": "extendWithPaymentContract",
+    "name": "extend",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -670,19 +604,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "reputationContract",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -772,34 +693,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_tokenAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_signature",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxTier",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_deadline",
-        "type": "uint256"
-      }
-    ],
-    "name": "stakeWithTier",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "stakingToken",
     "outputs": [
@@ -807,42 +700,6 @@
         "internalType": "contract IERC20",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "start",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "startTimestamp",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -866,19 +723,19 @@
         "type": "uint256[]"
       }
     ],
-    "name": "startWithPaymentContract",
+    "name": "start",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "tierCampaign",
+    "name": "startTimestamp",
     "outputs": [
       {
-        "internalType": "enum LiquidityMiningCampaignPaymentTier.TierList",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint8"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1002,4 +859,4 @@
     "stateMutability": "payable",
     "type": "receive"
   }
-]
+] as const;
