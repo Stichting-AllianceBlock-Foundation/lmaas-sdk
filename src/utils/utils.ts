@@ -1,10 +1,6 @@
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { formatUnits, parseUnits } from '@ethersproject/units';
-import { BigNumber, constants, providers } from 'ethers';
-import { WalletClient } from 'viem';
+import { formatUnits, getContract, parseUnits, PublicClient, WalletClient } from 'viem';
 
-import ERC20ABI from '../abi/ERC20.json';
+import { ERC20ABI } from '../abi/ERC20';
 import { Token, TokenConfigs } from '../entities';
 
 export const maxUint256 = BigInt(
@@ -96,88 +92,104 @@ export const getAddressFromWallet = async (wallet: WalletClient) => {
   return walletAddress;
 };
 
-export const formatValuesToString = (values: BigNumber[], decimals = 18): string[] => {
-  return values.map(v => formatUnits(v.toString(), decimals));
+export const formatValuesToString = (values: bigint[], decimals = 18): string[] => {
+  return values.map(v => formatUnits(v, decimals));
 };
 
 export const approveToken = async (
-  wallet: JsonRpcSigner,
-  tokenAddress: string,
-  spenderAddress: string,
+  wallet: WalletClient,
+  provider: PublicClient,
+  tokenAddress: `0x${string}`,
+  spenderAddress: `0x${string}`,
   amountToApprove?: string,
-): Promise<providers.TransactionResponse> => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
+) => {
+  const tokenContract = getContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    walletClient: wallet,
+  });
 
-  const tokenDecimals = await getTokenDecimals(wallet, tokenAddress);
+  const tokenDecimals = await getTokenDecimals(provider, tokenAddress);
+
+  const address = await getAddressFromWallet(wallet);
+
   const amountToApproveParsed = amountToApprove
     ? parseUnits(amountToApprove, tokenDecimals)
-    : constants.MaxUint256;
+    : maxUint256;
 
-  return tokenContract.approve(spenderAddress, amountToApproveParsed);
+  return tokenContract.write.approve([spenderAddress, amountToApproveParsed], {
+    chain: wallet.chain,
+    account: address,
+  });
 };
 
 export const getAllowance = async (
-  wallet: JsonRpcSigner,
-  tokenAddress: string,
-  spenderAddress: string,
-): Promise<BigNumber> => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
-  const walletAddress = await wallet.getAddress();
+  wallet: WalletClient,
+  provider: PublicClient,
+  tokenAddress: `0x${string}`,
+  spenderAddress: `0x${string}`,
+): Promise<bigint> => {
+  const tokenContract = getContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    publicClient: provider,
+  });
+  const walletAddress = await getAddressFromWallet(wallet);
 
-  return tokenContract.allowance(walletAddress, spenderAddress);
+  return tokenContract.read.allowance([walletAddress, spenderAddress]);
 };
 
 // formatUnits ( wei , decimalsOrUnitName ) => string
 export const formatToken = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  value: any,
-  tokenAddress: string,
+  provider: PublicClient,
+  value: bigint,
+  tokenAddress: `0x${string}`,
 ) => {
-  return formatUnits(value, await getTokenDecimals(walletOrProvider, tokenAddress));
+  return formatUnits(value, await getTokenDecimals(provider, tokenAddress));
 };
 
 // parseUnits ( valueString , decimalsOrUnitName ) => BigNumber
 export const parseToken = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
+  provider: PublicClient,
   valueString: string,
-  tokenAddress: string,
+  tokenAddress: `0x${string}`,
 ) => {
-  return parseUnits(valueString, await getTokenDecimals(walletOrProvider, tokenAddress));
+  return parseUnits(valueString, await getTokenDecimals(provider, tokenAddress));
 };
 
 export const getBalance = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  tokenAddress: string,
-  addressToCheck: string,
+  provider: PublicClient,
+  tokenAddress: `0x${string}`,
+  addressToCheck: `0x${string}`,
 ) => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, walletOrProvider);
-  const balance = await tokenContract.balanceOf(addressToCheck);
-
-  return balance;
+  const tokenContract = getContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    publicClient: provider,
+  });
+  return await tokenContract.read.balanceOf([addressToCheck]);
 };
 
-export const getTotalSupply = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  tokenAddress: string,
-) => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, walletOrProvider);
-  const supply = await tokenContract.totalSupply();
-
-  return supply;
+export const getTotalSupply = async (provider: PublicClient, tokenAddress: `0x${string}`) => {
+  const tokenContract = getContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    publicClient: provider,
+  });
+  return await tokenContract.read.totalSupply();
 };
 
-export const getTokenDecimals = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  tokenAddress: string,
-) => {
+export const getTokenDecimals = async (provider: PublicClient, tokenAddress: `0x${string}`) => {
   const ethToken = String('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE').toLowerCase();
   if (tokenAddress == ethToken) {
     return 18;
   }
-
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, walletOrProvider);
-  const decimals = await tokenContract.decimals();
-  return decimals;
+  const tokenContract = getContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    publicClient: provider,
+  });
+  return await tokenContract.read.decimals();
 };
 
 export function getTokenByPropName(tokenConfig: any, propName: string, propValue: string): any {
