@@ -39,7 +39,8 @@
   "dependencies": {
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.2",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "viem": "^1.2.12"
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^8.2.4",
