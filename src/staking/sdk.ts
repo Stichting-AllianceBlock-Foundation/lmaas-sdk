@@ -280,8 +280,6 @@ export class StakerSolo {
       functionName: 'stakingToken',
     });
 
-    const address = await getAddressFromWallet(wallet);
-
     const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
@@ -290,7 +288,6 @@ export class StakerSolo {
         abi: NonCompoundingRewardsPoolABI,
         address: contractAddress as `0x${string}`,
         functionName: 'stakeNative',
-        account: address,
         value: amountToStakeParsed,
       });
 
@@ -301,7 +298,6 @@ export class StakerSolo {
       abi: NonCompoundingRewardsPoolABI,
       address: contractAddress as `0x${string}`,
       functionName: 'stake',
-      account: address,
       args: [amountToStakeParsed],
     });
 
@@ -316,13 +312,10 @@ export class StakerSolo {
    * @return {string} hash of the transaction
    */
   public async exit(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
-    const address = await getAddressFromWallet(wallet);
-
     const { request } = await this.provider.simulateContract({
       abi: NonCompoundingRewardsPoolABI,
       address: contractAddress as `0x${string}`,
       functionName: 'exit',
-      account: address,
     });
 
     return await wallet.writeContract(request);
@@ -336,13 +329,10 @@ export class StakerSolo {
    * @return {string} hash of the transaction
    */
   public async completeExit(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
-    const address = await getAddressFromWallet(wallet);
-
     const { request } = await this.provider.simulateContract({
       abi: NonCompoundingRewardsPoolABI,
       address: contractAddress as `0x${string}`,
       functionName: 'completeExit',
-      account: address,
     });
 
     return await wallet.writeContract(request);
