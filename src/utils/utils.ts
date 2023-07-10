@@ -2,9 +2,14 @@ import { Contract } from '@ethersproject/contracts';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { formatUnits, parseUnits } from '@ethersproject/units';
 import { BigNumber, constants, providers } from 'ethers';
+import { WalletClient } from 'viem';
 
 import ERC20ABI from '../abi/ERC20.json';
 import { Token, TokenConfigs } from '../entities';
+
+export const maxUint256 = BigInt(
+  '115792089237316195423570985008687907853269984665640564039457584007913129639935',
+); // Equivalent to MaxUint256;
 
 export const day = 60 * 60 * 24;
 export const week = day * 7;
@@ -50,23 +55,21 @@ const SECONDS_PER_BLOCK: { [key: string]: number } = {
   volta: 5,
 };
 
-export const convertBlockToSeconds = (blocks: BigNumber, protocol: string) => {
+export const convertBlockToSeconds = (blocks: bigint, protocol: string) => {
   if (SECONDS_PER_BLOCK[protocol]) {
-    const secondsTen = SECONDS_PER_BLOCK[protocol] * 10;
-    const blocksPerSecond = blocks.mul(secondsTen);
-    const bigTen = BigNumber.from(10);
-
-    return blocksPerSecond.div(bigTen);
+    const secondsTen = BigInt(SECONDS_PER_BLOCK[protocol]) * 10n;
+    const blocksPerSecond = blocks * secondsTen;
+    return blocksPerSecond / 10n;
   }
+
   return blocks;
 };
 
-export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
-  const tenBN = BigNumber.from(10);
-  const tenPow18BN = tenBN.pow(18);
-  const maxAmount = constants.MaxUint256.div(tenPow18BN);
-
-  return limit.div(tenPow18BN).eq(maxAmount);
+export const checkMaxStakingLimit = (limit: bigint): boolean => {
+  const ten = 10n;
+  const tenPow18 = ten ** 18n;
+  const maxAmount = maxUint256 / tenPow18;
+  return limit / tenPow18 === maxAmount;
 };
 
 export const getTokensConfig = (tokens: Token[]): TokenConfigs => {
@@ -88,8 +91,8 @@ export const poolTupleToString = (tuple: string[]) => {
 
 // @wallet  -> wallet object
 // @returns -> address of wallet
-export const getAddressFromWallet = async (wallet: JsonRpcSigner) => {
-  const walletAddress = await wallet.getAddress();
+export const getAddressFromWallet = async (wallet: WalletClient) => {
+  const [walletAddress] = await wallet.getAddresses();
   return walletAddress;
 };
 
