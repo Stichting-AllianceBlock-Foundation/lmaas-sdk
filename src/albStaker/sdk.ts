@@ -367,7 +367,7 @@ export class ALBStaker {
         tokenName,
         tokenAddress: currentRewardToken.toLowerCase(),
         tokenAmount: formatUnits(
-          rewardPerBlock * BLOCKS_COUNT[this.protocol].PER_WEEK,
+          rewardPerBlock * BigInt(BLOCKS_COUNT[this.protocol].PER_WEEK),
           tokenDecimals,
         ),
       };
