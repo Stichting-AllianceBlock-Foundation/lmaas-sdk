@@ -1,5 +1,5 @@
 import { DexByNetworkMapping } from '.';
-import AllianceBlockDexPoolABI from './abi/AllianceBlockDexPoolABI.json';
+import { LiquidityProviderABI } from './abi/AllianceBlockDexPoolABI';
 import AllianceBlockDexRouterABI from './abi/AllianceBlockDexRouterABI.json';
 import arrakisPoolABI from './abi/ArrakisPoolABI.json';
 import arrakisRouterABI from './abi/ArrakisRouterABI.json';
@@ -70,7 +70,7 @@ export const dexByNetworkMapping: DexByNetworkMapping = {
     dexes: {
       alliancedex: {
         routerABI: AllianceBlockDexRouterABI,
-        poolABI: AllianceBlockDexPoolABI,
+        poolABI: LiquidityProviderABI,
         routerAddress: '0x6751c00E8A0E25c39175168DE4D34C8c9713cA30',
         interactWithNativeSuffix: 'Native',
       },
