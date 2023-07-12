@@ -1,4 +1,4 @@
-export const LiquidityProviderABI = [
+export const AbPoolABI = [
   {
     inputs: [],
     stateMutability: 'nonpayable',
