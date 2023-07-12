@@ -31,7 +31,7 @@ import {
   UserRewards,
   year,
 } from '..';
-import { LiquidityProviderABI } from '../abi/AllianceBlockDexPoolABI';
+import { AbPoolABI } from '../abi/AllianceBlockDexPoolABI';
 import { CompoundingRewardsPoolStakerABI } from '../abi/CompoundingRewardsPoolStaker';
 import { NonCompoundingRewardsPoolABI } from '../abi/NonCompoundingRewardsPoolV1';
 
@@ -416,12 +416,12 @@ export class SoloStakerWrapper {
 
     try {
       token0 = await this.provider.readContract({
-        abi: LiquidityProviderABI,
+        abi: AbPoolABI,
         address: campaignTokenAddress as `0x${string}`,
         functionName: 'token0',
       });
       token1 = await this.provider.readContract({
-        abi: LiquidityProviderABI,
+        abi: AbPoolABI,
         address: campaignTokenAddress as `0x${string}`,
         functionName: 'token1',
       });
@@ -764,12 +764,12 @@ export class SoloStakerWrapper {
 
     try {
       token0 = await this.provider.readContract({
-        abi: LiquidityProviderABI,
+        abi: AbPoolABI,
         address: campaignTokenAddress as `0x${string}`,
         functionName: 'token0',
       });
       token1 = await this.provider.readContract({
-        abi: LiquidityProviderABI,
+        abi: AbPoolABI,
         address: campaignTokenAddress as `0x${string}`,
         functionName: 'token1',
       });
@@ -912,7 +912,7 @@ export class SoloStakerWrapper {
     provisionTokensAddresses: string[],
   ): Promise<Result> {
     const reserves = await this.provider.readContract({
-      abi: LiquidityProviderABI,
+      abi: AbPoolABI,
       address: poolAddress,
       functionName: 'getReserves',
     });
@@ -923,7 +923,7 @@ export class SoloStakerWrapper {
     );
 
     const totalSupply = await await this.provider.readContract({
-      abi: LiquidityProviderABI,
+      abi: AbPoolABI,
       address: poolAddress,
       functionName: 'totalSupply',
     });
@@ -1683,12 +1683,12 @@ export class SoloStakerWrapper {
 
       try {
         token0 = await this.provider.readContract({
-          abi: LiquidityProviderABI,
+          abi: AbPoolABI,
           address: campaignTokenAddress as `0x${string}`,
           functionName: 'token0',
         });
         token1 = await this.provider.readContract({
-          abi: LiquidityProviderABI,
+          abi: AbPoolABI,
           address: campaignTokenAddress as `0x${string}`,
           functionName: 'token1',
         });
