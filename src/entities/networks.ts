@@ -1,3 +1,5 @@
+import { Abi } from 'viem';
+
 export enum NetworkEnum {
   eth = 'eth',
   bsc = 'bsc',
@@ -5,8 +7,7 @@ export enum NetworkEnum {
   polygon = 'polygon',
   ewc = 'ewc',
   moonbeam = 'moonbeam',
-  songbird = 'sonbird',
-  localhost = 'localhost',
+  songbird = 'songbird',
 }
 
 export enum DexEnum {
@@ -15,10 +16,20 @@ export enum DexEnum {
   pancakeswap = 'pancakeswap',
   pangolin = 'pangolin',
   quickswap = 'quickswap',
-  alliancedex = 'alliancedex',
   solarflare = 'solarflare',
   arrakis = 'arrakis',
 }
-export interface DexByNetworkMapping {
-  [key: string]: any;
-}
+
+export type DexByNetworkMapping = {
+  [key in NetworkEnum]: {
+    nativeToken: string;
+    dexes: {
+      [key: string]: {
+        routerABI: Abi;
+        poolABI: Abi;
+        routerAddress: `0x${string}`;
+        interactWithNativeSuffix: string;
+      };
+    };
+  };
+};
