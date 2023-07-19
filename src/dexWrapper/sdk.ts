@@ -1,9 +1,8 @@
+import { GetWalletClientResult } from '@wagmi/core';
 import { formatEther, formatUnits, parseEther, parseUnits, PublicClient, WalletClient } from 'viem';
 
 import {
   approveToken,
-  bdiv,
-  bmin,
   dexByNetworkMapping,
   DexEnum,
   formatToken,
@@ -13,6 +12,7 @@ import {
   getTokenByPropName,
   getTokenDecimals,
   maxUint256,
+  minimunBigNumber,
   NetworkEnum,
   parseToken,
   stripDecimalString,
@@ -86,10 +86,12 @@ export class DexWrapper {
     action: string,
     dex: DexEnum,
     tokensAmountsIn: string | GeneralStringToString,
-    wallet: WalletClient,
+    wallet: GetWalletClientResult | undefined,
     poolAddress: string,
     pair: string[],
   ) {
+    if (!wallet) return;
+
     const dexMapping = {
       uniswap: 'interactWithUniswap',
       pangolin: 'interactWithUniswap',
@@ -220,6 +222,7 @@ export class DexWrapper {
           abi: routerABI,
           address: routerAddress as `0x${string}`,
           functionName: methodName,
+          account: walletAddress,
           args: [...configuredArgs],
         });
 
@@ -236,16 +239,20 @@ export class DexWrapper {
         abi: routerABI,
         address: routerAddress as `0x${string}`,
         functionName: methodName,
+        account: walletAddress,
         args: [...configuredArgs],
       });
 
       return await wallet.writeContract(request);
     }
 
+    args.pop();
+
     const { request } = await this.provider.simulateContract({
       abi: routerABI,
       address: routerAddress as `0x${string}`,
       functionName: methodName,
+      account: walletAddress,
       args: [...args],
     });
 
@@ -328,7 +335,7 @@ export class DexWrapper {
         //increase the amounts with 1% from what is currently provided
         const amountIncreased = (parsedAmount * 100n) / 99n;
 
-        const maxAmountIn = bmin(amountIncreased, currentTokenBalance);
+        const maxAmountIn = minimunBigNumber(amountIncreased, currentTokenBalance);
         maxAmountsIn.push(maxAmountIn);
       }
 
@@ -336,6 +343,7 @@ export class DexWrapper {
         abi: poolABI,
         address: poolAddress as `0x${string}`,
         functionName: 'joinPool',
+        account: walletAddress,
         args: [poolAmountOut, maxAmountsIn],
       });
 
@@ -357,6 +365,7 @@ export class DexWrapper {
         abi: poolABI,
         address: poolAddress as `0x${string}`,
         functionName: 'exitPool',
+        account: walletAddress,
         args: [bPoolAmountIn, minAmountsOut],
       });
 
@@ -367,13 +376,13 @@ export class DexWrapper {
   /**
    * Get user allowance common
    * @public
-   * @param {object} userWallet - Provider object
+   * @param {GetWalletClientResult | undefined} wallet - Provider object
    * @param {string} spenderAddress - Spender address
    * @param {string} tokenAddress - Token address
    * @return {BigNumber} allowance amount as ethers BN
    */
   async getTokenAllowance(
-    wallet: WalletClient,
+    wallet: GetWalletClientResult | undefined,
     spenderAddress: string,
     tokenAddress: string,
   ): Promise<bigint> {
@@ -381,6 +390,8 @@ export class DexWrapper {
     if (!tokenAddress) {
       return maxUint256;
     }
+
+    if (!wallet) return 0n;
 
     return await getAllowance(
       wallet,
@@ -393,17 +404,19 @@ export class DexWrapper {
   /**
    * Approve by token
    * @public
-   * @param {object} userWallet - Provider object
+   * @param {GetWalletClientResult} wallet - Provider object
    * @param {string} tokenAddress - Token address
    * @param {string} spenderAddress - Spender address
-   * @return {object} transaction object
+   * @return {string} transaction object
    */
   async approveToken(
-    wallet: WalletClient,
+    wallet: GetWalletClientResult | undefined,
     spenderAddress: string,
     tokenAddress: string,
     amountToApprove?: string,
   ) {
+    if (!wallet) return;
+
     return await approveToken(
       wallet,
       this.provider,
@@ -416,11 +429,12 @@ export class DexWrapper {
   /**
    * Get balance
    * @public
-   * @param {object} userWallet - Provider object
+   * @param {GetWalletClientResult | undefined} wallet - Provider object
    * @param {string} tokenName - token symbol
    * @return {BigNumber} token balance
    */
-  async getBalanceOf(wallet: WalletClient, tokenName: string) {
+  async getBalanceOf(wallet: GetWalletClientResult | undefined, tokenName: string) {
+    if (!wallet) return 0n;
     const { nativeToken } = dexByNetworkMapping[this.network];
 
     const userAddress = await getAddressFromWallet(wallet);
@@ -633,7 +647,7 @@ export class DexWrapper {
         args: [tokenOutAddress],
       })) as bigint;
 
-      const price = bdiv(tokenOutBalance, tokenInBalance);
+      const price = parseUnits(tokenOutBalance.toString(), 18) / tokenInBalance;
 
       let priceFormatted = '0';
       // check if divisor has less than 18 decimals
@@ -703,8 +717,7 @@ export class DexWrapper {
     token1Amount: bigint,
     poolAddress: `0x${string}`,
   ) {
-    const rate = bdiv(token0Amount, token1Amount);
-
+    const rate = parseUnits(token0Amount.toString(), 18) / token1Amount;
     const token1Decimals = await this.getTokenDecimals(token1Name, poolAddress);
 
     // check if divisor has less than 18 decimals
@@ -730,7 +743,7 @@ export class DexWrapper {
    * @return {bigint} - minimum token amount
    */
   private _calculateSlippage(tokenAmount: bigint, slippage: bigint): bigint {
-    const hundredBN = 1000n;
+    const hundredBN = 100n;
     const percentage = (tokenAmount * slippage) / hundredBN;
     const minAmount = tokenAmount - percentage;
 
