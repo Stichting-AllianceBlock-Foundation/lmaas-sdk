@@ -13,7 +13,7 @@ permissions:
 env:
   CI: true
   CACHE_TOKEN: 50001cff
-  NPM_REGISTRY: npm.pkg.github.com
+  NPM_REGISTRY: registry.npmjs.org
 
 jobs:
   version:
@@ -32,7 +32,7 @@ jobs:
         run: echo "value=$(cat ./package.json | jq --raw-output .version)" >> $GITHUB_ENV
 
       - name: Authenticate GPR
-        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> .npmrc
 
       - name: Get registry version
         id: registry_version
@@ -88,7 +88,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Prepare .npmrc
-        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+        run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> .npmrc
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
