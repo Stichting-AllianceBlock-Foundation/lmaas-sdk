@@ -1,5 +1,3 @@
-import { Abi } from 'viem';
-
 export enum NetworkEnum {
   eth = 'eth',
   bsc = 'bsc',
@@ -19,17 +17,3 @@ export enum DexEnum {
   solarflare = 'solarflare',
   arrakis = 'arrakis',
 }
-
-export type DexByNetworkMapping = {
-  [key in NetworkEnum]: {
-    nativeToken: string;
-    dexes: {
-      [key: string]: {
-        routerABI: Abi;
-        poolABI: Abi;
-        routerAddress: `0x${string}`;
-        interactWithNativeSuffix: string;
-      };
-    };
-  };
-};
