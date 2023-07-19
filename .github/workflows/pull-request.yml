@@ -81,10 +81,10 @@ jobs:
         run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build
-        run: yarn build
+        run: pnpm build
 
       - name: Linting
-        run: yarn lint
+        run: pnpm lint
