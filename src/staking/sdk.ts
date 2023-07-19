@@ -153,14 +153,17 @@ export class StakerSolo {
     const now = BigInt(Math.floor(Date.now() / 1000));
 
     // Get raw contract data
+    const campaignStartTimestamp = await campaignContract.read.startTimestamp();
     const campaignEndTimestamp = await campaignContract.read.endTimestamp();
     const hasCampaignStarted = await campaignContract.read.hasStakingStarted();
 
     const hasCampaignEnded = hasCampaignStarted ? campaignEndTimestamp < now : false;
+    const upcoming = campaignStartTimestamp > now;
 
     return {
       hasCampaignStarted,
       hasCampaignEnded,
+      upcoming,
     };
   }
 
@@ -280,6 +283,7 @@ export class StakerSolo {
       functionName: 'stakingToken',
     });
 
+    const walletAddress = await getAddressFromWallet(wallet);
     const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
@@ -289,6 +293,7 @@ export class StakerSolo {
         address: contractAddress as `0x${string}`,
         functionName: 'stakeNative',
         value: amountToStakeParsed,
+        account: walletAddress,
       });
 
       return await wallet.writeContract(request);
@@ -299,6 +304,7 @@ export class StakerSolo {
       address: contractAddress as `0x${string}`,
       functionName: 'stake',
       args: [amountToStakeParsed],
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -329,10 +335,13 @@ export class StakerSolo {
    * @return {string} hash of the transaction
    */
   public async completeExit(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
+    const walletAddress = await getAddressFromWallet(wallet);
+
     const { request } = await this.provider.simulateContract({
       abi: NonCompoundingRewardsPoolABI,
       address: contractAddress as `0x${string}`,
       functionName: 'completeExit',
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);

@@ -1,4 +1,4 @@
-import { JsonRpcBatchProvider, JsonRpcProvider } from '@ethersproject/providers';
+import { PublicClient } from 'viem';
 
 import {
   ALBStaker,
@@ -24,7 +24,7 @@ import {
  *  @param {CampaignWrapper} campaignWrapper - Class that help with the actions of LMC's.
  *  @param {DexWrapper} dexWrapper - Class that help with the actions of DEX's depending on the network.
  *  @param {number} chainId - Name of the network where this class is being used.
- *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider that helps every class to interact with the blockchain.
+ *  @param {PublicClient} provider - Provider that helps every class to interact with the blockchain.
  */
 export class StakerSDK {
   lmcStaker: StakerLM;
@@ -32,13 +32,13 @@ export class StakerSDK {
   soloNonCompStaker: StakerSolo;
   coingecko: CoinGecko;
   soloStakerWrapper: SoloStakerWrapper;
-  provider: JsonRpcBatchProvider | JsonRpcProvider;
+  provider: PublicClient;
   dexWrapper: DexWrapper;
   campaignWrapper: CampaignWrapper;
   protocol: NetworkEnum;
 
   constructor(
-    provider: JsonRpcBatchProvider | JsonRpcProvider,
+    provider: PublicClient,
     chainId: number,
     config: BlockchainConfig,
     minutesForExpiration: number,
@@ -59,7 +59,7 @@ export class StakerSDK {
       getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
     );
     this.campaignWrapper = new CampaignWrapper(
-      this.provider as JsonRpcBatchProvider,
+      this.provider,
       this.lmcStaker,
       this.albStaker,
       this.coingecko,
@@ -102,6 +102,6 @@ export function getProtocolByChainId(chainId: number) {
     case 19:
       return NetworkEnum.songbird;
     default:
-      return NetworkEnum.localhost;
+      return NetworkEnum.eth;
   }
 }

@@ -64,10 +64,7 @@ export const convertBlockToSeconds = (blocks: bigint, protocol: string) => {
 };
 
 export const checkMaxStakingLimit = (limit: bigint): boolean => {
-  const ten = 10n;
-  const tenPow18 = ten ** 18n;
-  const maxAmount = maxUint256 / tenPow18;
-  return limit / tenPow18 === maxAmount;
+  return limit === maxUint256;
 };
 
 export const getTokensConfig = (tokens: Token[]): TokenConfigs => {
@@ -106,6 +103,7 @@ export const approveToken = async (
   amountToApprove?: string,
 ) => {
   const tokenDecimals = await getTokenDecimals(provider, tokenAddress);
+  const walletAddress = await getAddressFromWallet(wallet);
 
   const amountToApproveParsed = amountToApprove
     ? parseUnits(amountToApprove, tokenDecimals)
@@ -116,6 +114,7 @@ export const approveToken = async (
     address: tokenAddress,
     functionName: 'approve',
     args: [spenderAddress, amountToApproveParsed],
+    account: walletAddress,
   });
 
   return await wallet.writeContract(request);
@@ -213,4 +212,8 @@ export function formatStakingDuration(duration: number) {
 export function stripDecimalString(string: string, decimals: number) {
   const endPosition = string.indexOf('.') + decimals + 1;
   return string.slice(0, endPosition);
+}
+
+export function minimunBigNumber(firstNumber: bigint, secondNumber: bigint) {
+  return firstNumber >= secondNumber ? secondNumber : firstNumber;
 }
