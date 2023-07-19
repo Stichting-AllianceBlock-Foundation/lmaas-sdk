@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import { formatEther, formatUnits, getContract, parseAbi, PublicClient, WalletClient } from 'viem';
 
 import {
@@ -117,12 +118,15 @@ export class SoloStakerWrapper {
       stakeTokenAddress as `0x${string}`,
     );
 
+    const walletAddress = await getAddressFromWallet(wallet);
+
     if (compounding) {
       const { request } = await this.provider.simulateContract({
         abi: CompoundingRewardsPoolStakerABI,
         address: stakerContractAddress as `0x${string}`,
         functionName: 'stake',
         args: [stakeTokenAmountInBN],
+        account: walletAddress,
       });
 
       return await wallet.writeContract(request);
@@ -133,6 +137,7 @@ export class SoloStakerWrapper {
       address: stakerContractAddress as `0x${string}`,
       functionName: 'stake',
       args: [stakeTokenAmountInBN],
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -150,11 +155,15 @@ export class SoloStakerWrapper {
 
   async _exit(wallet: WalletClient, campaign: StakingInterface) {
     const { campaignAddress: stakerContractAddress, compounding } = campaign;
+
+    const walletAddress = await getAddressFromWallet(wallet);
+
     if (compounding) {
       const { request } = await this.provider.simulateContract({
         abi: CompoundingRewardsPoolStakerABI,
         address: stakerContractAddress as `0x${string}`,
         functionName: 'exit',
+        account: walletAddress,
       });
 
       return await wallet.writeContract(request);
@@ -164,6 +173,7 @@ export class SoloStakerWrapper {
       abi: NonCompoundingRewardsPoolABI,
       address: stakerContractAddress as `0x${string}`,
       functionName: 'exit',
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -181,11 +191,15 @@ export class SoloStakerWrapper {
 
   async _completeExit(wallet: WalletClient, campaign: StakingInterface) {
     const { campaignAddress: stakerContractAddress, compounding } = campaign;
+
+    const walletAddress = await getAddressFromWallet(wallet);
+
     if (compounding) {
       const { request } = await this.provider.simulateContract({
         abi: CompoundingRewardsPoolStakerABI,
         address: stakerContractAddress as `0x${string}`,
         functionName: 'completeExit',
+        account: walletAddress,
       });
 
       return await wallet.writeContract(request);
@@ -195,6 +209,7 @@ export class SoloStakerWrapper {
       abi: NonCompoundingRewardsPoolABI,
       address: stakerContractAddress as `0x${string}`,
       functionName: 'completeExit',
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -355,7 +370,10 @@ export class SoloStakerWrapper {
     );
 
     // Calculate percentage limit
-    const percentage = this._calculatePercentageLimit(totalStaked, contractStakeLimit);
+    const percentage = this._calculatePercentageLimit(
+      totalStaked.toString(),
+      contractStakeLimit.toString(),
+    );
 
     const totalStakedUSD = (Number(formattedTotalStaked) * stakingTokenPrice).toString();
 
@@ -533,7 +551,10 @@ export class SoloStakerWrapper {
     } = await this._formatCampaignRewards(1, campaignRewardsBN);
 
     // Calculate percentage limit
-    const percentage = this._calculatePercentageLimit(totalStakedBN, contractStakeLimitBN);
+    const percentage = this._calculatePercentageLimit(
+      totalStakedBN.toString(),
+      contractStakeLimitBN.toString(),
+    );
 
     // Get data for APY calculation
     let totalStakedUSD = Number(totalStaked) * stakingTokenPrice;
@@ -711,7 +732,10 @@ export class SoloStakerWrapper {
     );
 
     // Calculate percentage limit
-    const percentage = this._calculatePercentageLimit(totalStaked, contractStakeLimit);
+    const percentage = this._calculatePercentageLimit(
+      totalStaked.toString(),
+      contractStakeLimit.toString(),
+    );
 
     const totalStakedUSD = Number(formattedTotalStaked) * stakingTokenPrice;
 
@@ -846,7 +870,10 @@ export class SoloStakerWrapper {
     } = await this._formatCampaignRewards(1, campaignRewardsBN);
 
     // Calculate percentage limit
-    const percentage = this._calculatePercentageLimit(totalStakedBN, contractStakeLimitBN);
+    const percentage = this._calculatePercentageLimit(
+      totalStakedBN.toString(),
+      contractStakeLimitBN.toString(),
+    );
 
     // Get data for APY calculation
     let totalStakedUSD = Number(totalStaked) * stakingTokenPrice;
@@ -1561,11 +1588,17 @@ export class SoloStakerWrapper {
     };
   }
 
-  _calculatePercentageLimit(totalStaked: bigint, contractStakeLimit: bigint) {
-    const percentageBigInt =
-      totalStaked > 0n && contractStakeLimit > 0n ? totalStaked / contractStakeLimit : 0n;
+  _calculatePercentageLimit(totalStaked: string, contractStakeLimit: string) {
+    const zeroBN = new Decimal(0);
+    const totalStakedBigNumber = new Decimal(totalStaked);
+    const contractStakeLimitBigNumber = new Decimal(contractStakeLimit);
 
-    return Number(percentageBigInt) * 100;
+    const percentageBigNumber =
+      totalStakedBigNumber.gt(zeroBN) && contractStakeLimitBigNumber.gt(zeroBN)
+        ? totalStakedBigNumber.div(contractStakeLimitBigNumber)
+        : zeroBN;
+
+    return Number(percentageBigNumber.toString()) * 100;
   }
 
   _calculateAPY_new(totalStakedUSD: number, campaignRewardsPerDayUSD: number) {
@@ -1648,11 +1681,14 @@ export class SoloStakerWrapper {
   }
 
   async migrateStake(wallet: WalletClient, transferFrom: string, transferTo: string) {
+    const walletAddress = await getAddressFromWallet(wallet);
+
     const { request } = await this.provider.simulateContract({
       abi: NonCompoundingRewardsPoolABI,
       address: transferFrom as `0x${string}`,
       functionName: 'exitAndTransfer',
       args: [transferTo as `0x${string}`],
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
