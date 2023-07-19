@@ -9,7 +9,21 @@ import { PangolinRouterABI } from './abi/PangolinRouterABI';
 import { SolarflareRouterABI } from './abi/SolarflareRouterABI';
 import { UniswapRouterABI } from './abi/UniswapRouterABI';
 import { UniswapPoolABI } from './abi/UniswapV2PairABI';
-import { DexByNetworkMapping } from './entities';
+import { NetworkEnum } from './entities';
+
+export type DexByNetworkMapping = {
+  [key in NetworkEnum]: {
+    nativeToken: string;
+    dexes: {
+      [key: string]: {
+        routerABI: Abi;
+        poolABI: Abi;
+        routerAddress: `0x${string}`;
+        interactWithNativeSuffix: string;
+      };
+    };
+  };
+};
 
 export const STAKING_CAMPAIGN_STATE = {
   NOT_STARTED: -1,
@@ -65,7 +79,7 @@ export const dexByNetworkMapping: DexByNetworkMapping = {
       pangolin: {
         routerABI: PangolinRouterABI,
         poolABI: UniswapPoolABI,
-        routerAddress: (process.env.REACT_APP_PANGOLIN_ROUTER as `0x${string}`) || '', // Router address is different for test and main nets, so needs to be dynamic
+        routerAddress: '0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106',
         interactWithNativeSuffix: 'AVAX',
       },
     },
