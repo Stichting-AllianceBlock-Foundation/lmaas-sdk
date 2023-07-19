@@ -1,3 +1,4 @@
+import { GetWalletClientResult } from '@wagmi/core';
 import { getContract, parseUnits, PublicClient, WalletClient } from 'viem';
 
 import {
@@ -150,8 +151,7 @@ export class StakerLM {
    */
   public async getCampaignStatus(
     campaignAddress: string,
-    active: boolean,
-    wallet: WalletClient,
+    wallet: GetWalletClientResult | undefined,
   ): Promise<CampaingStatusData> {
     const campaignContract = getContract({
       abi: LiquidityMiningCampaignABI,
@@ -173,7 +173,7 @@ export class StakerLM {
 
     let hasUserStaked = false;
 
-    if (active) {
+    if (wallet) {
       const walletAddress = await getAddressFromWallet(wallet);
       const userStakedAmount = await campaignContract.read.balanceOf([walletAddress]);
       hasUserStaked = userStakedAmount > 0n;
@@ -256,6 +256,7 @@ export class StakerLM {
       functionName: 'stakingToken',
     });
 
+    const walletAddress = await getAddressFromWallet(wallet);
     const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
@@ -265,6 +266,7 @@ export class StakerLM {
         address: contractAddress as `0x${string}`,
         functionName: 'stakeNative',
         value: amountToStakeParsed,
+        account: walletAddress,
       });
 
       return await wallet.writeContract(request);
@@ -275,6 +277,7 @@ export class StakerLM {
       address: contractAddress as `0x${string}`,
       functionName: 'stake',
       args: [amountToStakeParsed],
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -305,6 +308,7 @@ export class StakerLM {
       functionName: 'stakingToken',
     });
 
+    const walletAddress = await getAddressFromWallet(wallet);
     const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
@@ -313,6 +317,7 @@ export class StakerLM {
       address: contractAddress as `0x${string}`,
       functionName: 'stakeWithTier',
       args: [amountToStakeParsed, signature as `0x${string}`, BigInt(maxTier), BigInt(deadline)],
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -326,10 +331,13 @@ export class StakerLM {
    * @return {string} hash of the transaction
    */
   public async exit(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
+    const walletAddress = await getAddressFromWallet(wallet);
+
     const { request } = await this.provider.simulateContract({
       abi: LiquidityMiningCampaignABI,
       address: contractAddress as `0x${string}`,
       functionName: 'exit',
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -343,10 +351,13 @@ export class StakerLM {
    * @return {string} hash of the transaction
    */
   public async claim(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
+    const walletAddress = await getAddressFromWallet(wallet);
+
     const { request } = await this.provider.simulateContract({
       abi: LiquidityMiningCampaignABI,
       address: contractAddress as `0x${string}`,
       functionName: 'claim',
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
@@ -372,6 +383,7 @@ export class StakerLM {
       functionName: 'stakingToken',
     });
 
+    const walletAddress = await getAddressFromWallet(wallet);
     const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const rewardsPerSecondParsed = parseUnits(rewardsPerSecond, tokenDecimals);
 
@@ -380,6 +392,7 @@ export class StakerLM {
       address: contractAddress as `0x${string}`,
       functionName: 'extend',
       args: [BigInt(duration), [rewardsPerSecondParsed]],
+      account: walletAddress,
     });
 
     return await wallet.writeContract(request);
