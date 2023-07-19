@@ -1,23 +1,8 @@
-// import {
-//   ChainId,
-//   initSDK,
-//   NativeCurrency,
-//   Percent,
-//   Token,
-//   TokenAmount,
-// } from '@allianceblock/abdex-sdk-v2';
-import { BigNumber } from '@ethersproject/bignumber';
-import { MaxUint256 } from '@ethersproject/constants';
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
-import { BigNumber as BigNumberJS } from 'bignumber.js';
+import { GetWalletClientResult } from '@wagmi/core';
+import { formatEther, formatUnits, parseEther, parseUnits, PublicClient, WalletClient } from 'viem';
 
 import {
   approveToken,
-  bdiv,
-  bmin,
-  bnum,
   dexByNetworkMapping,
   DexEnum,
   formatToken,
@@ -26,12 +11,13 @@ import {
   getBalance,
   getTokenByPropName,
   getTokenDecimals,
+  maxUint256,
+  minimunBigNumber,
   NetworkEnum,
   parseToken,
   stripDecimalString,
   TokenConfigs,
   TokenConfigsProps,
-  toWei,
 } from '..';
 
 interface GeneralStringToString {
@@ -40,32 +26,21 @@ interface GeneralStringToString {
 
 interface FormatedTokens {
   tokenAddress: any;
-  convertedAmountBN: BigNumber;
-  minAmountBN: BigNumber;
+  convertedAmountBN: bigint;
+  minAmountBN: bigint;
   isNativeToken: boolean;
 }
 
 interface AccFormated {
   addresses: string[];
-  amounts: BigNumber[];
-  minAmounts: BigNumber[];
+  amounts: bigint[];
+  minAmounts: bigint[];
   lastParam: {
-    [key: string]: BigNumber;
+    [key: string]: bigint;
   };
   [key: string]: any;
 }
 
-// // This function is only for AbDex
-// const getChainIdByNetwork = (network: NetworkEnum): ChainId => {
-//   switch (network) {
-//     case NetworkEnum.polygon:
-//       return ChainId.POLYGON;
-//     case NetworkEnum.ewc:
-//       return ChainId.MAIN_EWC;
-//     default:
-//       return ChainId.LOCAL;
-//   }
-// };
 /*
   TODO:
 
@@ -80,21 +55,17 @@ interface AccFormated {
  *  Represents a class that can interact with DEX's
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | } provider - Provider with the global interaction.
+ *  @param {PublicClient} provider - Provider with the global interaction.
  *  @param {NetworkEnum} network - Network on which the class DEX has the instance.
  *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
  */
 export class DexWrapper {
-  provider: JsonRpcBatchProvider | JsonRpcProvider;
+  provider: PublicClient;
   network: NetworkEnum;
   tokenConfigs: TokenConfigs;
   [key: string]: any;
 
-  constructor(
-    provider: JsonRpcBatchProvider | JsonRpcProvider,
-    network: NetworkEnum,
-    tokenConfigs: TokenConfigs,
-  ) {
+  constructor(provider: PublicClient, network: NetworkEnum, tokenConfigs: TokenConfigs) {
     this.provider = provider;
     this.network = network;
     this.tokenConfigs = tokenConfigs;
@@ -115,17 +86,18 @@ export class DexWrapper {
     action: string,
     dex: DexEnum,
     tokensAmountsIn: string | GeneralStringToString,
-    wallet: JsonRpcSigner,
+    wallet: GetWalletClientResult | undefined,
     poolAddress: string,
     pair: string[],
   ) {
+    if (!wallet) return;
+
     const dexMapping = {
       uniswap: 'interactWithUniswap',
       pangolin: 'interactWithUniswap',
       pancakeswap: 'interactWithUniswap',
       balancer: 'interactWithBalancer',
       quickswap: 'interactWithUniswap',
-      alliancedex: 'interactWithAbDex',
       solarflare: 'interactWithUniswap',
       arrakis: 'interactWithUniswap',
     };
@@ -135,129 +107,6 @@ export class DexWrapper {
 
     return this[dexMethod](action, dex, tokensAmountsIn, wallet, poolAddress, pair);
   }
-
-  // /**
-  //  * Interact with AllianceBlock dex
-  //  * @private
-  //  * @param {string} action - Action type
-  //  * @param {object | string} _tokensAmountsIn - Tokens data
-  //  * @param {object} wallet - User waller
-  //  * @param {string} poolAddress - LP address
-  //  * @param {array} pair - Array with token symbols
-  //  * @return {object} - minimum token amount
-  //  */
-  // async interactWithAbDex(
-  //   action: string,
-  //   _dex: DexEnum,
-  //   tokensAmountsIn: string | GeneralStringToString,
-  //   provider: JsonRpcSigner,
-  //   _poolAddress: string,
-  //   pair: string[],
-  // ) {
-  //   const { nativeToken } = dexByNetworkMapping[this.network];
-  //   const walletAddress = await provider.getAddress();
-  //   const poolWeight = parseEther('0.75');
-  //   (provider as any).address = walletAddress; // @CHECK error inside of the provideLiquidity function, calling provider.address
-  //   const sdkAbDex = await initSDK(provider);
-  //   const dexAb = new sdkAbDex.DEX();
-
-  //   let transaction;
-
-  //   if (action === 'removeLiquidity') {
-  //     const token0Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[0]);
-
-  //     const token1Data = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.SYMBOL, pair[1]);
-
-  //     const token0 = new Token(
-  //       getChainIdByNetwork(this.network),
-  //       token0Data.address,
-  //       token0Data.decimals,
-  //       token0Data.symbol,
-  //       token0Data.name,
-  //     );
-
-  //     const token1 = new Token(
-  //       getChainIdByNetwork(this.network),
-  //       token1Data.address,
-  //       token1Data.decimals,
-  //       token1Data.symbol,
-  //       token1Data.name,
-  //     );
-
-  //     const hasNativeToken =
-  //       token0Data.symbol.substr(1) === nativeToken || token1Data.symbol.substr(1) === nativeToken;
-
-  //     const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
-  //     const userPool = new sdkAbDex.UserContribution(poolAb);
-
-  //     const tokensAmountsInBN = parseEther(tokensAmountsIn as string);
-  //     const liquidityBN = BigNumber.from((await userPool.liquidity()).raw.toString());
-  //     const fixedTokensAmountsIn = FixedNumber.from(tokensAmountsInBN);
-  //     const fixedLiquidity = FixedNumber.from(liquidityBN);
-  //     const percentage = fixedTokensAmountsIn
-  //       .mulUnsafe(FixedNumber.from('100'))
-  //       .divUnsafe(fixedLiquidity)
-  //       .ceiling()
-  //       .toString();
-
-  //     const formatedPercentage = tokensAmountsInBN.eq(liquidityBN)
-  //       ? '100'
-  //       : parseInt(percentage, 10).toString();
-  //     const percentToRemove = new Percent(formatedPercentage, '100');
-  //     const slippage = 50;
-
-  //     transaction = await dexAb.removeLiquidity(percentToRemove, userPool, slippage);
-
-  //     if (hasNativeToken) {
-  //       transaction = await dexAb.removeNativeLiquidity(percentToRemove, userPool, slippage);
-  //     }
-  //   } else {
-  //     const { hasNativeToken, tokensArr } = this._getTokensData(
-  //       tokensAmountsIn as GeneralStringToString,
-  //       nativeToken,
-  //     );
-
-  //     const token0 = new Token(
-  //       getChainIdByNetwork(this.network),
-  //       tokensArr[0].tokenAddress,
-  //       tokensArr[0].tokenDecimals,
-  //       tokensArr[0].tokenSymbol,
-  //       tokensArr[0].tokenName,
-  //     );
-
-  //     const token1 = new Token(
-  //       getChainIdByNetwork(this.network),
-  //       tokensArr[1].tokenAddress,
-  //       tokensArr[1].tokenDecimals,
-  //       tokensArr[1].tokenSymbol,
-  //       tokensArr[1].tokenName,
-  //     );
-
-  //     const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
-
-  //     if (hasNativeToken) {
-  //       let amount0 = new TokenAmount(token0, tokensArr[0].convertedAmountBN.toBigInt());
-  //       let calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
-  //       let amount1 = NativeCurrency.native(calculatedAmountB, getChainIdByNetwork(this.network));
-
-  //       if (token0.symbol?.substring(1) === nativeToken) {
-  //         amount0 = new TokenAmount(token1, tokensArr[1].convertedAmountBN.toBigInt());
-  //         calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
-  //         amount1 = NativeCurrency.native(calculatedAmountB, getChainIdByNetwork(this.network));
-  //       }
-
-  //       transaction = await dexAb.addNativeLiquidity(amount1, amount0, poolAb);
-  //     } else {
-  //       const amount0 = new TokenAmount(token0, tokensArr[0].convertedAmountBN.toBigInt());
-  //       const calculatedAmountB = await (await dexAb.getQuote(poolAb, amount0)).raw.toString();
-  //       const amount1 = new TokenAmount(token1, calculatedAmountB);
-
-  //       transaction = await dexAb.addLiquidity(amount0, amount1, poolAb);
-  //     }
-  //   }
-
-  //   return await provider.sendTransaction(transaction);
-  // }
 
   /**
    * Interact with Uniswap forks
@@ -273,38 +122,45 @@ export class DexWrapper {
     action: string,
     dex: DexEnum,
     _tokensAmountsIn: string | GeneralStringToString,
-    provider: JsonRpcSigner,
+    wallet: WalletClient,
     poolAddress: string,
     pair: string[],
   ) {
     const { dexes, nativeToken } = dexByNetworkMapping[this.network];
-    const { routerAddress, routerABI, poolABI, interactWithNativeSuffix } = dexes[dex];
-    const walletAddress = await provider.getAddress();
+    const { routerAddress, interactWithNativeSuffix, poolABI, routerABI } = dexes[dex];
+    const walletAddress = await getAddressFromWallet(wallet);
 
     let tokensAmountsIn;
 
-    // Get init contracts
-    const routerContract = new Contract(routerAddress, routerABI, provider);
-    const poolContract = new Contract(poolAddress, poolABI, provider);
-
     if (action === 'removeLiquidity') {
       // Get pool data
-      let getReservesPR;
+      let getReservesPR: Promise<[bigint, bigint]>;
 
       if (dex === DexEnum.arrakis) {
-        getReservesPR = poolContract.getUnderlyingBalances;
+        getReservesPR = this.provider.readContract({
+          abi: poolABI,
+          address: poolAddress as `0x${string}`,
+          functionName: 'getUnderlyingBalances',
+        }) as Promise<[bigint, bigint]>;
       } else {
-        getReservesPR = poolContract.getReserves;
+        getReservesPR = this.provider.readContract({
+          abi: poolABI,
+          address: poolAddress as `0x${string}`,
+          functionName: 'getReserves',
+        }) as Promise<[bigint, bigint]>;
       }
 
-      const { totalSupply: totalSupplyPR } = poolContract;
+      const totalSupplyPR = this.provider.readContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'totalSupply',
+      }) as Promise<bigint>;
 
-      const promiseArray = [totalSupplyPR(), getReservesPR()];
-      const [poolTotalSupply, poolReserves] = await Promise.all(promiseArray);
+      const [totalSupply, poolReserves] = await Promise.all([totalSupplyPR, getReservesPR]);
       // Format pool data
-      const poolTotalSupplyFormated = Number(formatEther(poolTotalSupply.toString()));
-      const reserves0Formated = Number(formatEther(poolReserves[0].toString()));
-      const reserves1Formated = Number(formatEther(poolReserves[1].toString()));
+      const poolTotalSupplyFormated = Number(formatEther(totalSupply));
+      const reserves0Formated = Number(formatEther(poolReserves[0]));
+      const reserves1Formated = Number(formatEther(poolReserves[1]));
 
       const ratio = Number(_tokensAmountsIn) / poolTotalSupplyFormated;
       const token0Ratio = reserves0Formated * ratio;
@@ -323,8 +179,6 @@ export class DexWrapper {
       tokensAmountsIn as GeneralStringToString,
       nativeToken,
     );
-
-    console.log('tokensArr', tokensArr);
 
     // Check for provide native liquidity
     const methodName = hasNativeToken ? `${action}${interactWithNativeSuffix}` : `${action}`;
@@ -346,22 +200,33 @@ export class DexWrapper {
       configuredArgs.splice(0, 2, poolAddress);
 
       // calculating the minAmounts and minMintedAmount by arrakis vault
-      const { amount0, amount1, mintAmount } = await poolContract.getMintAmounts(
-        action === 'addLiquidity' ? configuredArgs[1] : configuredArgs[2],
-        action === 'addLiquidity' ? configuredArgs[2] : configuredArgs[3],
-      );
+      const [amount0, amount1, mintAmount] = (await this.provider.readContract({
+        address: poolAddress as `0x${string}`,
+        abi: poolABI,
+        functionName: 'getMintAmounts',
+        args: [
+          action === 'addLiquidity' ? configuredArgs[1] : configuredArgs[2],
+          action === 'addLiquidity' ? configuredArgs[2] : configuredArgs[3],
+        ],
+      })) as [bigint, bigint, bigint];
 
-      const amount0Min = amount0.mul(95).div(100);
-      const amount1Min = amount1.mul(95).div(100);
-      const amountSharesMin = mintAmount.mul(95).div(100);
+      const amount0Min = (amount0 * 95n) / 100n;
+      const amount1Min = (amount1 * 95n) / 100n;
+      const amountSharesMin = (mintAmount * 95n) / 100n;
 
       if (action === 'removeLiquidity') {
         configuredArgs.splice(5, 1);
         configuredArgs.splice(2, 2, amount0Min, amount1Min);
 
-        const transaction = await routerContract[methodName](...configuredArgs);
+        const { request } = await this.provider.simulateContract({
+          abi: routerABI,
+          address: routerAddress as `0x${string}`,
+          functionName: methodName,
+          account: walletAddress,
+          args: [...configuredArgs],
+        });
 
-        return transaction;
+        return await wallet.writeContract(request);
       }
 
       // this is only an extra step that takes the arrakis router
@@ -370,14 +235,28 @@ export class DexWrapper {
       configuredArgs.splice(3, 2, amount0Min, amount1Min);
       configuredArgs.splice(5, 0, amountSharesMin);
 
-      const transaction = await routerContract[methodName](...configuredArgs);
+      const { request } = await this.provider.simulateContract({
+        abi: routerABI,
+        address: routerAddress as `0x${string}`,
+        functionName: methodName,
+        account: walletAddress,
+        args: [...configuredArgs],
+      });
 
-      return transaction;
+      return await wallet.writeContract(request);
     }
 
-    const transaction = await routerContract[methodName](...args);
+    args.pop();
 
-    return transaction;
+    const { request } = await this.provider.simulateContract({
+      abi: routerABI,
+      address: routerAddress as `0x${string}`,
+      functionName: methodName,
+      account: walletAddress,
+      args: [...args],
+    });
+
+    return await wallet.writeContract(request);
   }
 
   /**
@@ -393,53 +272,54 @@ export class DexWrapper {
   async interactWithBalancer(
     action: string,
     _tokensAmountsIn: any,
-    provider: JsonRpcSigner,
+    wallet: WalletClient,
     poolAddress: string,
     pair: string[],
   ) {
     const { dexes } = dexByNetworkMapping[this.network];
     const { poolABI } = dexes['balancer'];
-    const walletAddress = await provider.getAddress();
-
-    const poolContract = new Contract(poolAddress, poolABI, provider);
+    const walletAddress = await getAddressFromWallet(wallet);
 
     if (action == 'addLiquidity') {
       // Get pool data
-      const { totalSupply: totalSupplyPR, getCurrentTokens: getCurrentTokensPR } = poolContract;
-      const promiseArray = [totalSupplyPR(), getCurrentTokensPR()];
-      const [poolTotalSupply, currentTokens] = await Promise.all(promiseArray);
+      const totalSupplyPR = this.provider.readContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'totalSupply',
+      }) as Promise<bigint>;
+
+      const getCurrentTokensPR = this.provider.readContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'getCurrentTokens',
+      }) as Promise<[`0x${string}`]>;
+
+      const [poolTotalSupply, currentTokens] = await Promise.all([
+        totalSupplyPR,
+        getCurrentTokensPR,
+      ]);
 
       // Calculate tokens to supply ratio
-      const { decimals, symbol } = getTokenByPropName(
+      const { symbol } = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         currentTokens[0].toLowerCase(),
       );
 
-      /* Legacy code */
-      const tokenBalance = await poolContract.getBalance(currentTokens[0]);
+      const tokenBalance = (await this.provider.readContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'getBalance',
+        args: [currentTokens[0]],
+      })) as bigint;
 
-      let tokenAmountIn = _tokensAmountsIn[symbol];
-      tokenAmountIn = await parseToken(this.provider, tokenAmountIn.toString(), currentTokens[0]);
+      const tokenAmountIn = _tokensAmountsIn[symbol];
+      const parsedTokenAmountIn = await parseToken(this.provider, tokenAmountIn, currentTokens[0]);
 
-      const ratio = bnum(tokenAmountIn.toString()).div(tokenBalance.toString());
-      const ratioSplitted = ratio.toString().split('.');
-      ratioSplitted[1] = ratioSplitted[1].slice(0, decimals);
-      const finalRatio = ratioSplitted.join('.');
-      const ratioBN = bnum(finalRatio);
+      const ratio = parsedTokenAmountIn / tokenBalance;
 
-      const formattedTotalSupply = await formatToken(
-        provider,
-        poolTotalSupply.toString(),
-        currentTokens[0],
-      );
-
-      const buffer = bnum(100);
-      const poolAmountOut = ratioBN
-        .times(toWei(formattedTotalSupply))
-        .integerValue(BigNumberJS.ROUND_DOWN)
-        .minus(buffer);
-      const maxAmountsIn = [];
+      const poolAmountOut = ratio * poolTotalSupply;
+      const maxAmountsIn: bigint[] = [];
 
       for (const tokenAddress of currentTokens) {
         const tokenName = getTokenByPropName(
@@ -448,94 +328,121 @@ export class DexWrapper {
           tokenAddress.toLowerCase(),
         ).symbol;
 
-        const currentTokenBalance = await getBalance(provider, tokenAddress, walletAddress);
+        const currentTokenBalance = await getBalance(this.provider, tokenAddress, walletAddress);
 
-        let amount = _tokensAmountsIn[tokenName];
-        amount = await parseToken(this.provider, amount.toString(), tokenAddress);
+        const amount = _tokensAmountsIn[tokenName];
+        const parsedAmount = await parseToken(this.provider, amount.toString(), tokenAddress);
         //increase the amounts with 1% from what is currently provided
-        const amountBN = BigNumber.from(amount).mul(100).div(99);
+        const amountIncreased = (parsedAmount * 100n) / 99n;
 
-        const maxAmountIn = bmin(amountBN, currentTokenBalance);
+        const maxAmountIn = minimunBigNumber(amountIncreased, currentTokenBalance);
         maxAmountsIn.push(maxAmountIn);
       }
-      /* Legacy code */
 
-      const transaction = await poolContract.joinPool(poolAmountOut.toString(10), maxAmountsIn);
-      return transaction;
+      const { request } = await this.provider.simulateContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'joinPool',
+        account: walletAddress,
+        args: [poolAmountOut, maxAmountsIn],
+      });
+
+      return await wallet.writeContract(request);
     } else {
-      const minAmountsOut = [];
+      const minAmountsOut: bigint[] = [];
 
       for (let i = 0; i <= pair.length; i++) {
-        const bAmount = new BigNumberJS(0);
-        minAmountsOut.push(bAmount.toString(10));
+        minAmountsOut.push(0n);
       }
 
       const bPoolAmountIn = await parseToken(
         this.provider,
         _tokensAmountsIn.toString(),
-        poolAddress,
+        poolAddress as `0x${string}`,
       );
 
-      const transaction = await poolContract.exitPool(bPoolAmountIn.toString(), minAmountsOut);
+      const { request } = await this.provider.simulateContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'exitPool',
+        account: walletAddress,
+        args: [bPoolAmountIn, minAmountsOut],
+      });
 
-      return transaction;
+      return await wallet.writeContract(request);
     }
   }
 
   /**
    * Get user allowance common
    * @public
-   * @param {object} userWallet - Provider object
+   * @param {GetWalletClientResult | undefined} wallet - Provider object
    * @param {string} spenderAddress - Spender address
    * @param {string} tokenAddress - Token address
    * @return {BigNumber} allowance amount as ethers BN
    */
   async getTokenAllowance(
-    userWallet: JsonRpcSigner,
+    wallet: GetWalletClientResult | undefined,
     spenderAddress: string,
     tokenAddress: string,
-  ): Promise<BigNumber> {
+  ): Promise<bigint> {
     // Check for native token
     if (!tokenAddress) {
-      return MaxUint256;
+      return maxUint256;
     }
 
-    return await getAllowance(userWallet, tokenAddress, spenderAddress);
+    if (!wallet) return 0n;
+
+    return await getAllowance(
+      wallet,
+      this.provider,
+      tokenAddress as `0x${string}`,
+      spenderAddress as `0x${string}`,
+    );
   }
 
   /**
    * Approve by token
    * @public
-   * @param {object} userWallet - Provider object
+   * @param {GetWalletClientResult} wallet - Provider object
    * @param {string} tokenAddress - Token address
    * @param {string} spenderAddress - Spender address
-   * @return {object} transaction object
+   * @return {string} transaction object
    */
   async approveToken(
-    userWallet: JsonRpcSigner,
+    wallet: GetWalletClientResult | undefined,
     spenderAddress: string,
     tokenAddress: string,
     amountToApprove?: string,
   ) {
-    const receipt = await approveToken(userWallet, tokenAddress, spenderAddress, amountToApprove);
-    return receipt;
+    if (!wallet) return;
+
+    return await approveToken(
+      wallet,
+      this.provider,
+      tokenAddress as `0x${string}`,
+      spenderAddress as `0x${string}`,
+      amountToApprove,
+    );
   }
 
   /**
    * Get balance
    * @public
-   * @param {object} userWallet - Provider object
+   * @param {GetWalletClientResult | undefined} wallet - Provider object
    * @param {string} tokenName - token symbol
    * @return {BigNumber} token balance
    */
-  async getBalanceOf(userWallet: JsonRpcSigner, tokenName: string) {
+  async getBalanceOf(wallet: GetWalletClientResult | undefined, tokenName: string) {
+    if (!wallet) return 0n;
     const { nativeToken } = dexByNetworkMapping[this.network];
 
-    const userAddress = await getAddressFromWallet(userWallet);
+    const userAddress = await getAddressFromWallet(wallet);
 
-    let balance;
+    let balance: bigint = 0n;
+
     if (tokenName === nativeToken) {
-      balance = await this.provider.getBalance(userAddress);
+      balance = await this.provider.getBalance({ address: userAddress, blockTag: 'safe' });
 
       return balance;
     }
@@ -561,7 +468,7 @@ export class DexWrapper {
    * @param {string} tokenName - token symbol
    * @return {number} allowance amount as ethers BN
    */
-  async getTokenDecimals(tokenName: string, poolAddress: string) {
+  public async getTokenDecimals(tokenName: string, poolAddress: string) {
     const { nativeToken } = dexByNetworkMapping[this.network];
 
     if (tokenName === nativeToken) {
@@ -595,15 +502,9 @@ export class DexWrapper {
    * @param {array} provisionTokensAddresses - Array of underlying token addresses
    * @return {object} price output
    */
-  async getAllPriceRates(
-    poolAddress: string,
-    provisionTokensAddresses: string[],
-    dex: DexEnum,
-    _signerProvider: JsonRpcSigner,
-  ) {
+  async getAllPriceRates(poolAddress: string, provisionTokensAddresses: string[], dex: DexEnum) {
     const { dexes } = dexByNetworkMapping[this.network];
     const { poolABI } = dexes[dex];
-    // const sdkAbDex = await initSDK(signerProvider);
 
     if (dex === DexEnum.balancer) {
       const output: { [key: string]: GeneralStringToString } = {};
@@ -629,88 +530,52 @@ export class DexWrapper {
       });
 
       return output;
-    }
-    // const token0Data = getTokenByPropName(
-    //   this.tokenConfigs,
-    //   TokenConfigsProps.ADDRESS,
-    //   provisionTokensAddresses[0].toLocaleLowerCase(),
-    // );
-    // const token1Data = getTokenByPropName(
-    //   this.tokenConfigs,
-    //   TokenConfigsProps.ADDRESS,
-    //   provisionTokensAddresses[1].toLocaleLowerCase(),
-    // );
-    // const token0 = new Token(
-    //   getChainIdByNetwork(this.network),
-    //   token0Data.address,
-    //   token0Data.decimals,
-    //   token0Data.symbol,
-    //   token0Data.name,
-    // );
-    // const token1 = new Token(
-    //   getChainIdByNetwork(this.network),
-    //   token1Data.address,
-    //   token1Data.decimals,
-    //   token1Data.symbol,
-    //   token1Data.name,
-    // );
-    // const poolWeight = parseEther('0.75');
-    // const poolAb = new sdkAbDex.Pool(token0, token1, poolWeight);
-    // const dexAb = new sdkAbDex.DEX();
-    // const token0Name: any = token0.symbol;
-    // const token1Name: any = token1.symbol;
-    // const baseRate0 = new TokenAmount(token0, parseEther('1').toBigInt());
-    // const baseRate1 = new TokenAmount(token1, parseEther('1').toBigInt());
-    // const rate0Quote = await dexAb.getQuote(poolAb, baseRate0);
-    // const rate1Quote = await dexAb.getQuote(poolAb, baseRate1);
-    // const rate0 = await this._getFormatRateAbDex(
-    //   token1Name,
-    //   token0Name,
-    //   rate0Quote.raw.toString(),
-    //   poolAddress,
-    // );
-    // const rate1 = await this._getFormatRateAbDex(
-    //   token0Name,
-    //   token1Name,
-    //   rate1Quote.raw.toString(),
-    //   poolAddress,
-    // );
-    // return {
-    //   [token0Name]: {
-    //     [token1Name]: rate0,
-    //   },
-    //   [token1Name]: {
-    //     [token0Name]: rate1,
-    //   },
-    // };
-    else {
-      const poolContract = new Contract(poolAddress, poolABI, this.provider);
-
+    } else {
       const reserves =
-        dex === DexEnum.arrakis ? poolContract.getUnderlyingBalances() : poolContract.getReserves();
-      let token0Address = poolContract.token0();
-      let token1Address = poolContract.token1();
-      const result = await Promise.all([reserves, token0Address, token1Address]);
+        dex === DexEnum.arrakis
+          ? (this.provider.readContract({
+              abi: poolABI,
+              address: poolAddress as `0x${string}`,
+              functionName: 'getUnderlyingBalances',
+            }) as Promise<[bigint, bigint]>)
+          : (this.provider.readContract({
+              abi: poolABI,
+              address: poolAddress as `0x${string}`,
+              functionName: 'getReserves',
+            }) as Promise<[bigint, bigint]>);
 
-      token0Address = result[1];
+      const token0 = this.provider.readContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'token0',
+      }) as Promise<`0x${string}`>;
+      const token1 = this.provider.readContract({
+        abi: poolABI,
+        address: poolAddress as `0x${string}`,
+        functionName: 'token1',
+      }) as Promise<`0x${string}`>;
+
+      const result = await Promise.all([reserves, token0, token1]);
+
+      const token0Address = result[1];
+
       const token0Name = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         token0Address.toLowerCase(),
       ).symbol;
 
-      const token0Reserve =
-        dex === DexEnum.arrakis ? result[0].amount0Current : result[0]._reserve0;
+      const token0Reserve = dex === DexEnum.arrakis ? result[0][0] : result[0][0];
 
-      token1Address = result[2];
+      const token1Address = result[2];
+
       const token1Name = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         token1Address.toLowerCase(),
       ).symbol;
 
-      const token1Reserve =
-        dex === DexEnum.arrakis ? result[0].amount1Current : result[0]._reserve1;
+      const token1Reserve = dex === DexEnum.arrakis ? result[0][1] : result[0][1];
 
       return {
         [token0Name]: {
@@ -719,7 +584,7 @@ export class DexWrapper {
             token0Name,
             token1Reserve,
             token0Reserve,
-            poolAddress,
+            poolAddress as `0x${string}`,
           ),
         },
         [token1Name]: {
@@ -728,7 +593,7 @@ export class DexWrapper {
             token1Name,
             token0Reserve,
             token1Reserve,
-            poolAddress,
+            poolAddress as `0x${string}`,
           ),
         },
       };
@@ -743,12 +608,11 @@ export class DexWrapper {
    * @param {array} tokenNames - Token symbols array
    * @return {object} price data object
    */
-  async _getPriceRatesBalancer(tokenName: string, poolAddress: string, tokenNames: string[]) {
-    const poolContract = new Contract(
-      poolAddress,
-      dexByNetworkMapping[this.network].dexes.balancer.poolABI,
-      this.provider,
-    );
+  private async _getPriceRatesBalancer(
+    tokenName: string,
+    poolAddress: string,
+    tokenNames: string[],
+  ) {
     const tokenInAddress = getTokenByPropName(
       this.tokenConfigs,
       TokenConfigsProps.SYMBOL,
@@ -756,9 +620,12 @@ export class DexWrapper {
     ).address;
 
     const tokenInDecimals = await getTokenDecimals(this.provider, tokenInAddress);
-    const tokenInBalance = await poolContract.getBalance(tokenInAddress);
-
-    const bTokenInBalance = new BigNumberJS(tokenInBalance.toString());
+    const tokenInBalance = (await this.provider.readContract({
+      address: poolAddress as `0x${string}`,
+      abi: dexByNetworkMapping[this.network].dexes.balancer.poolABI,
+      functionName: 'getBalance',
+      args: [tokenInAddress],
+    })) as bigint;
 
     const results: GeneralStringToString = {};
 
@@ -766,23 +633,32 @@ export class DexWrapper {
       if (tokenOutName === tokenName) {
         continue;
       }
+
       const tokenOutAddress: string = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.SYMBOL,
         tokenOutName,
       ).address;
 
-      const tokenOutBalance = await poolContract.getBalance(tokenOutAddress);
-      const bTokenOutBalance = new BigNumberJS(tokenOutBalance.toString());
+      const tokenOutBalance = (await this.provider.readContract({
+        address: poolAddress as `0x${string}`,
+        abi: dexByNetworkMapping[this.network].dexes.balancer.poolABI,
+        functionName: 'getBalance',
+        args: [tokenOutAddress],
+      })) as bigint;
 
-      const price = bdiv(bTokenOutBalance, bTokenInBalance);
-      let priceFormatted: string;
+      const price = parseUnits(tokenOutBalance.toString(), 18) / tokenInBalance;
+
+      let priceFormatted = '0';
       // check if divisor has less than 18 decimals
       if (tokenInDecimals != 18) {
-        const tokenOutDecimals = await getTokenDecimals(this.provider, tokenOutAddress);
-        priceFormatted = formatUnits(price.toString(10), tokenOutDecimals + (18 - tokenInDecimals));
+        const tokenOutDecimals = await getTokenDecimals(
+          this.provider,
+          tokenOutAddress as `0x${string}`,
+        );
+        priceFormatted = formatUnits(price, tokenOutDecimals + (18 - tokenInDecimals));
       } else {
-        priceFormatted = await formatToken(this.provider, price.toString(10), tokenOutAddress);
+        priceFormatted = await formatToken(this.provider, price, tokenOutAddress as `0x${string}`);
       }
 
       results[tokenOutName] = priceFormatted;
@@ -834,24 +710,20 @@ export class DexWrapper {
    * @param {string} poolAddress - Address of the pool
    * @return {string} rate
    */
-  async _getPriceRatesUniswap(
+  private async _getPriceRatesUniswap(
     token0Name: string,
     token1Name: string,
-    token0Amount: number,
-    token1Amount: number,
-    poolAddress: string,
+    token0Amount: bigint,
+    token1Amount: bigint,
+    poolAddress: `0x${string}`,
   ) {
-    let rate = bdiv(
-      new BigNumberJS(token0Amount.toString()),
-      new BigNumberJS(token1Amount.toString()),
-    );
-
+    const rate = parseUnits(token0Amount.toString(), 18) / token1Amount;
     const token1Decimals = await this.getTokenDecimals(token1Name, poolAddress);
+
     // check if divisor has less than 18 decimals
     if (token1Decimals != 18) {
       const token0Decimals = await this.getTokenDecimals(token0Name, poolAddress);
-      rate = formatUnits(rate.toString(10), token0Decimals + (18 - token1Decimals));
-      return rate.substring(0, rate.indexOf('.') + 18);
+      return formatUnits(rate, token0Decimals + (18 - token1Decimals));
     }
 
     const token0Address = getTokenByPropName(
@@ -860,22 +732,20 @@ export class DexWrapper {
       token0Name,
     ).address;
 
-    rate = await formatToken(this.provider, rate.toString(10), token0Address);
-
-    return rate;
+    return await formatToken(this.provider, rate, token0Address);
   }
 
   /**
    * Calculate slippage
    * @private
-   * @param {BigNumber} tokenAmount - token amount
-   * @param {BigNumber} slippage - slippage
-   * @return {BigNumber} - minimum token amount
+   * @param {bigint} tokenAmount - token amount
+   * @param {bigint} slippage - slippage
+   * @return {bigint} - minimum token amount
    */
-  _calculateSlippage(tokenAmount: BigNumber, slippage: BigNumber) {
-    const hundredBN = BigNumber.from(1000);
-    const percentage = BigNumber.from(tokenAmount).mul(slippage).div(hundredBN);
-    const minAmount = BigNumber.from(tokenAmount).sub(percentage);
+  private _calculateSlippage(tokenAmount: bigint, slippage: bigint): bigint {
+    const hundredBN = 100n;
+    const percentage = (tokenAmount * slippage) / hundredBN;
+    const minAmount = tokenAmount - percentage;
 
     return minAmount;
   }
@@ -887,7 +757,7 @@ export class DexWrapper {
    * @param {string} nativeToken - Native token symbol
    * @return {object} - Object with hasNativeToken and tokensArr
    */
-  _getTokensData(tokensAmountsIn: GeneralStringToString, nativeToken: string) {
+  private _getTokensData(tokensAmountsIn: GeneralStringToString, nativeToken: string) {
     const tokensArr = [];
 
     let hasNativeToken = false;
@@ -908,19 +778,18 @@ export class DexWrapper {
 
       // Convert to wei
       const tokenDecimals = isNativeToken ? 18 : tokenData.decimals;
-      const slippage = 5;
-      const slippageBN = BigNumber.from(slippage);
+      const slippage = 5n;
 
       const strippedAmount = stripDecimalString(tokensAmountsIn[tokenSymbol], tokenDecimals);
 
       const convertedAmountBN = parseUnits(strippedAmount, tokenDecimals);
 
-      const minAmountBN = this._calculateSlippage(convertedAmountBN, slippageBN);
+      const minAmount = this._calculateSlippage(convertedAmountBN, slippage);
 
       tokensArr.push({
         tokenAddress: tokenData.address,
         convertedAmountBN,
-        minAmountBN,
+        minAmountBN: minAmount,
         isNativeToken,
         tokenDecimals,
         tokenSymbol,
@@ -942,7 +811,7 @@ export class DexWrapper {
    * @param {string} action - Dex action
    * @return {array} - Array with formated args
    */
-  _getFormatFunctionArgumentsProvide(tokensArr: FormatedTokens[], walletAddress: string) {
+  private _getFormatFunctionArgumentsProvide(tokensArr: FormatedTokens[], walletAddress: string) {
     const initialAgrsState = {
       addresses: [],
       amounts: [],
@@ -950,7 +819,7 @@ export class DexWrapper {
       lastParam: {},
     };
 
-    let nativeTokenMinAmount = BigNumber.from(0);
+    let nativeTokenMinAmount = 0n;
 
     const reduceTokenArgs = (acc: AccFormated, item: FormatedTokens) => {
       if (!item.isNativeToken) {
@@ -969,7 +838,7 @@ export class DexWrapper {
 
     const deadline = Math.floor(Date.now() / 1000) + 60 * 60;
 
-    if (nativeTokenMinAmount.gt(BigNumber.from(0))) {
+    if (nativeTokenMinAmount > 0n) {
       argsObject.minAmounts.push(nativeTokenMinAmount);
     }
 
@@ -988,14 +857,14 @@ export class DexWrapper {
   /**
    * Format arguments for Remove liquidity function
    * @private
-   * @param {BigNumber} amountLP - Amount of LP tokens to be removed
+   * @param {bigint} amountLP - Amount of LP tokens to be removed
    * @param {array} tokensArr - Array with formated token data
    * @param {string} walletAddress - Wallet address
    * @param {string} action - Dex action
    * @return {array} - Array with formated args
    */
-  _getFormatFunctionArgumentsRemove(
-    amountLP: BigNumber,
+  private _getFormatFunctionArgumentsRemove(
+    amountLP: bigint,
     tokensArr: FormatedTokens[],
     walletAddress: string,
   ) {

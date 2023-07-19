@@ -1,7 +1,5 @@
-import { BigNumber } from '@ethersproject/bignumber';
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { formatEther, formatUnits } from '@ethersproject/units';
+import { GetWalletClientResult } from '@wagmi/core';
+import { formatEther, formatUnits, parseAbi, PublicClient, WalletClient } from 'viem';
 
 import {
   ALBStaker,
@@ -28,22 +26,22 @@ import {
   UserRewards,
   year,
 } from '..';
-import ArrakisPoolABI from '../abi/ArrakisPoolABI.json';
-import BalancerBPoolContractABI from '../abi/BalancerBPoolABI.json';
-import UniswapV2PairABI from '../abi/UniswapV2PairABI.json';
+import { ArrakisPoolABI } from '../abi/ArrakisPoolABI';
+import { BalancerPoolABI } from '../abi/BalancerBPoolABI';
+import { UniswapPoolABI } from '../abi/UniswapV2PairABI';
 
 /**
  *  Represents a class that can interact with LMC's
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider} provider - Provider with the global interaction.
+ *  @param {PublicClient} provider - Provider with the global interaction.
  *  @param {StakerLM} lmcStaker - Class that helps with the actions of a LMC.
  *  @param {CoinGecko} coingecko - Class for fetching the balance of the CoinGecko API.
  *  @param {TokenConfigs} tokenConfigs - Tokens that are inside of the JSON config configuration.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class CampaignWrapper {
-  provider: JsonRpcBatchProvider;
+  provider: PublicClient;
   lmcStaker: StakerLM;
   albStaker: ALBStaker;
   coingecko: CoinGecko;
@@ -52,7 +50,7 @@ export class CampaignWrapper {
   [key: string]: any;
 
   constructor(
-    provider: JsonRpcBatchProvider,
+    provider: PublicClient,
     lmcStaker: StakerLM,
     albStaker: ALBStaker,
     coingecko: CoinGecko,
@@ -67,29 +65,29 @@ export class CampaignWrapper {
     this.protocol = protocol;
   }
 
-  stake(
+  public stake(
     version: string,
-    userWallet: JsonRpcSigner,
+    wallet: WalletClient,
     campaignAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
     isNativeSupported = false,
   ) {
     if (!version || version === '1.0') {
-      return this.albStaker.stake(userWallet, campaignAddress, lockSchemeAddress, amountToStake);
+      return this.albStaker.stake(wallet, campaignAddress, lockSchemeAddress, amountToStake);
     }
 
-    return this.lmcStaker.stake(campaignAddress, amountToStake, userWallet, isNativeSupported);
+    return this.lmcStaker.stake(campaignAddress, amountToStake, wallet, isNativeSupported);
   }
 
-  stakeWithTier(
+  public stakeWithTier(
     version: string,
     campaignAddress: string,
     amountToStake: string,
     signature: string,
     maxTier: number,
     deadline: number,
-    userWallet: JsonRpcSigner,
+    wallet: WalletClient,
   ) {
     if (!version || version === '1.0') {
       throw new Error('Wrong version for tier campaign');
@@ -101,16 +99,16 @@ export class CampaignWrapper {
       signature,
       maxTier,
       deadline,
-      userWallet,
+      wallet,
     );
   }
 
-  exit(version: string, userWallet: JsonRpcSigner, campaignAddress: string) {
+  public exit(version: string, wallet: WalletClient, campaignAddress: string) {
     if (!version || version === '1.0') {
-      return this.albStaker.withdraw(userWallet, campaignAddress);
+      return this.albStaker.withdraw(wallet, campaignAddress);
     }
 
-    return this.lmcStaker.exit(campaignAddress, userWallet);
+    return this.lmcStaker.exit(campaignAddress, wallet);
   }
 
   /**
@@ -119,7 +117,7 @@ export class CampaignWrapper {
    * @param {object} campaign - campaign object
    * @return {object} campaign data object
    */
-  async getEmptyCardDataCommon(campaign: LMInterface): Promise<object> {
+  public async getEmptyCardDataCommon(campaign: LMInterface): Promise<object> {
     const { version } = campaign;
 
     interface VersionMapping {
@@ -164,23 +162,17 @@ export class CampaignWrapper {
       this.tokenConfigs,
     );
 
-    let contractStakeLimit = this.albStaker.getContractStakeLimit(campaignAddress);
-
-    interface Result {
-      [key: string]: any;
-    }
-
-    const result: Result = await Promise.all([
+    const result = await Promise.all([
       durationAndExpiration,
       hasCampaignEndedPromise,
       campaignRewardsPromise,
-      contractStakeLimit,
+      this.albStaker.getContractStakeLimit(campaignAddress),
     ]);
 
     const { duration, expirationTime } = result[0];
-    const hasCampaignEnded: boolean = result[1];
-    const campaignRewards: CampaignRewards = result[2];
-    contractStakeLimit = result[3];
+    const hasCampaignEnded = result[1];
+    const campaignRewards = result[2];
+    const contractStakeLimit = result[3];
 
     const campaignRewardsUSD = await this._getCampaignRewardsUSD_v1(campaignRewards);
     const [totalStakedString] = formatValuesToString([totalStakedAmountBN]);
@@ -215,7 +207,7 @@ export class CampaignWrapper {
     };
   }
 
-  async getEmptyCardDataNew(campaign: LMInterface) {
+  public async getEmptyCardDataNew(campaign: LMInterface) {
     //Get campaign data
     const {
       liquidityPoolAddress: poolAddress,
@@ -253,8 +245,8 @@ export class CampaignWrapper {
 
     // Format durations
     const { duration, durationDays, expirationTime } = this._formatDurationExpiration(
-      deltaDuration.toNumber(),
-      deltaExpiration.toNumber(),
+      Number(deltaDuration),
+      Number(deltaExpiration),
     );
 
     // Format rewards
@@ -276,7 +268,12 @@ export class CampaignWrapper {
 
     return {
       apy: !upcoming ? apy : 0,
-      campaign: { ...campaign, name, campaignEnd: Number(campaignEndTimestamp) },
+      campaign: {
+        ...campaign,
+        name,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+      },
       campaignRewards,
       dex,
       duration,
@@ -290,7 +287,7 @@ export class CampaignWrapper {
     };
   }
 
-  async getCardDataCommon(userWallet: JsonRpcSigner, campaign: LMInterface) {
+  public async getCardDataCommon(wallet: WalletClient, campaign: LMInterface) {
     const { version } = campaign;
 
     interface VersionMapping {
@@ -306,10 +303,10 @@ export class CampaignWrapper {
     // Compose function name based on version
     const cardDataMethod = `${versionMapping[version]}`;
 
-    return this[cardDataMethod](userWallet, campaign);
+    return this[cardDataMethod](wallet, campaign);
   }
 
-  async getCardData(userWallet: JsonRpcSigner, campaign: LMInterface) {
+  public async getCardData(wallet: WalletClient, campaign: LMInterface) {
     //Get campaign data
     const {
       liquidityPoolAddress: poolAddress,
@@ -349,11 +346,11 @@ export class CampaignWrapper {
       this.tokenConfigs,
     );
 
-    let rewards = this.albStaker.getCurrentReward(userWallet, campaignAddress, this.tokenConfigs);
+    let rewards = this.albStaker.getCurrentReward(wallet, campaignAddress, this.tokenConfigs);
 
-    let stakedTokens = this.albStaker.getStakingTokensBalance(userWallet, campaignAddress);
+    let stakedTokens = this.albStaker.getStakingTokensBalance(wallet, campaignAddress);
 
-    const LPTokensPromise = this._getPoolBalance(userWallet, poolAddress, dex);
+    const LPTokensPromise = this._getPoolBalance(wallet, poolAddress, dex);
 
     const totalStakedAmountBN = await this.albStaker.getTotalStakedAmount(campaignAddress);
     const totalStaked = formatEther(totalStakedAmountBN);
@@ -424,7 +421,7 @@ export class CampaignWrapper {
     };
   }
 
-  async getCardDataNew(userWallet: JsonRpcSigner, campaign: LMInterface) {
+  public async getCardDataNew(wallet: WalletClient, campaign: LMInterface) {
     //Get campaign data
     const {
       liquidityPoolAddress: poolAddress,
@@ -440,11 +437,11 @@ export class CampaignWrapper {
     // Get router address
     const { routerAddress } = dexByNetworkMapping[network].dexes[dex];
 
-    const LPTokens = formatEther(await this._getPoolBalance(userWallet, poolAddress, dex));
+    const LPTokens = formatEther(await this._getPoolBalance(wallet, poolAddress, dex));
 
     // Get data from new SDK
     const campaignData = await this.lmcStaker.getCampaignData(campaignAddress);
-    const userData: UserDataLM = await this.lmcStaker.getUserData(campaignAddress, userWallet);
+    const userData: UserDataLM = await this.lmcStaker.getUserData(campaignAddress, wallet);
 
     const {
       deltaDuration,
@@ -482,8 +479,8 @@ export class CampaignWrapper {
 
     // Format durations
     const { duration, durationDays, expirationTime } = this._formatDurationExpiration(
-      deltaDuration.toNumber(),
-      deltaExpiration.toNumber(),
+      Number(deltaDuration),
+      Number(deltaExpiration),
     );
 
     // Format campaign rewards
@@ -506,7 +503,7 @@ export class CampaignWrapper {
     // Get APY
     const apy = this._calculateAPY_new(campaignRewardsUSD, totalStakedUSD, durationDays, year);
 
-    const willBeExtended = BigNumber.from(extensionDuration).gt(BigNumber.from(0));
+    const willBeExtended = (extensionDuration ?? 0n) > 0n;
 
     return {
       apy: !upcoming ? apy : 0,
@@ -539,7 +536,7 @@ export class CampaignWrapper {
     };
   }
 
-  _formatTuplePairs(provisionTokensAddresses: string[]) {
+  private _formatTuplePairs(provisionTokensAddresses: string[]) {
     const tuple: string[] = [];
     const pairs = provisionTokensAddresses.map(address => {
       const { symbol } = getTokenByPropName(
@@ -562,7 +559,7 @@ export class CampaignWrapper {
     };
   }
 
-  async _getCampaignRewardsUSD_v1(campaignRewards: CampaignRewards) {
+  private async _getCampaignRewardsUSD_v1(campaignRewards: CampaignRewards) {
     let campaignRewardsUSD = 0;
     for (let index = 0; index < campaignRewards.total.length; index++) {
       const currentReward = campaignRewards.total[index];
@@ -585,15 +582,15 @@ export class CampaignWrapper {
     return campaignRewardsUSD;
   }
 
-  async _getTotalStakedUSD_v1(
+  private async _getTotalStakedUSD_v1(
     poolAddress: string,
     provisionTokensAddresses: string[],
     totalStaked: number,
     dex: string,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await getTotalSupply(this.provider, poolAddress);
-    const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
+    const liquidityPoolSupply = await getTotalSupply(this.provider, poolAddress as `0x${string}`);
+    const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply));
 
     const reservesBalances = await this.getPoolReserveBalances(
       poolAddress,
@@ -623,36 +620,46 @@ export class CampaignWrapper {
     return totalStakedUSD;
   }
 
-  async getPoolReserveBalances(
+  public async getPoolReserveBalances(
     poolAddress: string,
     provisionTokensAddresses: string[],
     dex: string,
   ): Promise<Result> {
-    let reserves;
-    const abi =
-      dex === DexEnum.balancer
-        ? BalancerBPoolContractABI
-        : dex === DexEnum.arrakis
-        ? ArrakisPoolABI
-        : UniswapV2PairABI;
-
-    const poolContract = new Contract(poolAddress, abi, this.provider);
     const tokenNames = provisionTokensAddresses.map(
       tokenAddress =>
         getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress.toLowerCase())
           .symbol,
     );
 
-    const totalSupply = await poolContract.totalSupply();
+    const totalSupply = await this.provider.readContract({
+      abi: parseAbi(['function totalSupply() external view returns (uint256)']),
+      address: poolAddress as `0x${string}`,
+      functionName: 'totalSupply',
+    });
+
     const pool = poolTupleToString(tokenNames);
-    const result: Result = {};
-    result[pool] = await formatToken(this.provider, totalSupply, poolAddress);
+    const result: Record<string, string> = {};
+    result[pool] = await formatToken(this.provider, totalSupply, poolAddress as `0x${string}`);
+
+    let reserves: [bigint, bigint] = [0n, 0n];
 
     if (dex !== DexEnum.balancer) {
       if (dex === DexEnum.arrakis) {
-        reserves = await poolContract.getUnderlyingBalances();
+        const currentReserves = await this.provider.readContract({
+          abi: ArrakisPoolABI,
+          address: poolAddress as `0x${string}`,
+          functionName: 'getUnderlyingBalances',
+        });
+
+        reserves = [currentReserves[0], currentReserves[1]];
       } else {
-        reserves = await poolContract.getReserves();
+        const currentReserves = await this.provider.readContract({
+          abi: UniswapPoolABI,
+          address: poolAddress as `0x${string}`,
+          functionName: 'getReserves',
+        });
+
+        reserves = [currentReserves[0], currentReserves[1]];
       }
     }
 
@@ -665,7 +672,12 @@ export class CampaignWrapper {
       ).address;
 
       if (dex === DexEnum.balancer) {
-        const tokenBalance = await poolContract.getBalance(tokenAddress);
+        const tokenBalance = await this.provider.readContract({
+          abi: BalancerPoolABI,
+          address: poolAddress as `0x${string}`,
+          functionName: 'getBalance',
+          args: [tokenAddress],
+        });
         result[tokenName] = await formatToken(this.provider, tokenBalance, tokenAddress);
       } else {
         result[tokenName] = await formatToken(this.provider, reserves[index], tokenAddress);
@@ -675,10 +687,9 @@ export class CampaignWrapper {
     return result;
   }
 
-  async getCampaignStatusCommon(
+  public async getCampaignStatusCommon(
     campaign: LMInterface,
-    connected: boolean,
-    signerProvider: JsonRpcSigner,
+    wallet: GetWalletClientResult | undefined,
   ) {
     const { version } = campaign;
     interface VersionMapping {
@@ -693,41 +704,33 @@ export class CampaignWrapper {
     // Compose function name based on version
     const cardDataMethod = `${versionMapping[version]}`;
 
-    return await this[cardDataMethod](campaign, connected, signerProvider);
+    return await this[cardDataMethod](campaign, wallet);
   }
 
-  async getCampaignStatus(
-    campaign: LMInterface,
-    connected: boolean,
-    signerProvider: JsonRpcSigner,
-  ) {
+  public async getCampaignStatus(campaign: LMInterface, wallet: GetWalletClientResult | undefined) {
     const { campaignAddress } = campaign;
     let hasUserStaked = false;
 
     const hasCampaignStarted = await this.albStaker.hasCampaignStarted(campaignAddress);
     const hasCampaignEnded = await this.albStaker.hasCampaignEnded(campaignAddress);
 
-    if (connected) {
-      hasUserStaked = await this.albStaker.getUserStakedInCampaign(signerProvider, campaignAddress);
+    if (wallet) {
+      hasUserStaked = await this.albStaker.getUserStakedInCampaign(wallet, campaignAddress);
     }
 
     return { hasCampaignStarted, hasCampaignEnded, hasUserStaked };
   }
 
-  async getCampaignStatusNew(
-    campaign: LMInterface,
-    connected: boolean,
-    signerProvider: JsonRpcSigner,
-  ) {
+  async getCampaignStatusNew(campaign: LMInterface, wallet: GetWalletClientResult | undefined) {
     const { campaignAddress } = campaign;
 
     const { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming } =
-      await this.lmcStaker.getCampaignStatus(campaignAddress, connected, signerProvider);
+      await this.lmcStaker.getCampaignStatus(campaignAddress, wallet);
 
     return { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming };
   }
 
-  _calculateAPY_new(
+  private _calculateAPY_new(
     totalRewardsUSD: number,
     totalStakedUSD: number,
     durationDays: number,
@@ -743,21 +746,26 @@ export class CampaignWrapper {
     return APY * 100;
   }
 
-  async _getPoolBalance(userWallet: JsonRpcSigner, poolAddress: string, dex: string) {
-    const userAddress = await getAddressFromWallet(userWallet);
-    let balance;
-    if (dex === DexEnum.balancer) {
-      const poolContract = new Contract(poolAddress, BalancerBPoolContractABI, this.provider);
+  private async _getPoolBalance(wallet: WalletClient, poolAddress: string, dex: string) {
+    const userAddress = await getAddressFromWallet(wallet);
 
-      balance = await poolContract.balanceOf(userAddress);
+    let balance: bigint = 0n;
+
+    if (dex === DexEnum.balancer) {
+      balance = await this.provider.readContract({
+        address: poolAddress as `0x${string}`,
+        abi: BalancerPoolABI,
+        functionName: 'balanceOf',
+        args: [userAddress],
+      });
     } else {
-      balance = getBalance(this.provider, poolAddress, userAddress);
+      balance = await getBalance(this.provider, poolAddress as `0x${string}`, userAddress);
     }
 
     return balance;
   }
 
-  _formatDurationExpiration(deltaDuration: number, deltaExpiration: number) {
+  private _formatDurationExpiration(deltaDuration: number, deltaExpiration: number) {
     const duration = deltaDuration * 1000;
     const durationDays = deltaDuration / (60 * 60 * 24);
     const expirationTime = deltaExpiration * 1000;
@@ -769,9 +777,11 @@ export class CampaignWrapper {
     };
   }
 
-  async _formatCampaignRewards(rewardsCount: number, campaignRewardsBN: CampaignRewardsNew[]) {
-    const secondsInWeek = 604800;
-    const secondsInWeekBN = BigNumber.from(secondsInWeek);
+  private async _formatCampaignRewards(
+    rewardsCount: bigint,
+    campaignRewardsBN: CampaignRewardsNew[],
+  ) {
+    const secondsInWeek = 604800n;
 
     const total = [];
     const weekly = [];
@@ -786,9 +796,9 @@ export class CampaignWrapper {
         decimals: tokenDecimals,
       } = getTokenByPropName(this.tokenConfigs, TokenConfigsProps.ADDRESS, tokenAddress);
 
-      const tokenAmount = formatUnits(currentReward.totalRewards.toString(), tokenDecimals);
+      const tokenAmount = formatUnits(currentReward.totalRewards, tokenDecimals);
       const tokenAmountWeekly = formatUnits(
-        BigNumber.from(currentReward.rewardPerSecond).mul(secondsInWeekBN).toString(),
+        currentReward.rewardPerSecond * secondsInWeek,
         tokenDecimals,
       );
 
@@ -823,15 +833,15 @@ export class CampaignWrapper {
     };
   }
 
-  async _getTotalStakedUSD(
+  private async _getTotalStakedUSD(
     poolAddress: string,
     provisionTokensAddresses: string[],
     totalStaked: number,
     dex: string,
   ) {
     // Get pool data
-    const liquidityPoolSupply = await getTotalSupply(this.provider, poolAddress);
-    const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply.toString()));
+    const liquidityPoolSupply = await getTotalSupply(this.provider, poolAddress as `0x${string}`);
+    const liquidityPoolSupplyFormated = Number(formatEther(liquidityPoolSupply));
 
     const reservesBalances = await this.getPoolReserveBalances(
       poolAddress,
@@ -861,7 +871,7 @@ export class CampaignWrapper {
     return totalStakedUSD;
   }
 
-  _formatUserRewards(userRewards: UserRewards[]) {
+  private _formatUserRewards(userRewards: UserRewards[]) {
     const rewards = userRewards.map(r => {
       const tokenAddress = r.tokenAddress.toLowerCase();
       const { symbol: tokenName, decimals: tokenDecimals } = getTokenByPropName(
@@ -869,7 +879,7 @@ export class CampaignWrapper {
         TokenConfigsProps.ADDRESS,
         tokenAddress,
       );
-      const tokenAmount = formatUnits(r.currentAmount.toString(), tokenDecimals);
+      const tokenAmount = formatUnits(r.currentAmount, tokenDecimals);
 
       return {
         tokenAmount,

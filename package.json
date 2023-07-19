@@ -1,7 +1,7 @@
 {
   "name": "@allianceblock/lmaas-sdk",
   "author": "AllianceBlock",
-  "version": "1.5.3",
+  "version": "2.0.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -18,50 +18,49 @@
     "node": ">=10"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "test:watch": "tsdx test --watch",
-    "test:coverage": "tsdx test --coverage",
+    "build": "dts build",
+    "lint": "dts lint",
+    "prepare": "dts build",
+    "size": "size-limit",
+    "start": "dts watch",
+    "test": "dts test",
+    "test:watch": "dts test --watch",
+    "test:coverage": "dts test --coverage",
     "format": "prettier --check \"src/**/*.{js,jsx,ts,tsx,scss}\"",
     "format:fix": "prettier --write \"src/**/*.{js,jsx,ts,tsx,scss}\"",
-    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
-    "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx}'",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why"
+    "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx}'"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "dts lint"
     }
   },
   "dependencies": {
+    "@wagmi/core": "^1.3.8",
     "axios": "^0.27.2",
-    "bignumber.js": "^9.0.2",
-    "ethers": "^5.7.2"
+    "decimal.js": "^10.4.3",
+    "viem": "^1.3.0"
   },
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^8.2.4",
-    "@typechain/ethers-v5": "^10.2.1",
-    "@typescript-eslint/eslint-plugin": "^5.12.0",
-    "@typescript-eslint/parser": "^5.12.0",
-    "eslint": "^8.9.0",
-    "eslint-config-prettier": "^8.4.0",
+    "@size-limit/preset-small-lib": "^8.2.6",
+    "@types/node": "^20.4.2",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "dts-cli": "^2.0.3",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^8.8.0",
     "eslint-config-standard-react": "^13.0.0",
-    "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-prettier": "^4.0.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "eslint-plugin-react": "^7.28.0",
-    "eslint-plugin-react-hooks": "^4.3.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "husky": "^8.0.3",
-    "prettier": "^2.5.1",
-    "size-limit": "^8.2.4",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.3.1",
-    "typechain": "^8.1.1",
-    "typescript": "^5.0.4"
+    "prettier": "^2.8.8",
+    "size-limit": "^8.2.6",
+    "tslib": "^2.6.0",
+    "typescript": "^5.1.6"
   },
   "size-limit": [
     {

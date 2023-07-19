@@ -1,5 +1,3 @@
-import { BigNumber } from '@ethersproject/bignumber';
-
 import { DexEnum, NetworkEnum } from '..';
 
 export interface LMInterface {
@@ -35,20 +33,20 @@ export interface StakingInterface {
   isNativeSupported: boolean;
 }
 export interface CampaingData {
-  totalStaked: BigNumber;
-  campaignStartTimestamp: BigNumber;
-  campaignEndTimestamp: BigNumber;
-  contractStakeLimit: BigNumber;
-  walletStakeLimit: BigNumber;
-  deltaExpiration: BigNumber;
-  deltaDuration: BigNumber;
-  extensionDuration?: BigNumber;
+  totalStaked: bigint;
+  campaignStartTimestamp: bigint;
+  campaignEndTimestamp: bigint;
+  contractStakeLimit: bigint;
+  walletStakeLimit: bigint;
+  deltaExpiration: bigint;
+  deltaDuration: bigint;
+  extensionDuration?: bigint;
   hasContractStakeLimit: boolean;
   hasWalletStakeLimit: boolean;
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
   campaignRewards: CampaignRewardsNew[];
-  rewardsCount: number;
+  rewardsCount: bigint;
   name: string;
   wrappedNativeToken: string;
 }
@@ -63,28 +61,28 @@ export interface CampaingStatusData {
 export interface CampaingStatusDataActive {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
-  exitTimestamp: BigNumber;
-  exitStake: BigNumber;
+  exitTimestamp: bigint;
+  exitStake: bigint;
   upcoming?: boolean;
 }
 
 export interface UserDataLM {
-  userStakedAmount: BigNumber;
+  userStakedAmount: bigint;
   hasUserStaked: boolean;
   userRewards: UserRewards[];
 }
 
 export interface UserDataStaking {
-  exitTimestamp: BigNumber;
-  exitStake: BigNumber;
-  userStakedAmount: BigNumber;
+  exitTimestamp: bigint;
+  exitStake: bigint;
+  userStakedAmount: bigint;
   userRewards: UserRewards[];
 }
 
 export interface CampaignRewardsNew {
   tokenAddress: string;
-  rewardPerSecond: BigNumber;
-  totalRewards: BigNumber;
+  rewardPerSecond: bigint;
+  totalRewards: bigint;
 }
 
 export interface CampaignRewards {
@@ -102,7 +100,7 @@ export interface CampaignRewards {
 
 export interface UserRewards {
   tokenAddress: string;
-  currentAmount: BigNumber;
+  currentAmount: bigint;
 }
 
 export interface Reward {

@@ -1,32 +1,29 @@
-import { BigNumber } from '@ethersproject/bignumber';
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { providers } from 'ethers';
-import { parseUnits } from 'ethers/lib/utils';
+import { getContract, parseUnits, PublicClient, WalletClient } from 'viem';
 
 import {
   CampaingData,
   CampaingStatusData,
   CampaingStatusDataActive,
   checkMaxStakingLimit,
+  getAddressFromWallet,
   getTokenDecimals,
   NetworkEnum,
   UserDataStaking,
 } from '..';
-import NonCompoundingRewardsPool from '../abi/NonCompoundingRewardsPool.json';
+import { NonCompoundingRewardsPoolABI } from '../abi/NonCompoundingRewardsPool';
 
 /**
  *  Represents a class that can interact with SoloStaker's campaigns
  *  depending on the network.
  *  @constructor
- *  @param {JsonRpcBatchProvider | JsonRpcProvider} provider - Provider with the global interaction.
+ *  @param {PublicClient} provider - Provider with the global interaction.
  *  @param {NetworkEnum} protocol - Name of the network where this class is being used.
  */
 export class StakerSolo {
   protected protocol: NetworkEnum;
-  protected provider: JsonRpcProvider;
+  protected provider: PublicClient;
 
-  constructor(provider: JsonRpcProvider, protocol: NetworkEnum) {
+  constructor(provider: PublicClient, protocol: NetworkEnum) {
     this.provider = provider;
     this.protocol = protocol;
   }
@@ -38,15 +35,14 @@ export class StakerSolo {
    * @return {CampaingData} CampaingData object
    */
   public async getCampaignData(campaignAddress: string): Promise<CampaingData> {
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPool,
-      this.provider,
-    );
+    const campaignContract = getContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: campaignAddress as `0x${string}`,
+      publicClient: this.provider,
+    });
 
     // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now() / 1000);
-    const nowBN = BigNumber.from(now);
+    const now = BigInt(Math.floor(Date.now() / 1000));
 
     // Get raw contract data
     const {
@@ -59,7 +55,7 @@ export class StakerSolo {
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
       wrappedNativeToken: wrappedNativeTokenPR,
-    } = campaignContract;
+    } = campaignContract.read;
 
     let wrappedNativeToken: string = '';
 
@@ -73,44 +69,41 @@ export class StakerSolo {
       console.error(e);
     }
 
+    const name = await namePR();
+    const hasCampaignStarted = await hasStakingStartedPR();
+
     const promiseArray = [
       totalStakedPR(),
       startTimestampPR(),
       endTimestampPR(),
-      hasStakingStartedPR(),
       contractStakeLimitPR(),
       stakeLimitPR(),
       getRewardTokensCountPR(),
-      namePR(),
     ];
 
     const [
       totalStaked,
       campaignStartTimestamp,
       campaignEndTimestamp,
-      hasCampaignStarted,
       contractStakeLimit,
       walletStakeLimit,
       rewardsCount,
-      name,
     ] = await Promise.all(promiseArray);
 
-    const rewardsCountNum = Number(rewardsCount);
-
     // Get deltas in seconds
-    const deltaExpiration = campaignEndTimestamp.sub(nowBN);
-    const deltaDuration = campaignEndTimestamp.sub(campaignStartTimestamp);
+    const deltaExpiration = campaignEndTimestamp - now;
+    const deltaDuration = campaignEndTimestamp - campaignStartTimestamp;
 
     const campaignRewards = [];
 
-    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+    const upcoming = campaignStartTimestamp > now;
 
     if (hasCampaignStarted || upcoming) {
       // Get rewards info
-      for (let i = 0; i < rewardsCountNum; i++) {
-        const tokenAddress = await campaignContract.rewardsTokens(i);
-        const rewardPerSecond = await campaignContract.rewardPerSecond(i);
-        const totalRewards = rewardPerSecond.mul(deltaDuration);
+      for (let i = 0n; i < rewardsCount; i++) {
+        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
+        const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
+        const totalRewards = rewardPerSecond * deltaDuration;
 
         campaignRewards.push({
           tokenAddress,
@@ -120,7 +113,7 @@ export class StakerSolo {
       }
     }
 
-    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const hasCampaignEnded = campaignEndTimestamp < now;
     const hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
     const hasWalletStakeLimit = !checkMaxStakingLimit(walletStakeLimit);
 
@@ -137,7 +130,7 @@ export class StakerSolo {
       deltaExpiration,
       deltaDuration,
       campaignRewards,
-      rewardsCount: rewardsCountNum,
+      rewardsCount,
       name,
       wrappedNativeToken,
     };
@@ -150,25 +143,27 @@ export class StakerSolo {
    * @return {CampaingStatusData} CampaingStatusData object
    */
   public async getCampaignStatus(campaignAddress: string): Promise<CampaingStatusData> {
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPool,
-      this.provider,
-    );
+    const campaignContract = getContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: campaignAddress as `0x${string}`,
+      publicClient: this.provider,
+    });
 
     // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now() / 1000);
-    const nowBN = BigNumber.from(now);
+    const now = BigInt(Math.floor(Date.now() / 1000));
 
     // Get raw contract data
-    const campaignEndTimestamp = await campaignContract.endTimestamp();
-    const hasCampaignStarted = await campaignContract.hasStakingStarted();
+    const campaignStartTimestamp = await campaignContract.read.startTimestamp();
+    const campaignEndTimestamp = await campaignContract.read.endTimestamp();
+    const hasCampaignStarted = await campaignContract.read.hasStakingStarted();
 
-    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const hasCampaignEnded = hasCampaignStarted ? campaignEndTimestamp < now : false;
+    const upcoming = campaignStartTimestamp > now;
 
     return {
       hasCampaignStarted,
       hasCampaignEnded,
+      upcoming,
     };
   }
 
@@ -180,28 +175,29 @@ export class StakerSolo {
    */
   public async getCampaignStatusActive(
     campaignAddress: string,
-    signerProvider: JsonRpcSigner,
+    wallet: WalletClient,
   ): Promise<CampaingStatusDataActive> {
-    const walletAddress = await signerProvider.getAddress();
+    const campaignContract = getContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: campaignAddress as `0x${string}`,
+      publicClient: this.provider,
+    });
 
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPool,
-      signerProvider,
-    );
+    const address = await getAddressFromWallet(wallet);
 
     // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now() / 1000);
-    const nowBN = BigNumber.from(now);
+    const now = BigInt(Math.floor(Date.now() / 1000));
 
     // Get raw contract data
-    const campaignStartTimestamp = await campaignContract.startTimestamp();
-    const campaignEndTimestamp = await campaignContract.endTimestamp();
-    const hasCampaignStarted = await campaignContract.hasStakingStarted();
-    const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
+    const campaignStartTimestamp = await campaignContract.read.startTimestamp();
+    const campaignEndTimestamp = await campaignContract.read.endTimestamp();
+    const hasCampaignStarted = await campaignContract.read.hasStakingStarted();
 
-    const hasCampaignEnded = campaignEndTimestamp.lt(nowBN);
+    const hasCampaignEnded = hasCampaignStarted ? campaignEndTimestamp < now : false;
+
     const upcoming = campaignStartTimestamp > now;
+
+    const [exitTimestamp, exitStake] = await campaignContract.read.exitInfo([address]);
 
     return {
       hasCampaignStarted,
@@ -220,37 +216,36 @@ export class StakerSolo {
    */
   public async getUserData(
     campaignAddress: string,
-    signerProvider: JsonRpcSigner,
+    wallet: WalletClient,
   ): Promise<UserDataStaking> {
-    const walletAddress = await signerProvider.getAddress();
+    const address = await getAddressFromWallet(wallet);
 
     // Get now in seconds and convert to BN
-    const now = Math.floor(Date.now() / 1000);
-    const zeroBN = BigNumber.from(0);
+    const now = BigInt(Math.floor(Date.now() / 1000));
 
-    const campaignContract = new Contract(
-      campaignAddress,
-      NonCompoundingRewardsPool,
-      signerProvider,
-    );
+    const campaignContract = getContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: campaignAddress as `0x${string}`,
+      publicClient: this.provider,
+    });
 
     // Get raw user data
-    const { exitTimestamp, exitStake } = await campaignContract.exitInfo(walletAddress);
-    const userBalance = await campaignContract.balanceOf(walletAddress);
+    const [exitTimestamp, exitStake] = await campaignContract.read.exitInfo([address]);
+    const userBalance = await campaignContract.read.balanceOf([address]);
 
-    const hasUserInitiatedWithdraw = exitTimestamp.gt(zeroBN);
+    const hasUserInitiatedWithdraw = exitTimestamp > 0n;
 
     const userStakedAmount = hasUserInitiatedWithdraw ? exitStake : userBalance;
-    const rewardsCount = Number(await campaignContract.getRewardTokensCount());
+    const rewardsCount = await campaignContract.read.getRewardTokensCount();
 
     const userRewards = [];
 
-    if (userStakedAmount.gt(zeroBN)) {
-      for (let i = 0; i < rewardsCount; i++) {
-        const tokenAddress = await campaignContract.rewardsTokens(i);
+    if (userStakedAmount > 0n) {
+      for (let i = 0n; i < rewardsCount; i++) {
+        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
         const currentAmount = !hasUserInitiatedWithdraw
-          ? await campaignContract.getUserAccumulatedReward(walletAddress, i, now)
-          : await campaignContract.getPendingReward(i);
+          ? await campaignContract.read.getUserAccumulatedReward([address, i, now])
+          : await campaignContract.read.getPendingReward([i]);
 
         userRewards.push({
           tokenAddress,
@@ -272,72 +267,83 @@ export class StakerSolo {
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
    * @param {string} amountToStake - Amount to stake
+   * @param {WalletClient} wallet - Wallet client
    * @param {boolean} isNativeSupported - Switch to stake native tokens
-   * @return {object} transaction object
+   * @return {string} hash of the transaction
    */
   public async stake(
     contractAddress: string,
     amountToStake: string,
-    signerProvider: JsonRpcSigner,
+    wallet: WalletClient,
     isNativeSupported: boolean,
-  ): Promise<providers.TransactionResponse> {
-    const campaignContract = new Contract(
-      contractAddress,
-      NonCompoundingRewardsPool,
-      signerProvider,
-    );
-    const stakingToken = await campaignContract.stakingToken();
-    const tokenDecimals = await getTokenDecimals(signerProvider, stakingToken);
+  ): Promise<`0x${string}`> {
+    const stakingToken = await this.provider.readContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: contractAddress as `0x${string}`,
+      functionName: 'stakingToken',
+    });
+
+    const walletAddress = await getAddressFromWallet(wallet);
+    const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
 
     if (isNativeSupported) {
-      return await campaignContract.stakeNative({
+      const { request } = await this.provider.simulateContract({
+        abi: NonCompoundingRewardsPoolABI,
+        address: contractAddress as `0x${string}`,
+        functionName: 'stakeNative',
         value: amountToStakeParsed,
+        account: walletAddress,
       });
+
+      return await wallet.writeContract(request);
     }
 
-    return await campaignContract.stake(amountToStakeParsed);
+    const { request } = await this.provider.simulateContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: contractAddress as `0x${string}`,
+      functionName: 'stake',
+      args: [amountToStakeParsed],
+      account: walletAddress,
+    });
+
+    return await wallet.writeContract(request);
   }
 
   /**
    * Exit from campaign
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
-   * @return {object} transaction object
+   * @param {WalletClient} wallet - Wallet client
+   * @return {string} hash of the transaction
    */
-  public async exit(
-    contractAddress: string,
-    signerProvider: JsonRpcSigner,
-  ): Promise<providers.TransactionResponse> {
-    const campaignContract = new Contract(
-      contractAddress,
-      NonCompoundingRewardsPool,
-      signerProvider,
-    );
+  public async exit(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
+    const { request } = await this.provider.simulateContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: contractAddress as `0x${string}`,
+      functionName: 'exit',
+    });
 
-    const transaction = await campaignContract.exit();
-
-    return transaction;
+    return await wallet.writeContract(request);
   }
 
   /**
    * Complete exit from campaign (take initial staking and rewards)
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
-   * @return {object} transaction object
+   *  @param {WalletClient} wallet - Wallet client
+   * @return {string} hash of the transaction
    */
-  public async completeExit(
-    contractAddress: string,
-    signerProvider: JsonRpcSigner,
-  ): Promise<providers.TransactionResponse> {
-    const campaignContract = new Contract(
-      contractAddress,
-      NonCompoundingRewardsPool,
-      signerProvider,
-    );
+  public async completeExit(contractAddress: string, wallet: WalletClient): Promise<`0x${string}`> {
+    const walletAddress = await getAddressFromWallet(wallet);
 
-    const transaction = await campaignContract.completeExit();
+    const { request } = await this.provider.simulateContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: contractAddress as `0x${string}`,
+      functionName: 'completeExit',
+      account: walletAddress,
+    });
 
-    return transaction;
+    return await wallet.writeContract(request);
   }
 }

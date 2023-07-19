@@ -25,18 +25,18 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '12.x'
+          node-version: 16
 
       - name: Get local version
         id: local_version
-        run: echo "value=$(cat ./package.json | jq --raw-output .version)" >> $GITHUB_OUTPUT
+        run: echo "value=$(cat ./package.json | jq --raw-output .version)" >> $GITHUB_ENV
 
       - name: Authenticate GPR
         run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Get registry version
         id: registry_version
-        run: echo "value=$(npm view ${{ github.repository }} version)" >> $GITHUB_OUTPUT
+        run: echo "value=$(pnpm view ${{ github.repository }} version)" >> $GITHUB_ENV
 
       - name: Validate version
         uses: actions/github-script@v6
@@ -59,32 +59,42 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '12.x'
+          node-version: 16
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 8
+          run_install: false
 
       - name: Debug
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - uses: actions/cache@v3
+        name: Setup pnpm cache
         with:
-          path: ${{ steps.yarn-cache-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ env.CACHE_TOKEN }}-${{ hashFiles('**/yarn.lock') }}
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ env.CACHE_TOKEN }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-
+            ${{ runner.os }}-pnpm-store-
 
       - name: Prepare .npmrc
         run: echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build
-        run: yarn build
+        run: pnpm run build
 
       - name: Linting
-        run: yarn lint
+        run: pnpm run lint

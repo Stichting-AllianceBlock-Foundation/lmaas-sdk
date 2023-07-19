@@ -1,8 +1,4 @@
-import { BigNumber } from '@ethersproject/bignumber';
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcBatchProvider, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { formatEther, formatUnits, parseEther } from '@ethersproject/units';
-import { providers } from 'ethers';
+import { formatEther, formatUnits, parseEther, PublicClient, WalletClient } from 'viem';
 
 import {
   BLOCKS_COUNT,
@@ -11,15 +7,15 @@ import {
   getAddressFromWallet,
   getTokenByPropName,
 } from '..';
-import LiquidityMiningCampaignABI from '../abi/LiquidityMiningCampaignV1.json';
+import { LiquidityMiningCampaignABI } from '../abi/LiquidityMiningCampaignV1';
 import { CampaignRewards, NetworkEnum, Reward, TokenConfigs, TokenConfigsProps } from '../entities';
 
 export class ALBStaker {
-  provider: JsonRpcProvider | JsonRpcBatchProvider;
+  provider: PublicClient;
   protocol: NetworkEnum;
   [key: string]: any;
 
-  constructor(provider: JsonRpcProvider | JsonRpcBatchProvider, protocol: NetworkEnum) {
+  constructor(provider: PublicClient, protocol: NetworkEnum) {
     this.provider = provider;
     this.protocol = protocol;
   }
@@ -34,21 +30,22 @@ export class ALBStaker {
    * @return {object} transaction object
    */
   async stake(
-    userWallet: JsonRpcSigner,
+    userWallet: WalletClient,
     stakingContractAddress: string,
     lockSchemeAddress: string,
     amountToStake: string,
-  ): Promise<providers.TransactionResponse> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      userWallet,
-    );
+  ): Promise<`0x${string}`> {
+    const [address] = await userWallet.getAddresses();
 
-    // shouldn't be an issue - pool's token is 18 decimals
-    const amountToStakeBN = parseEther(amountToStake);
+    const { request } = await this.provider.simulateContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'stakeAndLock',
+      account: address,
+      args: [parseEther(amountToStake), lockSchemeAddress as `0x${string}`],
+    });
 
-    return stakingRewardsContract.stakeAndLock(amountToStakeBN, lockSchemeAddress);
+    return userWallet.writeContract(request);
   }
 
   /**
@@ -59,15 +56,19 @@ export class ALBStaker {
    * @return {object} transaction object
    */
   async claimRewards(
-    userWallet: JsonRpcSigner,
+    userWallet: WalletClient,
     stakingContractAddress: string,
-  ): Promise<providers.TransactionResponse> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      userWallet,
-    );
-    return stakingRewardsContract.claim();
+  ): Promise<`0x${string}`> {
+    const [address] = await userWallet.getAddresses();
+
+    const { request } = await this.provider.simulateContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'claim',
+      account: address,
+    });
+
+    return userWallet.writeContract(request);
   }
 
   /**
@@ -77,16 +78,17 @@ export class ALBStaker {
    * @param {string} stakingContractAddress - Address of the camapaign contracts
    * @return {object} transaction object
    */
-  async withdraw(
-    userWallet: JsonRpcSigner,
-    stakingContractAddress: string,
-  ): Promise<providers.TransactionResponse> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      userWallet,
-    );
-    return stakingRewardsContract.exitAndUnlock();
+  async withdraw(userWallet: WalletClient, stakingContractAddress: string): Promise<`0x${string}`> {
+    const [address] = await userWallet.getAddresses();
+
+    const { request } = await this.provider.simulateContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'exitAndUnlock',
+      account: address,
+    });
+
+    return userWallet.writeContract(request);
   }
 
   /**
@@ -98,17 +100,21 @@ export class ALBStaker {
    * @return {object} transaction object
    */
   async exitAndStake(
-    userWallet: JsonRpcSigner,
+    userWallet: WalletClient,
     stakingContractAddress: string,
     stakerPoolAddress: string,
-  ): Promise<providers.TransactionResponse> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      userWallet,
-    );
+  ): Promise<`0x${string}`> {
+    const [address] = await userWallet.getAddresses();
 
-    return stakingRewardsContract.exitAndStake(stakerPoolAddress);
+    const { request } = await this.provider.simulateContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'exitAndStake',
+      account: address,
+      args: [stakerPoolAddress as `0x${string}`],
+    });
+
+    return userWallet.writeContract(request);
   }
 
   /**
@@ -120,17 +126,21 @@ export class ALBStaker {
    * @return {array} Array with rewards data
    */
   async getCurrentReward(
-    userWallet: JsonRpcSigner,
+    userWallet: WalletClient,
     stakingContractAddress: string,
     tokensConfig: TokenConfigs,
   ): Promise<Reward[]> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
+    const stakingContractConfig = {
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      walletClient: userWallet,
+    };
 
-    const rewardsCount = await stakingRewardsContract.getRewardTokensCount();
+    const rewardsCount = await this.provider.readContract({
+      ...stakingContractConfig,
+      functionName: 'getRewardTokensCount',
+    });
+
     const walletAddress = await getAddressFromWallet(userWallet);
 
     const currentRewards = [];
@@ -142,8 +152,13 @@ export class ALBStaker {
     );
 
     if (userStakingBalance === '0.0') {
-      for (let i = 0; i < rewardsCount.toNumber(); i++) {
-        const currentRewardToken = await stakingRewardsContract.rewardsTokens(i);
+      for (let i = 0n; i < rewardsCount; i++) {
+        const currentRewardToken = await this.provider.readContract({
+          ...stakingContractConfig,
+          functionName: 'rewardsTokens',
+          args: [i],
+        });
+
         const rewardsContractName = getTokenByPropName(
           tokensConfig,
           TokenConfigsProps.ADDRESS,
@@ -162,13 +177,18 @@ export class ALBStaker {
       // shouldn't be an issue - pool's token is 18 decimals
       return currentRewards;
     } else {
-      for (let i = 0; i < rewardsCount.toNumber(); i++) {
-        const currentRewardToken = await stakingRewardsContract.rewardsTokens(i);
+      for (let i = 0n; i < rewardsCount; i++) {
+        const currentRewardToken = await this.provider.readContract({
+          ...stakingContractConfig,
+          functionName: 'rewardsTokens',
+          args: [i],
+        });
 
-        const currentReward = await stakingRewardsContract.getUserAccumulatedReward(
-          walletAddress,
-          i,
-        );
+        const currentReward = await this.provider.readContract({
+          ...stakingContractConfig,
+          functionName: 'getUserAccumulatedReward',
+          args: [walletAddress, i],
+        });
 
         const { symbol: rewardsContractName, decimals: tokenDecimals } = getTokenByPropName(
           tokensConfig,
@@ -198,20 +218,19 @@ export class ALBStaker {
    * @return {string} Formatted user balance
    */
   async getStakingTokensBalance(
-    userWallet: JsonRpcSigner,
+    userWallet: WalletClient,
     stakingContractAddress: string,
   ): Promise<string> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
     const walletAddress = await getAddressFromWallet(userWallet);
-    const balance = await stakingRewardsContract.balanceOf(walletAddress);
+    const balance = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'balanceOf',
+      args: [walletAddress],
+    });
 
     // shouldn't be an issue - pool's token is 18 decimals
-    return formatEther(balance.toString());
+    return formatEther(balance);
   }
 
   /**
@@ -220,14 +239,12 @@ export class ALBStaker {
    * @param {string} stakingContractAddress - Address of the camapaign contracts
    * @return {BigNumber} Total staked amount
    */
-  async getTotalStakedAmount(stakingContractAddress: string): Promise<BigNumber> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    return stakingRewardsContract.totalStaked();
+  async getTotalStakedAmount(stakingContractAddress: string): Promise<bigint> {
+    return this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'totalStaked',
+    });
   }
 
   /**
@@ -237,14 +254,13 @@ export class ALBStaker {
    * @param {number} index - rewards token index
    * @return {BigNumber} Reward per block
    */
-  async getRewardInfo(stakingContractAddress: string, index: number): Promise<BigNumber> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    return stakingRewardsContract.rewardPerBlock(index);
+  async getRewardInfo(stakingContractAddress: string, index: number): Promise<bigint> {
+    return this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'rewardPerBlock',
+      args: [BigInt(index)],
+    });
   }
 
   /**
@@ -253,14 +269,12 @@ export class ALBStaker {
    * @param {string} stakingContractAddress - Address of the camapaign contracts
    * @return {number} Rewards number
    */
-  async getRewardsCount(stakingContractAddress: string): Promise<number> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    return stakingRewardsContract.getRewardTokensCount();
+  async getRewardsCount(stakingContractAddress: string): Promise<bigint> {
+    return this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'getRewardTokensCount',
+    });
   }
 
   /**
@@ -271,13 +285,12 @@ export class ALBStaker {
    * @return {string} Reward address
    */
   async getRewardsAddressFromArray(stakingContractAddress: string, index: number): Promise<string> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    return stakingRewardsContract.rewardsTokens(index);
+    return this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'rewardsTokens',
+      args: [BigInt(index)],
+    });
   }
 
   /**
@@ -291,31 +304,50 @@ export class ALBStaker {
     stakingContractAddress: string,
     tokensConfig: TokenConfigs,
   ): Promise<CampaignRewards> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
+    const rewardsCount = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'getRewardTokensCount',
+    });
 
-    const rewardsCount = await stakingRewardsContract.getRewardTokensCount();
+    let startBlock: bigint = 0n;
+    let endBlock: bigint = 0n;
 
-    let startBlock = stakingRewardsContract.startBlock();
-    let endBlock = stakingRewardsContract.endBlock();
-
-    const result = await Promise.all([startBlock, endBlock]);
+    const result = await Promise.all([
+      this.provider.readContract({
+        abi: LiquidityMiningCampaignABI,
+        address: stakingContractAddress as `0x${string}`,
+        functionName: 'startBlock',
+      }),
+      this.provider.readContract({
+        abi: LiquidityMiningCampaignABI,
+        address: stakingContractAddress as `0x${string}`,
+        functionName: 'endBlock',
+      }),
+    ]);
     startBlock = result[0];
     endBlock = result[1];
 
-    const durationInBlocks = endBlock.sub(startBlock);
+    const durationInBlocks = endBlock - startBlock;
 
     const campaignRewards: CampaignRewards = {
       total: [],
       weekly: [],
     };
 
-    for (let i = 0; i < rewardsCount.toNumber(); i++) {
-      const currentRewardToken = await stakingRewardsContract.rewardsTokens(i);
-      const rewardPerBlock = await stakingRewardsContract.rewardPerBlock(i);
+    for (let i = 0n; i < rewardsCount; i++) {
+      const currentRewardToken = await this.provider.readContract({
+        abi: LiquidityMiningCampaignABI,
+        address: stakingContractAddress as `0x${string}`,
+        functionName: 'rewardsTokens',
+        args: [i],
+      });
+      const rewardPerBlock = await this.provider.readContract({
+        abi: LiquidityMiningCampaignABI,
+        address: stakingContractAddress as `0x${string}`,
+        functionName: 'rewardPerBlock',
+        args: [i],
+      });
 
       const { symbol: tokenName, decimals: tokenDecimals } = getTokenByPropName(
         tokensConfig,
@@ -323,7 +355,7 @@ export class ALBStaker {
         currentRewardToken.toLowerCase(),
       );
 
-      const tokenAmount = formatUnits(rewardPerBlock.mul(durationInBlocks), tokenDecimals);
+      const tokenAmount = formatUnits(rewardPerBlock * durationInBlocks, tokenDecimals);
 
       const totalObj = {
         tokenName,
@@ -335,7 +367,7 @@ export class ALBStaker {
         tokenName,
         tokenAddress: currentRewardToken.toLowerCase(),
         tokenAmount: formatUnits(
-          rewardPerBlock.mul(BLOCKS_COUNT[this.protocol].PER_WEEK),
+          rewardPerBlock * BigInt(BLOCKS_COUNT[this.protocol].PER_WEEK),
           tokenDecimals,
         ),
       };
@@ -354,13 +386,11 @@ export class ALBStaker {
    * @return {boolean}
    */
   async hasCampaignStarted(stakingContractAddress: string): Promise<boolean> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    return stakingRewardsContract.hasStakingStarted();
+    return this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'hasStakingStarted',
+    });
   }
 
   /**
@@ -370,17 +400,15 @@ export class ALBStaker {
    * @return {boolean}
    */
   async hasCampaignEnded(stakingContractAddress: string): Promise<boolean> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
+    const endBlock = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'endBlock',
+    });
 
-    const endBlock = await stakingRewardsContract.endBlock();
-    const currentBlock = await this.provider.getBlock('latest');
-
-    const delta = endBlock.sub(currentBlock.number);
-    return delta.lt(0);
+    const currentBlock = await this.provider.getBlock();
+    const delta = endBlock - (currentBlock.number ?? 0n);
+    return delta < 0;
   }
 
   /**
@@ -390,21 +418,13 @@ export class ALBStaker {
    * @return {string} Staking limit
    */
   async getContractStakeLimit(stakingContractAddress: string): Promise<string> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
+    const contractStakeLimit = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'contractStakeLimit',
+    });
 
-    let contractStakeLimit;
-
-    try {
-      contractStakeLimit = await stakingRewardsContract.contractStakeLimit();
-    } catch (e) {
-      console.error(e);
-    }
-
-    return formatEther(contractStakeLimit.toString());
+    return formatEther(contractStakeLimit);
   }
 
   /**
@@ -414,22 +434,12 @@ export class ALBStaker {
    * @return {boolean} Has Staking limit
    */
   async checkContractStakeLimit(stakingContractAddress: string): Promise<boolean> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    let hasContractStakeLimit = true;
-
-    try {
-      const contractStakeLimit = await stakingRewardsContract.contractStakeLimit();
-      hasContractStakeLimit = !checkMaxStakingLimit(contractStakeLimit);
-    } catch (e) {
-      console.error(e);
-    }
-
-    return hasContractStakeLimit;
+    const contractStakeLimit = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'contractStakeLimit',
+    });
+    return !checkMaxStakingLimit(contractStakeLimit);
   }
 
   /**
@@ -439,20 +449,12 @@ export class ALBStaker {
    * @return {string} Staking limit
    */
   async getUserStakeLimit(stakingContractAddress: string): Promise<string> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    let stakeLimit;
-
-    try {
-      stakeLimit = await stakingRewardsContract.stakeLimit();
-    } catch (e) {
-      console.error(e);
-    }
-    return formatEther(stakeLimit.toString());
+    const stakeLimit = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'stakeLimit',
+    });
+    return formatEther(stakeLimit);
   }
 
   /**
@@ -462,21 +464,12 @@ export class ALBStaker {
    * @return {boolean} Has Staking limit
    */
   async checkUserStakeLimit(stakingContractAddress: string): Promise<boolean> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    let hasUserStakeLimit = true;
-
-    try {
-      const stakeLimit = await stakingRewardsContract.stakeLimit();
-      hasUserStakeLimit = !checkMaxStakingLimit(stakeLimit);
-    } catch (e) {
-      console.error(e);
-    }
-    return hasUserStakeLimit;
+    const stakeLimit = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'stakeLimit',
+    });
+    return !checkMaxStakingLimit(stakeLimit);
   }
 
   /**
@@ -488,37 +481,34 @@ export class ALBStaker {
   async getExpirationAndDuration(
     stakingContractAddress: string,
   ): Promise<{ duration: number; expirationTime: number }> {
-    const stakingRewardsContract = new Contract(
-      stakingContractAddress,
-      LiquidityMiningCampaignABI,
-      this.provider,
-    );
-
-    const currentBlock = await this.provider.getBlock('latest');
-    const startBlock = await stakingRewardsContract.startBlock();
-    const endBlock = await stakingRewardsContract.endBlock();
+    const currentBlock = await this.provider.getBlock();
+    const startBlock = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'startBlock',
+    });
+    const endBlock = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'endBlock',
+    });
 
     // Get duration period (from start to end block)
-    const deltaDurationPeriod = endBlock.sub(startBlock);
-    const durationPeriodInBlocks = deltaDurationPeriod.gt(0)
-      ? deltaDurationPeriod
-      : BigNumber.from(0);
+    const deltaDurationPeriod = endBlock - startBlock;
+    const durationPeriodInBlocks = deltaDurationPeriod > 0 ? deltaDurationPeriod : 0n;
     const durationInSeconds = await convertBlockToSeconds(durationPeriodInBlocks, this.protocol);
-    const durationInMilliseconds = durationInSeconds.mul(1000).toNumber();
-
-    const deltaExpirationPeriod = endBlock.sub(currentBlock.number);
-    const expirationPeriodInBlocks = deltaExpirationPeriod.gt(0)
-      ? deltaExpirationPeriod
-      : BigNumber.from(0);
+    const durationInMilliseconds = durationInSeconds * 1000n;
+    const deltaExpirationPeriod = endBlock - BigInt(currentBlock.number ?? 0n);
+    const expirationPeriodInBlocks = deltaExpirationPeriod > 0n ? deltaExpirationPeriod : 0n;
     const expirationInSeconds = await convertBlockToSeconds(
       expirationPeriodInBlocks,
       this.protocol,
     );
-    const expirationInMilliseconds = expirationInSeconds.mul(1000).toNumber();
+    const expirationInMilliseconds = expirationInSeconds * 1000n;
 
     return {
-      duration: durationInMilliseconds,
-      expirationTime: expirationInMilliseconds,
+      duration: Number(durationInMilliseconds),
+      expirationTime: Number(expirationInMilliseconds),
     };
   }
 
@@ -529,12 +519,18 @@ export class ALBStaker {
    * @param {string} address - Address of staking contract
    * @return {boolean} If user staked in campaign
    */
-  async getUserStakedInCampaign(userWallet: any, address: string): Promise<boolean> {
-    const stakingRewardsContract = new Contract(address, LiquidityMiningCampaignABI, this.provider);
-
+  async getUserStakedInCampaign(
+    userWallet: WalletClient,
+    stakingContractAddress: string,
+  ): Promise<boolean> {
     const walletAddress = await getAddressFromWallet(userWallet);
-    const stakedAmount = await stakingRewardsContract.balanceOf(walletAddress);
+    const stakedAmount = await this.provider.readContract({
+      abi: LiquidityMiningCampaignABI,
+      address: stakingContractAddress as `0x${string}`,
+      functionName: 'balanceOf',
+      args: [walletAddress],
+    });
 
-    return stakedAmount.toBigInt() > 0;
+    return stakedAmount > 0;
   }
 }
