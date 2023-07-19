@@ -1,3 +1,4 @@
+import { GetWalletClientResult } from '@wagmi/core';
 import { formatEther, formatUnits, parseAbi, PublicClient, WalletClient } from 'viem';
 
 import {
@@ -267,7 +268,12 @@ export class CampaignWrapper {
 
     return {
       apy: !upcoming ? apy : 0,
-      campaign: { ...campaign, name, campaignEnd: Number(campaignEndTimestamp) },
+      campaign: {
+        ...campaign,
+        name,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+      },
       campaignRewards,
       dex,
       duration,
@@ -683,8 +689,7 @@ export class CampaignWrapper {
 
   public async getCampaignStatusCommon(
     campaign: LMInterface,
-    connected: boolean,
-    wallet: WalletClient,
+    wallet: GetWalletClientResult | undefined,
   ) {
     const { version } = campaign;
     interface VersionMapping {
@@ -699,28 +704,28 @@ export class CampaignWrapper {
     // Compose function name based on version
     const cardDataMethod = `${versionMapping[version]}`;
 
-    return await this[cardDataMethod](campaign, connected, wallet);
+    return await this[cardDataMethod](campaign, wallet);
   }
 
-  public async getCampaignStatus(campaign: LMInterface, connected: boolean, wallet: WalletClient) {
+  public async getCampaignStatus(campaign: LMInterface, wallet: GetWalletClientResult | undefined) {
     const { campaignAddress } = campaign;
     let hasUserStaked = false;
 
     const hasCampaignStarted = await this.albStaker.hasCampaignStarted(campaignAddress);
     const hasCampaignEnded = await this.albStaker.hasCampaignEnded(campaignAddress);
 
-    if (connected) {
+    if (wallet) {
       hasUserStaked = await this.albStaker.getUserStakedInCampaign(wallet, campaignAddress);
     }
 
     return { hasCampaignStarted, hasCampaignEnded, hasUserStaked };
   }
 
-  async getCampaignStatusNew(campaign: LMInterface, connected: boolean, wallet: WalletClient) {
+  async getCampaignStatusNew(campaign: LMInterface, wallet: GetWalletClientResult | undefined) {
     const { campaignAddress } = campaign;
 
     const { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming } =
-      await this.lmcStaker.getCampaignStatus(campaignAddress, connected, wallet);
+      await this.lmcStaker.getCampaignStatus(campaignAddress, wallet);
 
     return { hasCampaignStarted, hasCampaignEnded, hasUserStaked, upcoming };
   }
