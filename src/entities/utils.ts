@@ -36,7 +36,9 @@ export interface Config {
   socialMedia: {
     [key: string]: string;
   };
-  thirdPartyIntegrations: string;
+  thirdPartyIntegrations: {
+    [key: string]: string;
+  };
   dappsIntegration?: {
     [dapp: string]: boolean;
   };
