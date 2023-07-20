@@ -327,7 +327,7 @@ export class SoloStakerWrapper {
             stakerCampaignAddress as `0x${string}`,
             campaignAddress,
           )
-        : await this._getAllPendingRewards(stakerCampaignAddress as `0x${string}`);
+        : await this._getAllPendingRewards(wallet, stakerCampaignAddress as `0x${string}`);
 
     const userStakedTokens = await this.getUserStakedTokens(
       wallet,
@@ -1363,6 +1363,7 @@ export class SoloStakerWrapper {
       abi: parsedAbi,
       address: stakerCampaignAddress,
       publicClient: this.provider,
+      walletClient: wallet,
     });
 
     const userAddress = await getAddressFromWallet(wallet);
@@ -1400,25 +1401,39 @@ export class SoloStakerWrapper {
     return userRewards;
   }
 
-  async _getAllPendingRewards(campaignAddress: `0x${string}`) {
-    const campaignInstance = getContract({
-      abi: parsedAbi,
-      address: campaignAddress,
-      publicClient: this.provider,
+  async _getAllPendingRewards(wallet: WalletClient, campaignAddress: `0x${string}`) {
+    const address = await getAddressFromWallet(wallet);
+
+    const rewardsCount = await this.provider.readContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: campaignAddress as `0x${string}`,
+      functionName: 'getRewardTokensCount',
+      account: address,
     });
 
-    const rewardsCount = await campaignInstance.read.getRewardTokensCount();
     const pendingRewards: Record<string, string> = {};
 
     for (let i = 0n; i < rewardsCount; i++) {
-      const rewardTokenAddress = await campaignInstance.read.rewardsTokens([i]);
+      const rewardTokenAddress = await this.provider.readContract({
+        abi: NonCompoundingRewardsPoolABI,
+        address: campaignAddress as `0x${string}`,
+        functionName: 'rewardsTokens',
+        args: [i],
+        account: address,
+      });
       const rewardTokenName = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
         rewardTokenAddress.toLowerCase(),
       ).symbol;
 
-      const rewardTokenAmount = await campaignInstance.read.getPendingReward([i]);
+      const rewardTokenAmount = await this.provider.readContract({
+        abi: NonCompoundingRewardsPoolABI,
+        address: campaignAddress as `0x${string}`,
+        functionName: 'getPendingReward',
+        args: [i],
+        account: address,
+      });
 
       const formattedRewardTokenAmount = await formatToken(
         this.provider,
@@ -1820,6 +1835,7 @@ export class SoloStakerWrapper {
               address: stakerCampaignAddress as `0x${string}`,
               functionName: 'getPendingReward',
               args: [0n],
+              account: userAddress as `0x${string}`,
             });
           }
         }

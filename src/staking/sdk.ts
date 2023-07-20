@@ -223,29 +223,54 @@ export class StakerSolo {
     // Get now in seconds and convert to BN
     const now = BigInt(Math.floor(Date.now() / 1000));
 
-    const campaignContract = getContract({
+    // Get raw user data
+    const [exitTimestamp, exitStake] = await this.provider.readContract({
       abi: NonCompoundingRewardsPoolABI,
       address: campaignAddress as `0x${string}`,
-      publicClient: this.provider,
+      functionName: 'exitInfo',
+      args: [address],
     });
-
-    // Get raw user data
-    const [exitTimestamp, exitStake] = await campaignContract.read.exitInfo([address]);
-    const userBalance = await campaignContract.read.balanceOf([address]);
+    const userBalance = await this.provider.readContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: campaignAddress as `0x${string}`,
+      functionName: 'balanceOf',
+      args: [address],
+    });
 
     const hasUserInitiatedWithdraw = exitTimestamp > 0n;
 
     const userStakedAmount = hasUserInitiatedWithdraw ? exitStake : userBalance;
-    const rewardsCount = await campaignContract.read.getRewardTokensCount();
+    const rewardsCount = await this.provider.readContract({
+      abi: NonCompoundingRewardsPoolABI,
+      address: campaignAddress as `0x${string}`,
+      functionName: 'getRewardTokensCount',
+    });
 
     const userRewards = [];
 
     if (userStakedAmount > 0n) {
       for (let i = 0n; i < rewardsCount; i++) {
-        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
+        const tokenAddress = await this.provider.readContract({
+          abi: NonCompoundingRewardsPoolABI,
+          address: campaignAddress as `0x${string}`,
+          functionName: 'rewardsTokens',
+          args: [i],
+        });
+
         const currentAmount = !hasUserInitiatedWithdraw
-          ? await campaignContract.read.getUserAccumulatedReward([address, i, now])
-          : await campaignContract.read.getPendingReward([i]);
+          ? await this.provider.readContract({
+              abi: NonCompoundingRewardsPoolABI,
+              address: campaignAddress as `0x${string}`,
+              functionName: 'getUserAccumulatedReward',
+              args: [address, i, now],
+            })
+          : await this.provider.readContract({
+              abi: NonCompoundingRewardsPoolABI,
+              address: campaignAddress as `0x${string}`,
+              functionName: 'getPendingReward',
+              args: [i],
+              account: address,
+            });
 
         userRewards.push({
           tokenAddress,
