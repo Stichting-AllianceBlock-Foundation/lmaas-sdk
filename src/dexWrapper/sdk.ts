@@ -36,9 +36,8 @@ interface AccFormated {
   amounts: bigint[];
   minAmounts: bigint[];
   lastParam: {
-    [key: string]: bigint;
-  };
-  [key: string]: any;
+    value: bigint; // Changed the value to a bigint type
+  } | null; // Modified to allow null instead of an empty object
 }
 
 /*
@@ -246,7 +245,8 @@ export class DexWrapper {
       return await wallet.writeContract(request);
     }
 
-    args.pop();
+    console.log(args);
+    // args.pop();
 
     const { request } = await this.provider.simulateContract({
       abi: routerABI,
@@ -812,29 +812,29 @@ export class DexWrapper {
    * @return {array} - Array with formated args
    */
   private _getFormatFunctionArgumentsProvide(tokensArr: FormatedTokens[], walletAddress: string) {
-    const initialAgrsState = {
+    const initialArgsState = {
       addresses: [],
       amounts: [],
       minAmounts: [],
-      lastParam: {},
+      lastParam: null, // Initialize to null instead of an empty object
     };
 
     let nativeTokenMinAmount = 0n;
 
     const reduceTokenArgs = (acc: AccFormated, item: FormatedTokens) => {
       if (!item.isNativeToken) {
-        acc['addresses'].push(item.tokenAddress);
-        acc['amounts'].push(item.convertedAmountBN);
-        acc['minAmounts'].push(item.minAmountBN);
+        acc.addresses.push(item.tokenAddress);
+        acc.amounts.push(item.convertedAmountBN);
+        acc.minAmounts.push(item.minAmountBN);
       } else {
-        acc['lastParam'] = { value: item.convertedAmountBN };
+        acc.lastParam = { value: item.convertedAmountBN };
         nativeTokenMinAmount = item.minAmountBN;
       }
 
       return acc;
     };
 
-    const argsObject = tokensArr.reduce(reduceTokenArgs, initialAgrsState);
+    const argsObject = tokensArr.reduce(reduceTokenArgs, initialArgsState);
 
     const deadline = Math.floor(Date.now() / 1000) + 60 * 60;
 
@@ -842,14 +842,17 @@ export class DexWrapper {
       argsObject.minAmounts.push(nativeTokenMinAmount);
     }
 
-    const args = [
-      ...argsObject['addresses'],
-      ...argsObject['amounts'],
-      ...argsObject['minAmounts'],
+    const args: (string | number | bigint | { value: bigint })[] = [
+      ...argsObject.addresses,
+      ...argsObject.amounts,
+      ...argsObject.minAmounts,
       walletAddress,
       deadline,
-      argsObject['lastParam'],
     ];
+
+    if (argsObject.lastParam !== null) {
+      args.push(argsObject.lastParam);
+    }
 
     return args;
   }
@@ -872,7 +875,7 @@ export class DexWrapper {
       addresses: [],
       amounts: [],
       minAmounts: [],
-      lastParam: {},
+      lastParam: null,
     };
 
     const reduceTokenArgs = (acc: AccFormated, item: FormatedTokens) => {
