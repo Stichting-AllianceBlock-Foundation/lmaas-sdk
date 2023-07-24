@@ -1336,10 +1336,10 @@ export class SoloStakerWrapper {
     }
 
     // Get accumulated rewards (assuming there is only one reward token)
-    const accumulatedRewards = await campaignInstance.read.getUserAccumulatedReward([
-      stakerInstance.address,
-      0n,
-    ]);
+    const accumulatedRewards = await campaignInstance.read.getUserAccumulatedReward(
+      [stakerInstance.address, 0n],
+      { account: userAddress },
+    );
 
     // Calculate total pool value based on total staked + accumulated rewards
     const poolTotalTokens = totalStakedInPool + accumulatedRewards - exitStake;
@@ -1359,23 +1359,33 @@ export class SoloStakerWrapper {
     stakerCampaignAddress: `0x${string}`,
     compounding: boolean,
   ) {
-    const stakerInstance = getContract({
-      abi: parsedAbi,
-      address: stakerCampaignAddress,
-      publicClient: this.provider,
-      walletClient: wallet,
-    });
-
     const userAddress = await getAddressFromWallet(wallet);
 
-    const stakedTokens = await stakerInstance.read.balanceOf([userAddress]);
+    const stakedTokens = await this.provider.readContract({
+      abi: parsedAbi,
+      address: stakerCampaignAddress,
+      functionName: 'balanceOf',
+      args: [userAddress],
+      account: userAddress,
+    });
     const hasUserStaked = stakedTokens > 0n;
 
     const userRewards: Record<string, string> = {};
-    const rewardsCount = await stakerInstance.read.getRewardTokensCount();
+    const rewardsCount = await this.provider.readContract({
+      abi: parsedAbi,
+      address: stakerCampaignAddress,
+      functionName: 'getRewardTokensCount',
+      account: userAddress,
+    });
 
     for (let i = 0n; i < rewardsCount; i++) {
-      const rewardTokenAddress = await stakerInstance.read.rewardsTokens([i]);
+      const rewardTokenAddress = await this.provider.readContract({
+        abi: parsedAbi,
+        address: stakerCampaignAddress,
+        functionName: 'rewardsTokens',
+        args: [i],
+        account: userAddress,
+      });
       const rewardTokenName = getTokenByPropName(
         this.tokenConfigs,
         TokenConfigsProps.ADDRESS,
@@ -1391,7 +1401,13 @@ export class SoloStakerWrapper {
               stakerCampaignAddress,
               campaignAddress,
             )
-          : await stakerInstance.read.getUserAccumulatedReward([userAddress, 0n]);
+          : await this.provider.readContract({
+              abi: parsedAbi,
+              address: stakerCampaignAddress as `0x${string}`,
+              functionName: 'getUserAccumulatedReward',
+              args: [userAddress, 0n],
+              account: userAddress,
+            });
         formattedReward = await formatToken(this.provider, currentReward, rewardTokenAddress);
       }
 
@@ -1808,6 +1824,7 @@ export class SoloStakerWrapper {
                     address: stakerCampaignAddress as `0x${string}`,
                     functionName: 'getUserAccumulatedReward',
                     args: [userAddress as `0x${string}`, 0n],
+                    account: userAddress as `0x${string}`,
                   })
                 : 0n;
           }

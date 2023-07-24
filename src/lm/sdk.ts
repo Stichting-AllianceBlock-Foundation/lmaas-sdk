@@ -215,11 +215,10 @@ export class StakerLM {
     if (hasUserStaked) {
       for (let i = 0n; i < rewardsCount; i++) {
         const tokenAddress = await campaignContract.read.rewardsTokens([i]);
-        const currentAmount = await campaignContract.read.getUserAccumulatedReward([
-          walletAddress,
-          i,
-          now,
-        ]);
+        const currentAmount = await campaignContract.read.getUserAccumulatedReward(
+          [walletAddress, i, now],
+          { account: walletAddress },
+        );
 
         userRewards.push({
           tokenAddress,

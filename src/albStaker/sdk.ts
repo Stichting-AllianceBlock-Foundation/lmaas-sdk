@@ -188,6 +188,7 @@ export class ALBStaker {
           ...stakingContractConfig,
           functionName: 'getUserAccumulatedReward',
           args: [walletAddress, i],
+          account: walletAddress,
         });
 
         const { symbol: rewardsContractName, decimals: tokenDecimals } = getTokenByPropName(

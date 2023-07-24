@@ -263,6 +263,7 @@ export class StakerSolo {
               address: campaignAddress as `0x${string}`,
               functionName: 'getUserAccumulatedReward',
               args: [address, i, now],
+              account: address,
             })
           : await this.provider.readContract({
               abi: NonCompoundingRewardsPoolABI,
