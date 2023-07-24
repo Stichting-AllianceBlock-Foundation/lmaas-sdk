@@ -245,9 +245,6 @@ export class DexWrapper {
       return await wallet.writeContract(request);
     }
 
-    console.log(args);
-    // args.pop();
-
     const { request } = await this.provider.simulateContract({
       abi: routerABI,
       address: routerAddress as `0x${string}`,

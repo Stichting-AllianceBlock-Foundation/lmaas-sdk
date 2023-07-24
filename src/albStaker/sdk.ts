@@ -184,12 +184,17 @@ export class ALBStaker {
           args: [i],
         });
 
-        const currentReward = await this.provider.readContract({
-          ...stakingContractConfig,
-          functionName: 'getUserAccumulatedReward',
-          args: [walletAddress, i],
-          account: walletAddress,
-        });
+        let currentReward = 0n;
+
+        try {
+          currentReward = await this.provider.readContract({
+            ...stakingContractConfig,
+            functionName: 'getUserAccumulatedReward',
+            args: [walletAddress, i],
+          });
+        } catch (e) {
+          console.error(e);
+        }
 
         const { symbol: rewardsContractName, decimals: tokenDecimals } = getTokenByPropName(
           tokensConfig,
