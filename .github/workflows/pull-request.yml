@@ -27,6 +27,13 @@ jobs:
         with:
           node-version: 16
 
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 8
+          run_install: false
+
       - name: Get local version
         id: local_version
         run: echo "value=$(cat ./package.json | jq --raw-output .version)" >> $GITHUB_ENV
