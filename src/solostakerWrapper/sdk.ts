@@ -1672,7 +1672,6 @@ export class SoloStakerWrapper {
     } else {
       const { hasCampaignStarted, hasCampaignEnded, upcoming } =
         await this.soloNonComp.getCampaignStatus(campaignAddress);
-      console.log({ hasCampaignStarted, hasCampaignEnded, upcoming, campaignAddress });
 
       if (upcoming) {
         return 5;
