@@ -1300,7 +1300,7 @@ export class SoloStakerWrapper {
       }
     }
 
-    return 0;
+    return -2;
   }
 
   async _getUserAccumulatedRewardAuto(
@@ -1672,6 +1672,7 @@ export class SoloStakerWrapper {
     } else {
       const { hasCampaignStarted, hasCampaignEnded, upcoming } =
         await this.soloNonComp.getCampaignStatus(campaignAddress);
+      console.log({ hasCampaignStarted, hasCampaignEnded, upcoming, campaignAddress });
 
       if (upcoming) {
         return 5;
@@ -1686,7 +1687,7 @@ export class SoloStakerWrapper {
       }
     }
 
-    return 0;
+    return -2;
   }
 
   async getMigrationWhitelist(campaign: StakingInterface, campaignsArr: string[]) {
