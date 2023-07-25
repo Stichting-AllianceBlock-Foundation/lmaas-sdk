@@ -77,7 +77,7 @@ export class StakerSDK {
       getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
     );
     this.infiniteStakingWrapper = new InfiniteStakingWrapper(
-      this.provider as JsonRpcBatchProvider,
+      this.provider,
       this.infiniteStaker,
       this.coingecko,
       this.protocol,
