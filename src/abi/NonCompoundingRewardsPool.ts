@@ -36,11 +36,6 @@ export const NonCompoundingRewardsPoolABI = [
         name: '_name',
         type: 'string',
       },
-      {
-        internalType: 'address',
-        name: '_wrappedNativeToken',
-        type: 'address',
-      },
     ],
     stateMutability: 'nonpayable',
     type: 'constructor',
@@ -262,6 +257,30 @@ export const NonCompoundingRewardsPoolABI = [
       },
     ],
     name: 'balanceOf',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_currentTimestamp',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: '_index',
+        type: 'uint256',
+      },
+    ],
+    name: 'calculateLeftoverRewards',
     outputs: [
       {
         internalType: 'uint256',
@@ -644,8 +663,14 @@ export const NonCompoundingRewardsPoolABI = [
     type: 'function',
   },
   {
-    inputs: [],
-    name: 'lastRewardTimestamp',
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    name: 'leftoverRewards',
     outputs: [
       {
         internalType: 'uint256',
@@ -798,6 +823,25 @@ export const NonCompoundingRewardsPoolABI = [
         type: 'uint256',
       },
     ],
+    name: 'rewardTokenDecimals',
+    outputs: [
+      {
+        internalType: 'uint8',
+        name: '',
+        type: 'uint8',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
     name: 'rewardsTokens',
     outputs: [
       {
@@ -855,19 +899,25 @@ export const NonCompoundingRewardsPoolABI = [
   },
   {
     inputs: [],
-    name: 'stakeNative',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [],
     name: 'stakingToken',
     outputs: [
       {
         internalType: 'contract IERC20',
         name: '',
         type: 'address',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'stakingTokenDecimals',
+    outputs: [
+      {
+        internalType: 'uint8',
+        name: '',
+        type: 'uint8',
       },
     ],
     stateMutability: 'view',
@@ -1034,19 +1084,6 @@ export const NonCompoundingRewardsPoolABI = [
     name: 'withdrawTokens',
     outputs: [],
     stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'wrappedNativeToken',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
     type: 'function',
   },
   {

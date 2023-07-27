@@ -1,4 +1,4 @@
-import { Abi } from 'viem';
+import { Abi, parseEther } from 'viem';
 
 import { AbPoolABI } from './abi/AllianceBlockDexPoolABI';
 import { AbRouterABI } from './abi/AllianceBlockDexRouterABI';
@@ -25,6 +25,7 @@ export type DexByNetworkMapping = {
   };
 };
 
+export const accuracy = parseEther('1');
 export const STAKING_CAMPAIGN_STATE = {
   NOT_STARTED: -1,
   STAKING_IN_PROGRESS: 0,

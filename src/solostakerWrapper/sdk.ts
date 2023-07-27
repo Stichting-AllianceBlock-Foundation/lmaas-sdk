@@ -2,6 +2,7 @@ import Decimal from 'decimal.js';
 import { formatEther, formatUnits, getContract, parseAbi, PublicClient, WalletClient } from 'viem';
 
 import {
+  accuracy,
   approveToken,
   BLOCKS_COUNT,
   CampaignRewardsNew,
@@ -22,6 +23,7 @@ import {
   NetworkEnum,
   parseToken,
   poolTupleToString,
+  PoolVersion,
   Result,
   stableCoinsIds,
   StakerSolo,
@@ -86,19 +88,14 @@ export class SoloStakerWrapper {
     this.tokenConfigs = tokenConfigs;
   }
 
-  stake(
-    wallet: WalletClient,
-    campaign: StakingInterface,
-    amountToStake: string,
-    isNativeSupported = false,
-  ) {
+  stake(wallet: WalletClient, campaign: StakingInterface, amountToStake: string) {
     const { campaignAddress, version = '1.0' } = campaign;
 
     if (version === '1.0') {
       return this._stake(wallet, campaign, amountToStake);
     }
 
-    return this.soloNonComp.stake(campaignAddress, amountToStake, wallet, isNativeSupported);
+    return this.soloNonComp.stake(campaignAddress, amountToStake, wallet);
   }
 
   async _stake(
@@ -226,6 +223,7 @@ export class SoloStakerWrapper {
       '1.0': 'getCardData',
       '2.0': 'getCardDataNew',
       '3.0': 'getCardDataNew',
+      '4.0': 'getCardDataNew',
     };
 
     // Compose function name based on version
@@ -470,7 +468,7 @@ export class SoloStakerWrapper {
     }
 
     // Get data from new SDK
-    const campaignData = await this.soloNonComp.getCampaignData(campaignAddress);
+    const campaignData = await this.soloNonComp.getCampaignData(campaignAddress, version);
 
     // Get campaign state
     const state = await this.getState(wallet, campaignAddress as `0x${string}`, version);
@@ -500,7 +498,6 @@ export class SoloStakerWrapper {
       campaignStartTimestamp,
       campaignEndTimestamp,
       name,
-      wrappedNativeToken,
     } = campaignData;
 
     const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
@@ -548,7 +545,7 @@ export class SoloStakerWrapper {
       campaignRewardsTotal: totalRewards,
       campaignRewardsWeekly: weeklyRewards,
       campaignRewardsPerDayUSD,
-    } = await this._formatCampaignRewards(1, campaignRewardsBN);
+    } = await this._formatCampaignRewards(1, campaignRewardsBN, campaign.version);
 
     // Calculate percentage limit
     const percentage = this._calculatePercentageLimit(
@@ -598,7 +595,6 @@ export class SoloStakerWrapper {
         isLpToken,
         campaignStart: Number(campaignStartTimestamp),
         campaignEnd: Number(campaignEndTimestamp),
-        wrappedNativeToken,
         isNativeSupported,
       },
       contractStakeLimit,
@@ -635,6 +631,7 @@ export class SoloStakerWrapper {
       '1.0': 'getEmptyCardData',
       '2.0': 'getEmptyCardDataNew',
       '3.0': 'getEmptyCardDataNew',
+      '4.0': 'getEmptyCardDataNew',
     };
 
     // Compose function name based on version
@@ -779,7 +776,7 @@ export class SoloStakerWrapper {
 
   async getEmptyCardDataNew(campaign: StakingInterface) {
     //Get campaign data
-    const { campaignAddress, campaignTokenAddress, rewardsAddresses } = campaign;
+    const { campaignAddress, campaignTokenAddress, rewardsAddresses, version } = campaign;
 
     // If this is a liquidity provider, then try to get the function getReservers()
     let isLpToken: boolean = false;
@@ -821,7 +818,7 @@ export class SoloStakerWrapper {
     }
 
     // Get data from new SDK
-    const campaignData = await this.soloNonComp.getCampaignData(campaignAddress);
+    const campaignData = await this.soloNonComp.getCampaignData(campaignAddress, version);
 
     // Get campaign state
     const state = await this.getDisconnectedState(campaignAddress as `0x${string}`, '3.0');
@@ -867,7 +864,7 @@ export class SoloStakerWrapper {
       campaignRewardsTotal: totalRewards,
       campaignRewardsWeekly: weeklyRewards,
       campaignRewardsPerDayUSD,
-    } = await this._formatCampaignRewards(1, campaignRewardsBN);
+    } = await this._formatCampaignRewards(1, campaignRewardsBN, campaign.version);
 
     // Calculate percentage limit
     const percentage = this._calculatePercentageLimit(
@@ -1559,7 +1556,11 @@ export class SoloStakerWrapper {
     };
   }
 
-  async _formatCampaignRewards(rewardsCount: number, campaignRewardsBN: CampaignRewardsNew[]) {
+  async _formatCampaignRewards(
+    rewardsCount: number,
+    campaignRewardsBN: CampaignRewardsNew[],
+    version?: PoolVersion,
+  ) {
     const secondsInDay = 86400;
     const secondsInWeek = 604800;
     const secondsInDayBN = BigInt(secondsInDay);
@@ -1580,8 +1581,14 @@ export class SoloStakerWrapper {
 
       const tokenAmountTotal = formatUnits(currentReward.totalRewards, tokenDecimals);
       const rewardPerSecond = currentReward.rewardPerSecond;
-      const tokenAmountDaily = formatUnits(rewardPerSecond * secondsInDayBN, tokenDecimals);
-      const tokenAmountWeekly = formatUnits(rewardPerSecond * secondsInWeekBN, tokenDecimals);
+      const tokenAmountDaily = formatUnits(
+        (rewardPerSecond * secondsInDayBN) / (version === '4.0' ? accuracy : 1n),
+        tokenDecimals,
+      );
+      const tokenAmountWeekly = formatUnits(
+        (rewardPerSecond * secondsInWeekBN) / (version === '4.0' ? accuracy : 1n),
+        tokenDecimals,
+      );
 
       total.push({
         tokenAddress,

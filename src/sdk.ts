@@ -12,6 +12,8 @@ import {
   StakerLM,
   StakerSolo,
 } from '.';
+import { InfiniteStakingWrapper } from './infiniteStakingWrapper';
+import { InfiniteStaker } from './istaking';
 
 /**
  *  Represents a class that can interact with the ecosystem of LiquidityMining
@@ -29,12 +31,14 @@ import {
 export class StakerSDK {
   lmcStaker: StakerLM;
   albStaker: ALBStaker;
+  infiniteStaker: InfiniteStaker;
   soloNonCompStaker: StakerSolo;
   coingecko: CoinGecko;
   soloStakerWrapper: SoloStakerWrapper;
   provider: PublicClient;
   dexWrapper: DexWrapper;
   campaignWrapper: CampaignWrapper;
+  infiniteStakingWrapper: InfiniteStakingWrapper;
   protocol: NetworkEnum;
 
   constructor(
@@ -49,6 +53,7 @@ export class StakerSDK {
 
     this.lmcStaker = new StakerLM(this.provider, this.protocol);
     this.albStaker = new ALBStaker(this.provider, this.protocol);
+    this.infiniteStaker = new InfiniteStaker(this.provider, this.protocol);
     this.soloNonCompStaker = new StakerSolo(this.provider, this.protocol);
 
     this.soloStakerWrapper = new SoloStakerWrapper(
@@ -68,6 +73,13 @@ export class StakerSDK {
     );
     this.dexWrapper = new DexWrapper(
       this.provider,
+      this.protocol,
+      getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
+    );
+    this.infiniteStakingWrapper = new InfiniteStakingWrapper(
+      this.provider,
+      this.infiniteStaker,
+      this.coingecko,
       this.protocol,
       getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
     );
