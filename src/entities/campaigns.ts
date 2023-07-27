@@ -42,6 +42,8 @@ export interface InfiniteStakingInterface {
   compounding: boolean;
   version: PoolVersion;
   campaignMessage?: string;
+  campaignStart?: number;
+  campaignEnd?: number;
   name?: string;
   isLpToken: boolean;
 }
