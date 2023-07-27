@@ -202,8 +202,8 @@ export class InfiniteStakingWrapper {
       deltaDuration,
       campaignRewards: campaignRewardsBN,
       name,
-      campaignStartTimestamp: campaignStartTimestampBN,
-      campaignEndTimestamp: campaignEndTimestampBN,
+      campaignStartTimestamp,
+      campaignEndTimestamp,
       rewardsCount,
     } = campaignData;
 
@@ -228,8 +228,7 @@ export class InfiniteStakingWrapper {
       Number(deltaExpiration),
     );
 
-    const campaignStartTimestamp = campaignStartTimestampBN * 1000n;
-    const campaignEndTimestamp = campaignEndTimestampBN * 1000n;
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
 
     const duration = formatStakingDuration(durationMilliseconds);
 
@@ -267,10 +266,14 @@ export class InfiniteStakingWrapper {
 
     return {
       apy,
-      campaign: { ...campaign, name, isLpToken },
+      campaign: {
+        ...campaign,
+        name,
+        isLpToken,
+        campaignStart: Number(campaignStartTimestamp),
+        campaignEnd: Number(campaignEndTimestamp),
+      },
       contractStakeLimit,
-      campaignStartTimestamp,
-      campaignEndTimestamp,
       campaignRewards,
       emptyCardData: true,
       expirationTime,
@@ -286,6 +289,7 @@ export class InfiniteStakingWrapper {
       state,
       totalStaked,
       totalStakedUSD,
+      upcoming,
     };
   }
 
