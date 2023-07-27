@@ -266,7 +266,7 @@ export class InfiniteStaker {
 
     const userRewards = [];
 
-    if (userStakedAmount < 0n) {
+    if (userStakedAmount > 0n) {
       for (let i = 0n; i < rewardsCount; i++) {
         const tokenAddress = await campaignContract.read.rewardsTokens([i]);
         let currentAmount = await campaignContract.read.getUserAccumulatedReward([
