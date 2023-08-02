@@ -50,6 +50,7 @@ export interface InfiniteStakingInterface {
 
 export interface InfiniteCampaignData extends CampaingData {
   rewardsDistributing: boolean;
+  locked: boolean;
 }
 export interface CampaingData {
   totalStaked: bigint;

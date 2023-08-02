@@ -53,6 +53,7 @@ export class InfiniteStaker {
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
+      locked: lockedPR,
     } = campaignContract.read;
 
     const [
@@ -65,6 +66,7 @@ export class InfiniteStaker {
       walletStakeLimit,
       rewardsCount,
       name,
+      locked,
     ] = await Promise.all([
       totalStakedPR(),
       startTimestampPR(),
@@ -75,6 +77,7 @@ export class InfiniteStaker {
       stakeLimitPR(),
       getRewardTokensCountPR(),
       namePR(),
+      lockedPR(),
     ]);
 
     // Get deltas in seconds
@@ -83,21 +86,20 @@ export class InfiniteStaker {
     const campaignRewards = [];
 
     let rewardsDistributing = rewardsCount > 0n && hasCampaignStarted;
-    if (hasCampaignStarted) {
-      // Get rewards info
-      for (let i = 0n; i < rewardsCount; i++) {
-        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
-        const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
-        const totalRewards = (rewardPerSecond * epochDuration) / accuracy;
 
-        campaignRewards.push({
-          tokenAddress,
-          rewardPerSecond,
-          totalRewards,
-        });
+    // Get rewards info
+    for (let i = 0n; i < rewardsCount; i++) {
+      const tokenAddress = await campaignContract.read.rewardsTokens([i]);
+      const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
+      const totalRewards = (rewardPerSecond * epochDuration) / accuracy;
 
-        rewardsDistributing = rewardsDistributing && rewardPerSecond > 0n;
-      }
+      campaignRewards.push({
+        tokenAddress,
+        rewardPerSecond,
+        totalRewards,
+      });
+
+      rewardsDistributing = rewardsDistributing && rewardPerSecond > 0n;
     }
 
     const hasCampaignEnded = campaignEndTimestamp < now;
@@ -120,6 +122,7 @@ export class InfiniteStaker {
       rewardsCount,
       rewardsDistributing,
       name,
+      locked,
     };
   }
 
@@ -251,18 +254,20 @@ export class InfiniteStaker {
       endTimestamp: endTimestampPR,
       epochCount: epochCountPR,
       getRewardTokensCount: getRewardTokensCountPR,
+      locked: lockedPR,
     } = campaignContract.read;
 
-    const [userStakedAmount, userStakedEpoch, endTimestamp, epochCount, rewardsCount] =
+    const [userStakedAmount, userStakedEpoch, endTimestamp, epochCount, rewardsCount, locked] =
       await Promise.all([
         balanceOfPR([walletAddress]),
         userStakedEpochPR([walletAddress]),
         endTimestampPR(),
         epochCountPR(),
         getRewardTokensCountPR(),
+        lockedPR(),
       ]);
 
-    const userCanExit = userStakedEpoch < epochCount - 2n || endTimestamp < now;
+    const userCanExit = locked ? userStakedEpoch < epochCount - 2n || endTimestamp < now : true;
 
     const userRewards = [];
 

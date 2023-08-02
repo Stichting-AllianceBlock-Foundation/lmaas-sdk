@@ -205,11 +205,8 @@ export class InfiniteStakingWrapper {
       campaignStartTimestamp,
       campaignEndTimestamp,
       rewardsCount,
+      locked,
     } = campaignData;
-
-    if (!hasCampaignStarted) {
-      return {};
-    }
 
     const tokenDecimals = await getTokenDecimals(
       this.provider,
@@ -290,6 +287,7 @@ export class InfiniteStakingWrapper {
       totalStaked,
       totalStakedUSD,
       upcoming,
+      locked,
     };
   }
 
