@@ -1,6 +1,6 @@
-import { BigNumber } from '@ethersproject/bignumber';
-
 import { DexEnum, NetworkEnum } from '..';
+
+export type PoolVersion = '1.0' | '2.0' | '3.0' | '4.0';
 
 export interface LMInterface {
   network: NetworkEnum;
@@ -10,7 +10,7 @@ export interface LMInterface {
   provisionTokensAddresses: string[];
   rewardsAddresses: string[];
   lockSchemeAddress?: string;
-  version: string;
+  version: PoolVersion;
   routerAddress?: string;
   campaignMessage?: string;
   campaignStart?: number;
@@ -25,32 +25,56 @@ export interface StakingInterface {
   rewardsAddresses: string[];
   compounding: boolean;
   period: string;
-  version: string;
+  version: PoolVersion;
   campaignMessage?: string;
   campaignStart?: number;
   campaignEnd?: number;
   name?: string;
   isLpToken: boolean;
-  wrappedNativeToken: string;
   isNativeSupported: boolean;
 }
+
+export interface InfiniteStakingInterface {
+  network: NetworkEnum;
+  campaignAddress: string;
+  campaignTokenAddress: string;
+  rewardsAddresses: string[];
+  compounding: boolean;
+  version: PoolVersion;
+  campaignMessage?: string;
+  campaignStart?: number;
+  campaignEnd?: number;
+  name?: string;
+  isLpToken: boolean;
+}
+
+export interface InfiniteCampaignData extends CampaingData {
+  rewardsDistributing: boolean;
+}
 export interface CampaingData {
-  totalStaked: BigNumber;
-  campaignStartTimestamp: BigNumber;
-  campaignEndTimestamp: BigNumber;
-  contractStakeLimit: BigNumber;
-  walletStakeLimit: BigNumber;
-  deltaExpiration: BigNumber;
-  deltaDuration: BigNumber;
-  extensionDuration?: BigNumber;
+  totalStaked: bigint;
+  campaignStartTimestamp: bigint;
+  campaignEndTimestamp: bigint;
+  contractStakeLimit: bigint;
+  walletStakeLimit: bigint;
+  deltaExpiration: bigint;
+  deltaDuration: bigint;
+  extensionDuration?: bigint;
   hasContractStakeLimit: boolean;
   hasWalletStakeLimit: boolean;
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
   campaignRewards: CampaignRewardsNew[];
-  rewardsCount: number;
+  rewardsCount: bigint;
   name: string;
-  wrappedNativeToken: string;
+}
+
+export interface InfiniteCampaingStatusData {
+  hasCampaignStarted: boolean;
+  currentEpochAssigned: boolean;
+  rewardsDistributing: boolean;
+  hasUserStaked?: boolean;
+  unlockedRewards: boolean;
 }
 
 export interface CampaingStatusData {
@@ -63,28 +87,34 @@ export interface CampaingStatusData {
 export interface CampaingStatusDataActive {
   hasCampaignStarted: boolean;
   hasCampaignEnded: boolean;
-  exitTimestamp: BigNumber;
-  exitStake: BigNumber;
+  exitTimestamp: bigint;
+  exitStake: bigint;
   upcoming?: boolean;
 }
 
 export interface UserDataLM {
-  userStakedAmount: BigNumber;
+  userStakedAmount: bigint;
   hasUserStaked: boolean;
   userRewards: UserRewards[];
 }
 
 export interface UserDataStaking {
-  exitTimestamp: BigNumber;
-  exitStake: BigNumber;
-  userStakedAmount: BigNumber;
+  exitTimestamp: bigint;
+  exitStake: bigint;
+  userStakedAmount: bigint;
+  userRewards: UserRewards[];
+}
+
+export interface UserDataIStaking {
+  userCanExit: boolean;
+  userStakedAmount: bigint;
   userRewards: UserRewards[];
 }
 
 export interface CampaignRewardsNew {
   tokenAddress: string;
-  rewardPerSecond: BigNumber;
-  totalRewards: BigNumber;
+  rewardPerSecond: bigint;
+  totalRewards: bigint;
 }
 
 export interface CampaignRewards {
@@ -102,11 +132,21 @@ export interface CampaignRewards {
 
 export interface UserRewards {
   tokenAddress: string;
-  currentAmount: BigNumber;
+  currentAmount: bigint;
 }
 
 export interface Reward {
   tokenAmount: string;
   tokenName: string;
   tokenAddress: string;
+}
+
+export enum InfiniteStakingState {
+  NOT_STARTED,
+  STARTED_WITH_UNLOCKED_REWARDS,
+  STARTED_WITH_REWARDS,
+  STARTED_WITHOUT_REWARDS,
+  STAKED_WITH_REWARDS,
+  STAKED_WITH_UNLOCKED_REWARDS,
+  STAKED_WITHOUT_REWARDS,
 }

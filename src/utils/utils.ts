@@ -1,10 +1,11 @@
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { formatUnits, parseUnits } from '@ethersproject/units';
-import { BigNumber, constants, providers } from 'ethers';
+import { formatUnits, parseUnits, PublicClient, WalletClient } from 'viem';
 
-import ERC20ABI from '../abi/ERC20.json';
+import { ERC20ABI } from '../abi/ERC20';
 import { Token, TokenConfigs } from '../entities';
+
+export const maxUint256 = BigInt(
+  '115792089237316195423570985008687907853269984665640564039457584007913129639935',
+); // Equivalent to MaxUint256;
 
 export const day = 60 * 60 * 24;
 export const week = day * 7;
@@ -17,7 +18,9 @@ const BLOCKS_PER_DAY_POLY = 43200;
 //avalanche average block time 2 sec
 const BLOCKS_PER_DAY_AVAX = 43200;
 
-export const BLOCKS_COUNT: { [key: string]: any } = {
+export const BLOCKS_COUNT: {
+  [key: string]: { PER_DAY: number; PER_WEEK: number; PER_30_DAYS: number };
+} = {
   eth: {
     PER_DAY: BLOCKS_PER_DAY_ETH,
     PER_WEEK: BLOCKS_PER_DAY_ETH * 7,
@@ -50,23 +53,18 @@ const SECONDS_PER_BLOCK: { [key: string]: number } = {
   volta: 5,
 };
 
-export const convertBlockToSeconds = (blocks: BigNumber, protocol: string) => {
+export const convertBlockToSeconds = (blocks: bigint, protocol: string) => {
   if (SECONDS_PER_BLOCK[protocol]) {
-    const secondsTen = SECONDS_PER_BLOCK[protocol] * 10;
-    const blocksPerSecond = blocks.mul(secondsTen);
-    const bigTen = BigNumber.from(10);
-
-    return blocksPerSecond.div(bigTen);
+    const secondsTen = BigInt(SECONDS_PER_BLOCK[protocol]) * 10n;
+    const blocksPerSecond = blocks * secondsTen;
+    return blocksPerSecond / 10n;
   }
+
   return blocks;
 };
 
-export const checkMaxStakingLimit = (limit: BigNumber): boolean => {
-  const tenBN = BigNumber.from(10);
-  const tenPow18BN = tenBN.pow(18);
-  const maxAmount = constants.MaxUint256.div(tenPow18BN);
-
-  return limit.div(tenPow18BN).eq(maxAmount);
+export const checkMaxStakingLimit = (limit: bigint): boolean => {
+  return limit === maxUint256;
 };
 
 export const getTokensConfig = (tokens: Token[]): TokenConfigs => {
@@ -88,93 +86,107 @@ export const poolTupleToString = (tuple: string[]) => {
 
 // @wallet  -> wallet object
 // @returns -> address of wallet
-export const getAddressFromWallet = async (wallet: JsonRpcSigner) => {
-  const walletAddress = await wallet.getAddress();
+export const getAddressFromWallet = async (wallet: WalletClient) => {
+  const [walletAddress] = await wallet.getAddresses();
   return walletAddress;
 };
 
-export const formatValuesToString = (values: BigNumber[], decimals = 18): string[] => {
-  return values.map(v => formatUnits(v.toString(), decimals));
+export const formatValuesToString = (values: bigint[], decimals = 18): string[] => {
+  return values.map(v => formatUnits(v, decimals));
 };
 
 export const approveToken = async (
-  wallet: JsonRpcSigner,
-  tokenAddress: string,
-  spenderAddress: string,
+  wallet: WalletClient,
+  provider: PublicClient,
+  tokenAddress: `0x${string}`,
+  spenderAddress: `0x${string}`,
   amountToApprove?: string,
-): Promise<providers.TransactionResponse> => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
+) => {
+  const tokenDecimals = await getTokenDecimals(provider, tokenAddress);
+  const walletAddress = await getAddressFromWallet(wallet);
 
-  const tokenDecimals = await getTokenDecimals(wallet, tokenAddress);
   const amountToApproveParsed = amountToApprove
     ? parseUnits(amountToApprove, tokenDecimals)
-    : constants.MaxUint256;
+    : maxUint256;
 
-  return tokenContract.approve(spenderAddress, amountToApproveParsed);
+  const { request } = await provider.simulateContract({
+    abi: ERC20ABI,
+    address: tokenAddress,
+    functionName: 'approve',
+    args: [spenderAddress, amountToApproveParsed],
+    account: walletAddress,
+  });
+
+  return await wallet.writeContract(request);
 };
 
 export const getAllowance = async (
-  wallet: JsonRpcSigner,
-  tokenAddress: string,
-  spenderAddress: string,
-): Promise<BigNumber> => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, wallet);
-  const walletAddress = await wallet.getAddress();
+  wallet: WalletClient,
+  provider: PublicClient,
+  tokenAddress: `0x${string}`,
+  spenderAddress: `0x${string}`,
+): Promise<bigint> => {
+  const walletAddress = await getAddressFromWallet(wallet);
 
-  return tokenContract.allowance(walletAddress, spenderAddress);
+  return await provider.readContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    functionName: 'allowance',
+    args: [walletAddress, spenderAddress],
+  });
 };
 
 // formatUnits ( wei , decimalsOrUnitName ) => string
 export const formatToken = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  value: any,
-  tokenAddress: string,
+  provider: PublicClient,
+  value: bigint | number,
+  tokenAddress: `0x${string}`,
 ) => {
-  return formatUnits(value, await getTokenDecimals(walletOrProvider, tokenAddress));
+  const parsedValue = typeof value === 'bigint' ? value : BigInt(value);
+  return formatUnits(parsedValue, await getTokenDecimals(provider, tokenAddress));
 };
 
 // parseUnits ( valueString , decimalsOrUnitName ) => BigNumber
 export const parseToken = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
+  provider: PublicClient,
   valueString: string,
-  tokenAddress: string,
+  tokenAddress: `0x${string}`,
 ) => {
-  return parseUnits(valueString, await getTokenDecimals(walletOrProvider, tokenAddress));
+  return parseUnits(valueString, await getTokenDecimals(provider, tokenAddress));
 };
 
 export const getBalance = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  tokenAddress: string,
-  addressToCheck: string,
+  provider: PublicClient,
+  tokenAddress: `0x${string}`,
+  addressToCheck: `0x${string}`,
 ) => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, walletOrProvider);
-  const balance = await tokenContract.balanceOf(addressToCheck);
-
-  return balance;
+  return await provider.readContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    functionName: 'balanceOf',
+    args: [addressToCheck],
+  });
 };
 
-export const getTotalSupply = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  tokenAddress: string,
-) => {
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, walletOrProvider);
-  const supply = await tokenContract.totalSupply();
-
-  return supply;
+export const getTotalSupply = async (provider: PublicClient, tokenAddress: `0x${string}`) => {
+  return await provider.readContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    functionName: 'totalSupply',
+  });
 };
 
-export const getTokenDecimals = async (
-  walletOrProvider: JsonRpcProvider | JsonRpcSigner,
-  tokenAddress: string,
-) => {
+export const getTokenDecimals = async (provider: PublicClient, tokenAddress: `0x${string}`) => {
   const ethToken = String('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE').toLowerCase();
   if (tokenAddress == ethToken) {
     return 18;
   }
 
-  const tokenContract = new Contract(tokenAddress, ERC20ABI, walletOrProvider);
-  const decimals = await tokenContract.decimals();
-  return decimals;
+  return await provider.readContract({
+    address: tokenAddress,
+    abi: ERC20ABI,
+    functionName: 'decimals',
+  });
 };
 
 export function getTokenByPropName(tokenConfig: any, propName: string, propValue: string): any {
@@ -200,4 +212,8 @@ export function formatStakingDuration(duration: number) {
 export function stripDecimalString(string: string, decimals: number) {
   const endPosition = string.indexOf('.') + decimals + 1;
   return string.slice(0, endPosition);
+}
+
+export function minimunBigNumber(firstNumber: bigint, secondNumber: bigint) {
+  return firstNumber >= secondNumber ? secondNumber : firstNumber;
 }
