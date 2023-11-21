@@ -109,15 +109,14 @@ export const approveToken = async (
     ? parseUnits(amountToApprove, tokenDecimals)
     : maxUint256;
 
-  const { request } = await provider.simulateContract({
+  return await wallet.writeContract({
     abi: ERC20ABI,
     address: tokenAddress,
     functionName: 'approve',
     args: [spenderAddress, amountToApproveParsed],
     account: walletAddress,
+    chain: provider.chain,
   });
-
-  return await wallet.writeContract(request);
 };
 
 export const getAllowance = async (
