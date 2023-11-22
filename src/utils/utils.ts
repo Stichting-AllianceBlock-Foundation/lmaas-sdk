@@ -115,7 +115,7 @@ export const approveToken = async (
     functionName: 'approve',
     args: [spenderAddress, amountToApproveParsed],
     account: walletAddress,
-    chain: provider.chain
+    chain: wallet.chain
   });
 };
 
