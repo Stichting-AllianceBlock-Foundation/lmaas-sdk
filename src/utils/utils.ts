@@ -110,7 +110,8 @@ export const approveToken = async (
     : maxUint256;
 
   try {
-    return await wallet.writeContract({
+    // Simulate approve to check for errors
+    await provider.simulateContract({
       abi: ERC20ABI,
       address: tokenAddress,
       functionName: 'approve',
@@ -118,10 +119,14 @@ export const approveToken = async (
       account: walletAddress,
       chain: wallet.chain
     });
-  } catch (e) {
-    // Error with approving, probably because this ERC20 version doesn't allow approve when already not 0
+  } catch (e: any) {
+    console.error(e.toString());
 
-    console.error(e);
+    // Check error message
+    //if (!e.toString().includes("")) return;
+
+    // Error with approving because this ERC20 version doesn't allow approve when already not 0
+
     console.log('Trying to approve to 0 first');
   }
 
