@@ -1,4 +1,4 @@
-export const LiquidityMiningCampaignABI = [
+export const NonCompoundingRewardsPoolInfiniteABI = [
   {
     inputs: [
       {
@@ -247,7 +247,7 @@ export const LiquidityMiningCampaignABI = [
     inputs: [],
     name: 'cancel',
     outputs: [],
-    stateMutability: 'nonpayable',
+    stateMutability: 'pure',
     type: 'function',
   },
   {
@@ -292,6 +292,32 @@ export const LiquidityMiningCampaignABI = [
   },
   {
     inputs: [],
+    name: 'epochCount',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'epochDuration',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
     name: 'exit',
     outputs: [],
     stateMutability: 'nonpayable',
@@ -300,32 +326,19 @@ export const LiquidityMiningCampaignABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: 'transferTo',
-        type: 'address',
-      },
-    ],
-    name: 'exitAndTransfer',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
         internalType: 'uint256',
-        name: '_durationTime',
+        name: '',
         type: 'uint256',
       },
       {
         internalType: 'uint256[]',
-        name: '_rewardPerSecond',
+        name: '',
         type: 'uint256[]',
       },
     ],
     name: 'extend',
     outputs: [],
-    stateMutability: 'nonpayable',
+    stateMutability: 'pure',
     type: 'function',
   },
   {
@@ -603,25 +616,6 @@ export const LiquidityMiningCampaignABI = [
     type: 'function',
   },
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    name: 'receiversWhitelist',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
     inputs: [],
     name: 'renounceOwnership',
     outputs: [],
@@ -683,24 +677,6 @@ export const LiquidityMiningCampaignABI = [
       },
     ],
     stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_receiver',
-        type: 'address',
-      },
-      {
-        internalType: 'bool',
-        name: '_whitelisted',
-        type: 'bool',
-      },
-    ],
-    name: 'setReceiverWhitelisted',
-    outputs: [],
-    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
@@ -779,6 +755,37 @@ export const LiquidityMiningCampaignABI = [
     type: 'function',
   },
   {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_epochDuration',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: '_startTimestamp',
+        type: 'uint256',
+      },
+    ],
+    name: 'start',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_epochDuration',
+        type: 'uint256',
+      },
+    ],
+    name: 'start',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     inputs: [],
     name: 'startTimestamp',
     outputs: [
@@ -842,6 +849,25 @@ export const LiquidityMiningCampaignABI = [
       {
         internalType: 'uint256',
         name: 'amountStaked',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address',
+      },
+    ],
+    name: 'userStakedEpoch',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
         type: 'uint256',
       },
     ],

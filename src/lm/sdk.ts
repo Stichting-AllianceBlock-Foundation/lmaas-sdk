@@ -2,12 +2,14 @@ import { GetWalletClientResult } from '@wagmi/core';
 import { getContract, parseUnits, PublicClient, WalletClient } from 'viem';
 
 import {
+  accuracy,
   CampaingData,
   CampaingStatusData,
   checkMaxStakingLimit,
   getAddressFromWallet,
   getTokenDecimals,
   NetworkEnum,
+  PoolVersion,
   UserDataLM,
 } from '..';
 import { LiquidityMiningCampaignABI } from '../abi/LiquidityMiningCampaign';
@@ -35,7 +37,10 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {CampaingData} CampaingData object
    */
-  public async getCampaignData(campaignAddress: string): Promise<CampaingData> {
+  public async getCampaignData(
+    campaignAddress: string,
+    version: PoolVersion,
+  ): Promise<CampaingData> {
     const campaignContract = getContract({
       abi: LiquidityMiningCampaignABI,
       address: campaignAddress as `0x${string}`,
@@ -55,23 +60,7 @@ export class StakerLM {
       extensionDuration: extensionDurationPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
-      wrappedNativeToken: wrappedNativeTokenPR,
     } = campaignContract.read;
-
-    let wrappedNativeToken: string = '';
-
-    /*
-      @REMOVE this when the version of the pool is fixed.
-      Some saving, because there are pools already deployed of v2.
-    */
-    try {
-      wrappedNativeToken = await wrappedNativeTokenPR();
-    } catch (e) {
-      /*
-        Not printing the error, for the different versions of the campaigns
-        being around of the ecosystem.
-      */
-    }
 
     const name = await namePR();
     const hasCampaignStarted = await hasStakingStartedPR();
@@ -109,7 +98,8 @@ export class StakerLM {
       for (let i = 0n; i < rewardsCount; i++) {
         const tokenAddress = await campaignContract.read.rewardsTokens([i]);
         const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
-        const totalRewards = rewardPerSecond * deltaDuration;
+        const totalRewards =
+          (rewardPerSecond * deltaDuration) / (version === '4.0' ? accuracy : 1n);
 
         campaignRewards.push({
           tokenAddress,
@@ -139,7 +129,6 @@ export class StakerLM {
       rewardsCount,
       extensionDuration,
       name,
-      wrappedNativeToken,
     };
   }
 
@@ -193,7 +182,11 @@ export class StakerLM {
    * @param {string} contractAddress - Address of the camapaign contract
    * @return {UserData} UserData object
    */
-  public async getUserData(campaignAddress: string, wallet: WalletClient): Promise<UserDataLM> {
+  public async getUserData(
+    campaignAddress: string,
+    wallet: WalletClient,
+    version?: PoolVersion,
+  ): Promise<UserDataLM> {
     const campaignContract = getContract({
       abi: LiquidityMiningCampaignABI,
       address: campaignAddress as `0x${string}`,
@@ -215,11 +208,16 @@ export class StakerLM {
     if (hasUserStaked) {
       for (let i = 0n; i < rewardsCount; i++) {
         const tokenAddress = await campaignContract.read.rewardsTokens([i]);
-        const currentAmount = await campaignContract.read.getUserAccumulatedReward([
+        let currentAmount = await campaignContract.read.getUserAccumulatedReward([
           walletAddress,
           i,
           now,
         ]);
+
+        if (version === '4.0') {
+          const decimals = await getTokenDecimals(this.provider, tokenAddress);
+          currentAmount = (currentAmount * 10n ** BigInt(decimals)) / accuracy;
+        }
 
         userRewards.push({
           tokenAddress,
@@ -248,7 +246,6 @@ export class StakerLM {
     contractAddress: string,
     amountToStake: string,
     wallet: WalletClient,
-    isNativeSupported: boolean,
   ): Promise<`0x${string}`> {
     const stakingToken = await this.provider.readContract({
       abi: LiquidityMiningCampaignABI,
@@ -259,18 +256,6 @@ export class StakerLM {
     const walletAddress = await getAddressFromWallet(wallet);
     const tokenDecimals = await getTokenDecimals(this.provider, stakingToken);
     const amountToStakeParsed = parseUnits(amountToStake, tokenDecimals);
-
-    if (isNativeSupported) {
-      const { request } = await this.provider.simulateContract({
-        abi: LiquidityMiningCampaignABI,
-        address: contractAddress as `0x${string}`,
-        functionName: 'stakeNative',
-        value: amountToStakeParsed,
-        account: walletAddress,
-      });
-
-      return await wallet.writeContract(request);
-    }
 
     const { request } = await this.provider.simulateContract({
       abi: LiquidityMiningCampaignABI,
