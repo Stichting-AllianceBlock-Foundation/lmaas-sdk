@@ -5,6 +5,7 @@ import {
   BlockchainConfig,
   CampaignWrapper,
   CoinGecko,
+  dexByNetworkMapping,
   DexWrapper,
   getTokensConfig,
   NetworkEnum,
@@ -46,9 +47,15 @@ export class StakerSDK {
     chainId: number,
     config: BlockchainConfig,
     minutesForExpiration: number,
+    coingeckoApiKey?: string, // optional coingecko api key
   ) {
+    if (chainId === 11155111) {
+      dexByNetworkMapping.eth.dexes.uniswap.routerAddress =
+        '0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008';
+    }
+
     this.provider = provider; // @notice General provider for the global interaction of the blockchain.
-    this.coingecko = new CoinGecko(minutesForExpiration); // @notice Coingecko fetcher class for their API
+    this.coingecko = new CoinGecko(minutesForExpiration, coingeckoApiKey); // @notice Coingecko fetcher class for their API
     this.protocol = getProtocolByChainId(chainId);
 
     this.lmcStaker = new StakerLM(this.provider, this.protocol);

@@ -1,14 +1,19 @@
 import axios from 'axios';
 
 const coingeckoAPI = 'https://api.coingecko.com/api/v3';
+const coingeckoProAPI = 'https://pro-api.coingecko.com/api/v3';
 
 export class CoinGecko {
   minutesForExpiration: number;
   httpStatus?: number;
   errorCode?: string;
+  coingeckoApiKey?: string;
+  coingeckoApiUrl?: string;
 
-  constructor(minutesToExpire: number) {
+  constructor(minutesToExpire: number, coingeckoApiKey?: string) {
     this.minutesForExpiration = minutesToExpire;
+    this.coingeckoApiKey = coingeckoApiKey;
+    this.coingeckoApiUrl = coingeckoApiKey ? coingeckoProAPI : coingeckoAPI;
   }
 
   /**
@@ -39,10 +44,11 @@ export class CoinGecko {
     let price = 0;
 
     try {
-      const response = await axios.get(coingeckoAPI + `/simple/price`, {
+      const response = await axios.get(this.coingeckoApiUrl + `/simple/price`, {
         params: {
           ids: tokenId,
           vs_currencies: currency,
+          x_cg_pro_api_key: this.coingeckoApiKey,
         },
       });
 
