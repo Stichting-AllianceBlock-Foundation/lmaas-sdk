@@ -88,6 +88,13 @@ export const poolTupleToString = (tuple: string[]) => {
 // @returns -> address of wallet
 export const getAddressFromWallet = async (wallet: WalletClient) => {
   const [walletAddress] = await wallet.getAddresses();
+
+  // TODO: Remove this fallback once the getAddresses function is fixed
+  // @ts-expect-error
+  if (walletAddress === '0') {
+    return wallet.account?.address || '0x'; // First attempt function, fallback to property and finally to 0x
+  }
+
   return walletAddress;
 };
 
