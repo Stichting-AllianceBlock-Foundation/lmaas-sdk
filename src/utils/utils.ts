@@ -109,13 +109,46 @@ export const approveToken = async (
     ? parseUnits(amountToApprove, tokenDecimals)
     : maxUint256;
 
+  let shouldApproveZero = false;
+
+  try {
+    // Simulate approve to check for errors
+    await provider.simulateContract({
+      abi: ERC20ABI,
+      address: tokenAddress,
+      functionName: 'approve',
+      args: [spenderAddress, amountToApproveParsed],
+      account: walletAddress,
+      chain: wallet.chain,
+    });
+  } catch (e: any) {
+    // Error with approving because this ERC20 version doesn't allow approve when already not 0
+    console.error(e.toString());
+    console.log('Trying to approve to 0 first');
+    shouldApproveZero = true;
+  }
+
+  if (shouldApproveZero) {
+    // First approve to 0
+    const txHash = await wallet.writeContract({
+      abi: ERC20ABI,
+      address: tokenAddress,
+      functionName: 'approve',
+      args: [spenderAddress, 0n],
+      account: walletAddress,
+      chain: wallet.chain,
+    });
+    await provider.waitForTransactionReceipt({ hash: txHash });
+  }
+
+  // Then approve to amount
   return await wallet.writeContract({
     abi: ERC20ABI,
     address: tokenAddress,
     functionName: 'approve',
     args: [spenderAddress, amountToApproveParsed],
     account: walletAddress,
-    chain: provider.chain,
+    chain: wallet.chain,
   });
 };
 
