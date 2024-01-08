@@ -126,7 +126,7 @@ export const approveToken = async (
       functionName: 'approve',
       args: [spenderAddress, amountToApproveParsed],
       account: walletAddress,
-      chain: wallet.chain
+      chain: wallet.chain,
     });
   } catch (e: any) {
     // Error with approving because this ERC20 version doesn't allow approve when already not 0
@@ -143,9 +143,9 @@ export const approveToken = async (
       functionName: 'approve',
       args: [spenderAddress, 0n],
       account: walletAddress,
-      chain: wallet.chain
+      chain: wallet.chain,
     });
-    await provider.waitForTransactionReceipt({hash: txHash});
+    await provider.waitForTransactionReceipt({ hash: txHash });
   }
 
   // Then approve to amount
@@ -155,7 +155,7 @@ export const approveToken = async (
     functionName: 'approve',
     args: [spenderAddress, amountToApproveParsed],
     account: walletAddress,
-    chain: wallet.chain
+    chain: wallet.chain,
   });
 };
 
