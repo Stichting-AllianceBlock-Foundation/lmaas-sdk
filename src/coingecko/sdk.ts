@@ -48,7 +48,7 @@ export class CoinGecko {
         params: {
           ids: tokenId,
           vs_currencies: currency,
-          x_cg_pro_api_key: this.coingeckoApiKey,
+          ...(this.coingeckoApiKey && { x_cg_pro_api_key: this.coingeckoApiKey }),
         },
       });
 
