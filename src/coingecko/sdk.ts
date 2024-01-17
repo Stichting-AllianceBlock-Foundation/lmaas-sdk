@@ -7,6 +7,8 @@ export class CoinGecko {
   httpStatus?: number;
   errorCode?: string;
 
+  queries: { [key: string]: number } = {};
+
   constructor(minutesToExpire: number) {
     this.minutesForExpiration = minutesToExpire;
   }
@@ -36,6 +38,30 @@ export class CoinGecko {
       }
     }
 
+    if (
+      this.queries[tokenId + currency] &&
+      currentTimestamp < this.queries[tokenId + currency] + 1
+    ) {
+      // if query is already running, check every 100ms if localstorage is defined for 1 second, otherwise continue
+      // Hotfix for race condition & rate limits
+      for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        try {
+          usdPrices = JSON.parse(localStorage.getItem('usd_prices')!);
+        } catch (error) {
+          console.error(error);
+        }
+        if (usdPrices && usdPrices[tokenId] && usdPrices[tokenId].expiration > currentTimestamp) {
+          if (usdPrices[tokenId][currency]) {
+            return usdPrices[tokenId][currency];
+          }
+        }
+      }
+    }
+
+    this.queries[tokenId + currency] = currentTimestamp;
+
     let price = 0;
 
     try {
@@ -58,6 +84,7 @@ export class CoinGecko {
       this.httpStatus = (error as any).response.status || 0;
       this.errorCode = (error as any).code || '';
     }
+    delete this.queries[tokenId + currency];
 
     if (usdPrices) {
       usdPrices = {
