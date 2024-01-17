@@ -1,88 +1,88 @@
 {
-  "name": "@allianceblock/lmaas-sdk",
-  "author": "AllianceBlock",
-  "version": "2.1.6",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
-  "module": "dist/lmaas-sdk.esm.js",
-  "files": [
-    "dist",
-    "src"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk.git"
-  },
-  "engines": {
-    "node": ">=10"
-  },
-  "scripts": {
-    "build": "dts build",
-    "lint": "dts lint",
-    "prepare": "dts build",
-    "size": "size-limit",
-    "start": "dts watch",
-    "test": "dts test",
-    "test:watch": "dts test --watch",
-    "test:coverage": "dts test --coverage",
-    "format": "prettier --check \"src/**/*.{js,jsx,ts,tsx,scss}\"",
-    "format:fix": "prettier --write \"src/**/*.{js,jsx,ts,tsx,scss}\"",
-    "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx}'"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "dts lint"
-    }
-  },
-  "dependencies": {
-    "@wagmi/core": "^1.3.8",
-    "axios": "^0.27.2",
-    "decimal.js": "^10.4.3",
-    "viem": "^1.3.0"
-  },
-  "devDependencies": {
-    "@size-limit/preset-small-lib": "^8.2.6",
-    "@types/node": "^20.4.2",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
-    "dts-cli": "^2.0.3",
-    "eslint": "^8.45.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-config-standard-react": "^13.0.0",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-promise": "^6.1.1",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-simple-import-sort": "^10.0.0",
-    "husky": "^8.0.3",
-    "prettier": "^2.8.8",
-    "size-limit": "^8.2.6",
-    "tslib": "^2.6.0",
-    "typescript": "^5.1.6"
-  },
-  "size-limit": [
-    {
-      "path": "dist/lmaas-sdk.cjs.production.min.js",
-      "limit": "10 KB"
+    "name": "@allianceblock/lmaas-sdk",
+    "author": "AllianceBlock",
+    "version": "2.1.7",
+    "license": "MIT",
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "module": "dist/lmaas-sdk.esm.js",
+    "files": [
+        "dist",
+        "src"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk.git"
     },
-    {
-      "path": "dist/lmaas-sdk.esm.js",
-      "limit": "10 KB"
-    }
-  ],
-  "description": "## ⚙️ Install dependencies",
-  "bugs": {
-    "url": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk/issues"
-  },
-  "homepage": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk#readme",
-  "directories": {
-    "example": "example"
-  },
-  "keywords": [
-    "defi",
-    "allianceblock",
-    "lmaas"
-  ]
+    "engines": {
+        "node": ">=10"
+    },
+    "scripts": {
+        "build": "dts build",
+        "lint": "dts lint",
+        "prepare": "dts build",
+        "size": "size-limit",
+        "start": "dts watch",
+        "test": "dts test",
+        "test:watch": "dts test --watch",
+        "test:coverage": "dts test --coverage",
+        "format": "prettier --check \"src/**/*.{js,jsx,ts,tsx,scss}\"",
+        "format:fix": "prettier --write \"src/**/*.{js,jsx,ts,tsx,scss}\"",
+        "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx}'"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "dts lint"
+        }
+    },
+    "dependencies": {
+        "@wagmi/core": "^1.3.8",
+        "axios": "^0.27.2",
+        "decimal.js": "^10.4.3",
+        "viem": "^1.3.0"
+    },
+    "devDependencies": {
+        "@size-limit/preset-small-lib": "^8.2.6",
+        "@types/node": "^20.4.2",
+        "@typescript-eslint/eslint-plugin": "^5.62.0",
+        "@typescript-eslint/parser": "^5.62.0",
+        "dts-cli": "^2.0.3",
+        "eslint": "^8.45.0",
+        "eslint-config-prettier": "^8.8.0",
+        "eslint-config-standard-react": "^13.0.0",
+        "eslint-plugin-import": "^2.27.5",
+        "eslint-plugin-prettier": "^4.2.1",
+        "eslint-plugin-promise": "^6.1.1",
+        "eslint-plugin-react": "^7.32.2",
+        "eslint-plugin-react-hooks": "^4.6.0",
+        "eslint-plugin-simple-import-sort": "^10.0.0",
+        "husky": "^8.0.3",
+        "prettier": "^2.8.8",
+        "size-limit": "^8.2.6",
+        "tslib": "^2.6.0",
+        "typescript": "^5.1.6"
+    },
+    "size-limit": [
+        {
+            "path": "dist/lmaas-sdk.cjs.production.min.js",
+            "limit": "10 KB"
+        },
+        {
+            "path": "dist/lmaas-sdk.esm.js",
+            "limit": "10 KB"
+        }
+    ],
+    "description": "## ⚙️ Install dependencies",
+    "bugs": {
+        "url": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk/issues"
+    },
+    "homepage": "https://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk#readme",
+    "directories": {
+        "example": "example"
+    },
+    "keywords": [
+        "defi",
+        "allianceblock",
+        "lmaas"
+    ]
 }
