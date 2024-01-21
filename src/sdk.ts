@@ -5,6 +5,7 @@ import {
   BlockchainConfig,
   CampaignWrapper,
   CoinGecko,
+  CoinGeckoConfig,
   dexByNetworkMapping,
   DexWrapper,
   getTokensConfig,
@@ -42,12 +43,28 @@ export class StakerSDK {
   infiniteStakingWrapper: InfiniteStakingWrapper;
   protocol: NetworkEnum;
 
+  static constructorV2({
+    provider,
+    chainId,
+    projectConfig,
+    coingeckoConfig,
+  }: {
+    provider: PublicClient;
+    chainId: number;
+    projectConfig: BlockchainConfig;
+    coingeckoConfig: CoinGeckoConfig;
+  }): StakerSDK {
+    return new StakerSDK(provider, chainId, projectConfig, coingeckoConfig);
+  }
+
+  /**
+   * @deprecated Use contructorV2 instead
+   */
   constructor(
     provider: PublicClient,
-    chainId: number,
+    chainId: number, /// @deprecated
     config: BlockchainConfig,
-    minutesForExpiration: number,
-    coingeckoApiKey?: string, // optional coingecko api key
+    coingeckoConfig: CoinGeckoConfig,
   ) {
     if (chainId === 11155111) {
       dexByNetworkMapping.eth.dexes.uniswap.routerAddress =
@@ -55,7 +72,7 @@ export class StakerSDK {
     }
 
     this.provider = provider; // @notice General provider for the global interaction of the blockchain.
-    this.coingecko = new CoinGecko(minutesForExpiration, coingeckoApiKey); // @notice Coingecko fetcher class for their API
+    this.coingecko = new CoinGecko(coingeckoConfig); // @notice Coingecko fetcher class for their API
     this.protocol = getProtocolByChainId(chainId);
 
     this.lmcStaker = new StakerLM(this.provider, this.protocol);
