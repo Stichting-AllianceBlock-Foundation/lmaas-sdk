@@ -3,17 +3,32 @@ import axios from 'axios';
 const coingeckoAPI = 'https://api.coingecko.com/api/v3';
 const coingeckoProAPI = 'https://pro-api.coingecko.com/api/v3';
 
+export interface CoinGeckoConfig {
+  apiKey?: string;
+  fallbackUrl?: string;
+  minutesForExpiration: number;
+  url?: string;
+}
 export class CoinGecko {
   minutesForExpiration: number;
   httpStatus?: number;
   errorCode?: string;
   coingeckoApiKey?: string;
-  coingeckoApiUrl?: string;
+  coingeckoApiUrl: string;
+  coingeckoFallbackUrl?: string;
 
-  constructor(minutesToExpire: number, coingeckoApiKey?: string) {
-    this.minutesForExpiration = minutesToExpire;
-    this.coingeckoApiKey = coingeckoApiKey;
-    this.coingeckoApiUrl = coingeckoApiKey ? coingeckoProAPI : coingeckoAPI;
+  constructor(minutesToExpire: number | CoinGeckoConfig) {
+    if (typeof minutesToExpire === 'number') {
+      this.coingeckoApiUrl = coingeckoAPI;
+      this.minutesForExpiration = minutesToExpire;
+      return;
+    }
+
+    this.minutesForExpiration = minutesToExpire.minutesForExpiration;
+    this.coingeckoApiKey = minutesToExpire.apiKey;
+    this.coingeckoApiUrl =
+      minutesToExpire.url || this.coingeckoApiKey ? coingeckoProAPI : coingeckoAPI;
+    this.coingeckoFallbackUrl = minutesToExpire.fallbackUrl;
   }
 
   /**
@@ -41,29 +56,12 @@ export class CoinGecko {
       }
     }
 
-    let price = 0;
-
-    try {
-      const response = await axios.get(this.coingeckoApiUrl + `/simple/price`, {
-        params: {
-          ids: tokenId,
-          vs_currencies: currency,
-          ...(this.coingeckoApiKey && { x_cg_pro_api_key: this.coingeckoApiKey }),
-        },
-      });
-
-      const statusCode = response.status;
-
-      this.httpStatus = statusCode;
-
-      if (statusCode >= 300 || statusCode < 200) {
-        this.errorCode = statusCode.toString();
-      }
-      price = response.data[tokenId][currency];
-    } catch (error) {
-      this.httpStatus = (error as any).response.status || 0;
-      this.errorCode = (error as any).code || '';
-    }
+    const price =
+      (await this.fetchCoingeckoPrice({
+        ids: tokenId,
+        vs_currencies: currency,
+        ...(this.coingeckoApiKey && { x_cg_pro_api_key: this.coingeckoApiKey }),
+      })) || 0;
 
     if (usdPrices) {
       usdPrices = {
@@ -89,5 +87,37 @@ export class CoinGecko {
     localStorage.setItem('usd_prices', JSON.stringify(usdPrices));
 
     return price;
+  }
+
+  async fetchCoingeckoPrice(
+    params: { ids: string; vs_currencies: string; x_cg_pro_api_key?: string },
+    useFallback = false,
+  ): Promise<any> {
+    try {
+      const baseUrl = useFallback ? this.coingeckoFallbackUrl : this.coingeckoApiUrl;
+      console.log(useFallback, baseUrl);
+
+      const response = await axios.get(baseUrl + `/simple/price`, {
+        params,
+      });
+      const statusCode = response.status;
+
+      this.httpStatus = statusCode;
+      console.log('status code', statusCode);
+
+      return response.data[params.ids][params.vs_currencies];
+    } catch (error) {
+      console.log(
+        this.coingeckoFallbackUrl,
+        error as any,
+        !useFallback,
+        Object.entries(error as any),
+        // this.coingeckoFallbackUrl && (error as any).response.status == 429 && !useFallback,
+      );
+
+      if (this.coingeckoFallbackUrl && !useFallback) {
+        return await this.fetchCoingeckoPrice(params, true);
+      }
+    }
   }
 }
