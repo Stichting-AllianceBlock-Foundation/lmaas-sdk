@@ -5,6 +5,7 @@ import {
   BlockchainConfig,
   CampaignWrapper,
   CoinGecko,
+  CoinGeckoConfig,
   DexWrapper,
   getTokensConfig,
   NetworkEnum,
@@ -37,14 +38,28 @@ export class StakerSDK {
   campaignWrapper: CampaignWrapper;
   protocol: NetworkEnum;
 
+  static constructorV2({
+    provider,
+    chainId,
+    projectConfig,
+    coingeckoConfig,
+  }: {
+    provider: PublicClient;
+    chainId: number;
+    projectConfig: BlockchainConfig;
+    coingeckoConfig: CoinGeckoConfig;
+  }): StakerSDK {
+    return new StakerSDK(provider, chainId, projectConfig, coingeckoConfig);
+  }
+
   constructor(
     provider: PublicClient,
     chainId: number,
     config: BlockchainConfig,
-    minutesForExpiration: number,
+    coingeckoConfig: CoinGeckoConfig,
   ) {
     this.provider = provider; // @notice General provider for the global interaction of the blockchain.
-    this.coingecko = new CoinGecko(minutesForExpiration); // @notice Coingecko fetcher class for their API
+    this.coingecko = new CoinGecko(coingeckoConfig); // @notice Coingecko fetcher class for their API
     this.protocol = getProtocolByChainId(chainId);
 
     this.lmcStaker = new StakerLM(this.provider, this.protocol);
