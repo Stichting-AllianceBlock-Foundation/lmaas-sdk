@@ -95,7 +95,6 @@ export class CoinGecko {
   ): Promise<any> {
     try {
       const baseUrl = useFallback ? this.coingeckoFallbackUrl : this.coingeckoApiUrl;
-      console.log(useFallback, baseUrl);
 
       const response = await axios.get(baseUrl + `/simple/price`, {
         params,
@@ -103,17 +102,10 @@ export class CoinGecko {
       const statusCode = response.status;
 
       this.httpStatus = statusCode;
-      console.log('status code', statusCode);
 
       return response.data[params.ids][params.vs_currencies];
     } catch (error) {
-      console.log(
-        this.coingeckoFallbackUrl,
-        error as any,
-        !useFallback,
-        Object.entries(error as any),
-        // this.coingeckoFallbackUrl && (error as any).response.status == 429 && !useFallback,
-      );
+      console.error(error);
 
       if (this.coingeckoFallbackUrl && !useFallback) {
         return await this.fetchCoingeckoPrice(params, true);
