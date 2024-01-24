@@ -1,16 +1,34 @@
 import axios from 'axios';
 
 const coingeckoAPI = 'https://api.coingecko.com/api/v3';
+const coingeckoProAPI = 'https://pro-api.coingecko.com/api/v3';
 
+export interface CoinGeckoConfig {
+  apiKey?: string;
+  fallbackUrl?: string;
+  minutesForExpiration: number;
+  url?: string;
+}
 export class CoinGecko {
   minutesForExpiration: number;
   httpStatus?: number;
   errorCode?: string;
+  coingeckoApiKey?: string;
+  coingeckoApiUrl: string;
+  coingeckoFallbackUrl?: string;
 
-  queries: { [key: string]: number } = {};
+  constructor(minutesToExpire: number | CoinGeckoConfig) {
+    if (typeof minutesToExpire === 'number') {
+      this.coingeckoApiUrl = coingeckoAPI;
+      this.minutesForExpiration = minutesToExpire;
+      return;
+    }
 
-  constructor(minutesToExpire: number) {
-    this.minutesForExpiration = minutesToExpire;
+    this.minutesForExpiration = minutesToExpire.minutesForExpiration;
+    this.coingeckoApiKey = minutesToExpire.apiKey;
+    this.coingeckoApiUrl =
+      minutesToExpire.url || this.coingeckoApiKey ? coingeckoProAPI : coingeckoAPI;
+    this.coingeckoFallbackUrl = minutesToExpire.fallbackUrl;
   }
 
   /**
@@ -38,53 +56,12 @@ export class CoinGecko {
       }
     }
 
-    if (
-      this.queries[tokenId + currency] &&
-      currentTimestamp < this.queries[tokenId + currency] + 1
-    ) {
-      // if query is already running, check every 100ms if localstorage is defined for 1 second, otherwise continue
-      // Hotfix for race condition & rate limits
-      for (let i = 0; i < 10; i++) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        try {
-          usdPrices = JSON.parse(localStorage.getItem('usd_prices')!);
-        } catch (error) {
-          console.error(error);
-        }
-        if (usdPrices && usdPrices[tokenId] && usdPrices[tokenId].expiration > currentTimestamp) {
-          if (usdPrices[tokenId][currency]) {
-            return usdPrices[tokenId][currency];
-          }
-        }
-      }
-    }
-
-    this.queries[tokenId + currency] = currentTimestamp;
-
-    let price = 0;
-
-    try {
-      const response = await axios.get(coingeckoAPI + `/simple/price`, {
-        params: {
-          ids: tokenId,
-          vs_currencies: currency,
-        },
-      });
-
-      const statusCode = response.status;
-
-      this.httpStatus = statusCode;
-
-      if (statusCode >= 300 || statusCode < 200) {
-        this.errorCode = statusCode.toString();
-      }
-      price = response.data[tokenId][currency];
-    } catch (error) {
-      this.httpStatus = (error as any).response.status || 0;
-      this.errorCode = (error as any).code || '';
-    }
-    delete this.queries[tokenId + currency];
+    const price =
+      (await this.fetchCoingeckoPrice({
+        ids: tokenId,
+        vs_currencies: currency,
+        ...(this.coingeckoApiKey && { x_cg_pro_api_key: this.coingeckoApiKey }),
+      })) || 0;
 
     if (usdPrices) {
       usdPrices = {
@@ -110,5 +87,29 @@ export class CoinGecko {
     localStorage.setItem('usd_prices', JSON.stringify(usdPrices));
 
     return price;
+  }
+
+  async fetchCoingeckoPrice(
+    params: { ids: string; vs_currencies: string; x_cg_pro_api_key?: string },
+    useFallback = false,
+  ): Promise<any> {
+    try {
+      const baseUrl = useFallback ? this.coingeckoFallbackUrl : this.coingeckoApiUrl;
+
+      const response = await axios.get(baseUrl + `/simple/price`, {
+        params,
+      });
+      const statusCode = response.status;
+
+      this.httpStatus = statusCode;
+
+      return response.data[params.ids][params.vs_currencies];
+    } catch (error) {
+      console.error(error);
+
+      if (this.coingeckoFallbackUrl && !useFallback) {
+        return await this.fetchCoingeckoPrice(params, true);
+      }
+    }
   }
 }

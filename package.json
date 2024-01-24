@@ -1,18 +1,18 @@
 {
-    "name": "@allianceblock/lmaas-sdk",
-    "author": "AllianceBlock",
-    "version": "2.1.7-hotfix",
-    "license": "MIT",
-    "main": "dist/index.js",
-    "typings": "dist/index.d.ts",
-    "module": "dist/lmaas-sdk.esm.js",
-    "files": [
-        "dist",
-        "src"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk.git"
+  "name": "@allianceblock/lmaas-sdk",
+  "author": "AllianceBlock",
+  "version": "2.2.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "module": "dist/lmaas-sdk.esm.js",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Stichting-AllianceBlock-Foundation/lmaas-sdk.git"
     },
     "engines": {
         "node": ">=10"
