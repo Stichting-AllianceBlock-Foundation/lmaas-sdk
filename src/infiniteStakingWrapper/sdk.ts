@@ -207,7 +207,14 @@ export class InfiniteStakingWrapper {
       rewardsCount,
     } = campaignData;
 
-    if (!hasCampaignStarted) {
+    const pair = {
+      symbol,
+      address: campaignTokenAddress.toLowerCase(),
+    };
+
+    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
+
+    if (!hasCampaignStarted && !upcoming) {
       return {};
     }
 
@@ -227,8 +234,6 @@ export class InfiniteStakingWrapper {
       Number(deltaDuration),
       Number(deltaExpiration),
     );
-
-    const upcoming = Number(campaignStartTimestamp) > Math.floor(Date.now() / 1000);
 
     const duration = formatStakingDuration(durationMilliseconds);
 
@@ -256,11 +261,6 @@ export class InfiniteStakingWrapper {
 
     // Calculate APY
     const apy = this._calculateAPY_new(totalStakedUSD, campaignRewardsPerDayUSD);
-
-    const pair = {
-      symbol,
-      address: campaignTokenAddress.toLowerCase(),
-    };
 
     const state = await this.getDisconnectedState(campaignAddress);
 

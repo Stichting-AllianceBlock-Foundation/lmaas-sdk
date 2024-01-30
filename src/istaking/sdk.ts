@@ -83,21 +83,19 @@ export class InfiniteStaker {
     const campaignRewards = [];
 
     let rewardsDistributing = rewardsCount > 0n && hasCampaignStarted;
-    if (hasCampaignStarted) {
-      // Get rewards info
-      for (let i = 0n; i < rewardsCount; i++) {
-        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
-        const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
-        const totalRewards = (rewardPerSecond * epochDuration) / accuracy;
+    // Get rewards info
+    for (let i = 0n; i < rewardsCount; i++) {
+      const tokenAddress = await campaignContract.read.rewardsTokens([i]);
+      const rewardPerSecond = await campaignContract.read.rewardPerSecond([i]);
+      const totalRewards = (rewardPerSecond * epochDuration) / accuracy;
 
-        campaignRewards.push({
-          tokenAddress,
-          rewardPerSecond,
-          totalRewards,
-        });
+      campaignRewards.push({
+        tokenAddress,
+        rewardPerSecond,
+        totalRewards,
+      });
 
-        rewardsDistributing = rewardsDistributing && rewardPerSecond > 0n;
-      }
+      rewardsDistributing = rewardsDistributing && rewardPerSecond > 0n;
     }
 
     const hasCampaignEnded = campaignEndTimestamp < now;
