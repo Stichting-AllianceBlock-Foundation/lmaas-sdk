@@ -75,6 +75,7 @@ export interface InfiniteCampaingStatusData {
   rewardsDistributing: boolean;
   hasUserStaked?: boolean;
   unlockedRewards: boolean;
+  upcoming: boolean;
 }
 
 export interface CampaingStatusData {
@@ -149,4 +150,5 @@ export enum InfiniteStakingState {
   STAKED_WITH_REWARDS,
   STAKED_WITH_UNLOCKED_REWARDS,
   STAKED_WITHOUT_REWARDS,
+  UNSCHEDULED,
 }

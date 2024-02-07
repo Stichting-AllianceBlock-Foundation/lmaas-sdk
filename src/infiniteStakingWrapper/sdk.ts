@@ -129,11 +129,13 @@ export class InfiniteStakingWrapper {
   }
 
   async getDisconnectedState(campaignAddress: string): Promise<InfiniteStakingState> {
-    const { hasCampaignStarted, rewardsDistributing, unlockedRewards } =
+    const { hasCampaignStarted, rewardsDistributing, unlockedRewards, upcoming } =
       await this.infiniteStaker.getCampaignStatus(campaignAddress);
 
     if (!hasCampaignStarted) {
-      return InfiniteStakingState.NOT_STARTED;
+      if (upcoming) return InfiniteStakingState.NOT_STARTED;
+
+      return InfiniteStakingState.UNSCHEDULED;
     }
 
     return rewardsDistributing
