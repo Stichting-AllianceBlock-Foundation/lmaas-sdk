@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import { getContract, PublicClient, WalletClient } from 'viem';
 
 import {
@@ -10,11 +11,7 @@ import {
   TokenConfigs,
 } from '..';
 import { NonCompoundingRewardsPoolInfiniteABI } from '../abi/NonCompoundingRewardsPoolInfinite';
-import {
-  InfiniteCampaignData,
-  NetworkEnum,
-  UserDataIStaking,
-} from '../entities';
+import { InfiniteCampaignData, NetworkEnum, UserDataIStaking } from '../entities';
 import { checkMaxStakingLimit, parseToken } from '../utils';
 
 /**
@@ -177,7 +174,7 @@ export class InfiniteStaker {
     const campaignEndTimestamp = Number(await campaignContract.read.endTimestamp());
     const hasCampaignStarted = await campaignContract.read.hasStakingStarted();
     const campaignStartTimestamp = Number(await campaignContract.read.startTimestamp());
-    const epochDuration = campaignEndTimestamp - campaignStartTimestamp;
+    const epochDuration = new Decimal(campaignEndTimestamp - campaignStartTimestamp);
     const now = Math.floor(Date.now() / 1000);
 
     const tokensCount = await campaignContract.read.getRewardTokensCount();
@@ -185,18 +182,26 @@ export class InfiniteStaker {
     let distributableFunds = false;
     if (hasCampaignStarted) {
       for (let i = 0n; i < tokensCount; i++) {
-        const availableBalance = await campaignContract.read.getAvailableBalance([i]);
+        const availableBalanceBN = await campaignContract.read.getAvailableBalance([i]);
+        const availableBalance = new Decimal(availableBalanceBN.toString());
 
-        const tokenAddress = await campaignContract.read.rewardsTokens([i]);
+        const tokenAddress = (await campaignContract.read.rewardsTokens([i])).toLowerCase();
         const token = Object.values(this.tokenConfigs).find(item => item.address === tokenAddress);
 
         if (!token) {
-          throw new Error('Token not found');
+          console.error('token not found, fallback to 18 decimals', tokenAddress);
+
+          distributableFunds =
+            distributableFunds || availableBalance.gt(new Decimal(10).pow(18).div(epochDuration));
+
+          continue;
         }
+
+        const tokenDecimals = new Decimal(token.decimals);
 
         distributableFunds =
           distributableFunds ||
-          availableBalance > 10n ** BigInt(token.decimals) / BigInt(epochDuration);
+          availableBalance.gt(new Decimal(10).pow(tokenDecimals).div(epochDuration));
       }
     }
 
