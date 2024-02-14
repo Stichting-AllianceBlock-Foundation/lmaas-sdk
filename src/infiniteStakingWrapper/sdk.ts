@@ -15,8 +15,8 @@ import {
   getTokenByPropName,
   getTokenDecimals,
   getTotalSupply,
+  InfiniteCampaingStatusData,
   InfiniteStakingInterface,
-  InfiniteStakingState,
   NetworkEnum,
   poolTupleToString,
   PoolVersion,
@@ -82,8 +82,6 @@ export class InfiniteStakingWrapper {
 
     const emptyCardData = await this._getCampaignData(campaign);
 
-    const state = await this.getState(wallet, campaignAddress);
-
     const {
       userStakedAmount: userStakedAmountBN,
       userRewards,
@@ -101,7 +99,6 @@ export class InfiniteStakingWrapper {
     return {
       ...emptyCardData,
       emptyCardData: false,
-      state,
       userCanExit,
       userStakedAmount,
       userWalletTokensBalance,
@@ -113,36 +110,26 @@ export class InfiniteStakingWrapper {
     return this._getCampaignData(campaign);
   }
 
-  async getState(wallet: WalletClient, campaignAddress: string): Promise<InfiniteStakingState> {
-    const state = await this.getDisconnectedState(campaignAddress);
-    const userData = await this.infiniteStaker.getUserData(campaignAddress, wallet);
+  async getStatus(
+    campaignAddress: string,
+    wallet?: WalletClient,
+  ): Promise<InfiniteCampaingStatusData> {
+    const baseStatus = await this.infiniteStaker.getCampaignStatus(campaignAddress);
 
-    if (userData.userStakedAmount > 0n) {
-      return state === InfiniteStakingState.STARTED_WITH_REWARDS
-        ? InfiniteStakingState.STAKED_WITH_REWARDS
-        : state === InfiniteStakingState.STARTED_WITH_UNLOCKED_REWARDS
-        ? InfiniteStakingState.STAKED_WITH_UNLOCKED_REWARDS
-        : InfiniteStakingState.STAKED_WITHOUT_REWARDS;
+    const state = await this.infiniteStaker.getState(campaignAddress);
+
+    let staked = false;
+    if (wallet) {
+      const userData = await this.infiniteStaker.getUserData(campaignAddress, wallet);
+
+      staked = userData.userStakedAmount > 0n;
     }
 
-    return state;
-  }
-
-  async getDisconnectedState(campaignAddress: string): Promise<InfiniteStakingState> {
-    const { hasCampaignStarted, rewardsDistributing, unlockedRewards, upcoming } =
-      await this.infiniteStaker.getCampaignStatus(campaignAddress);
-
-    if (!hasCampaignStarted) {
-      if (upcoming) return InfiniteStakingState.NOT_STARTED;
-
-      return InfiniteStakingState.UNSCHEDULED;
-    }
-
-    return rewardsDistributing
-      ? InfiniteStakingState.STARTED_WITH_REWARDS
-      : unlockedRewards
-      ? InfiniteStakingState.STARTED_WITH_UNLOCKED_REWARDS
-      : InfiniteStakingState.STARTED_WITHOUT_REWARDS;
+    return {
+      ...baseStatus,
+      staked,
+      state,
+    };
   }
 
   async _getCampaignData(campaign: InfiniteStakingInterface) {
@@ -264,9 +251,10 @@ export class InfiniteStakingWrapper {
     // Calculate APY
     const apy = this._calculateAPY_new(totalStakedUSD, campaignRewardsPerDayUSD);
 
-    const state = await this.getDisconnectedState(campaignAddress);
+    const state = await this.getStatus(campaignAddress);
 
     return {
+      ...state,
       apy,
       campaign: {
         ...campaign,
@@ -288,7 +276,6 @@ export class InfiniteStakingWrapper {
       pair,
       percentage,
       stakeLimit: walletStakeLimit,
-      state,
       totalStaked,
       totalStakedUSD,
       upcoming,

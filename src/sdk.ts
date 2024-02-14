@@ -77,7 +77,11 @@ export class StakerSDK {
 
     this.lmcStaker = new StakerLM(this.provider, this.protocol);
     this.albStaker = new ALBStaker(this.provider, this.protocol);
-    this.infiniteStaker = new InfiniteStaker(this.provider, this.protocol);
+    this.infiniteStaker = new InfiniteStaker(
+      this.provider,
+      this.protocol,
+      getTokensConfig(projectConfig.tokens.filter(item => item.network === this.protocol)),
+    );
     this.soloNonCompStaker = new StakerSolo(this.provider, this.protocol);
 
     this.soloStakerWrapper = new SoloStakerWrapper(
