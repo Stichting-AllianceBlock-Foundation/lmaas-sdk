@@ -194,6 +194,7 @@ export class InfiniteStakingWrapper {
       campaignStartTimestamp,
       campaignEndTimestamp,
       rewardsCount,
+      locked,
     } = campaignData;
 
     const pair = {
@@ -269,6 +270,7 @@ export class InfiniteStakingWrapper {
       expirationTime,
       expired: expirationTime < 0,
       duration,
+      locked,
       rawDuration: durationMilliseconds,
       hasContractStakeLimit,
       hasUserStakeLimit,

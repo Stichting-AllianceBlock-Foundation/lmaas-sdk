@@ -58,6 +58,7 @@ export class InfiniteStaker {
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
+      locked: lockedPR,
     } = campaignContract.read;
 
     const [
@@ -70,6 +71,7 @@ export class InfiniteStaker {
       walletStakeLimit,
       rewardsCount,
       name,
+      locked,
     ] = await Promise.all([
       totalStakedPR(),
       startTimestampPR(),
@@ -80,6 +82,7 @@ export class InfiniteStaker {
       stakeLimitPR(),
       getRewardTokensCountPR(),
       namePR(),
+      lockedPR(),
     ]);
 
     // Get deltas in seconds
@@ -127,6 +130,7 @@ export class InfiniteStaker {
       rewardsCount,
       rewardsDistributing,
       name,
+      locked,
     };
   }
 

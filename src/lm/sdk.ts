@@ -3,7 +3,7 @@ import { getContract, parseUnits, PublicClient, WalletClient } from 'viem';
 
 import {
   accuracy,
-  CampaingData,
+  CampaignData,
   CampaingStatusData,
   checkMaxStakingLimit,
   getAddressFromWallet,
@@ -35,12 +35,12 @@ export class StakerLM {
    * Get campaign data
    * @public
    * @param {string} contractAddress - Address of the camapaign contract
-   * @return {CampaingData} CampaingData object
+   * @return {CampaignData} CampaingData object
    */
   public async getCampaignData(
     campaignAddress: string,
     version: PoolVersion,
-  ): Promise<CampaingData> {
+  ): Promise<CampaignData> {
     const campaignContract = getContract({
       abi: LiquidityMiningCampaignABI,
       address: campaignAddress as `0x${string}`,

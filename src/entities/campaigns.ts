@@ -48,10 +48,11 @@ export interface InfiniteStakingInterface {
   isLpToken: boolean;
 }
 
-export interface InfiniteCampaignData extends CampaingData {
+export interface InfiniteCampaignData extends CampaignData {
   rewardsDistributing: boolean;
+  locked: boolean;
 }
-export interface CampaingData {
+export interface CampaignData {
   totalStaked: bigint;
   campaignStartTimestamp: bigint;
   campaignEndTimestamp: bigint;
