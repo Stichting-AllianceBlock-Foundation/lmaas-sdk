@@ -48,10 +48,11 @@ export interface InfiniteStakingInterface {
   isLpToken: boolean;
 }
 
-export interface InfiniteCampaignData extends CampaingData {
+export interface InfiniteCampaignData extends CampaignData {
   rewardsDistributing: boolean;
+  locked: boolean;
 }
-export interface CampaingData {
+export interface CampaignData {
   totalStaked: bigint;
   campaignStartTimestamp: bigint;
   campaignEndTimestamp: bigint;
@@ -69,12 +70,21 @@ export interface CampaingData {
   name: string;
 }
 
-export interface InfiniteCampaingStatusData {
-  hasCampaignStarted: boolean;
-  currentEpochAssigned: boolean;
-  rewardsDistributing: boolean;
-  hasUserStaked?: boolean;
-  unlockedRewards: boolean;
+export interface InfiniteCampaingStatusData extends InfiniteCampaignBaseStatusData {
+  state: InfiniteStakingState;
+  staked: boolean;
+}
+
+export interface InfiniteCampaignStatusStateData extends InfiniteCampaignBaseStatusData {
+  state: InfiniteStakingState;
+}
+
+export interface InfiniteCampaignBaseStatusData {
+  startTimestamp: number;
+  endTimestamp: number;
+  epochDuration: number;
+  distributableFunds: boolean;
+  upcoming: boolean;
 }
 
 export interface CampaingStatusData {
@@ -143,10 +153,7 @@ export interface Reward {
 
 export enum InfiniteStakingState {
   NOT_STARTED,
-  STARTED_WITH_UNLOCKED_REWARDS,
-  STARTED_WITH_REWARDS,
-  STARTED_WITHOUT_REWARDS,
-  STAKED_WITH_REWARDS,
-  STAKED_WITH_UNLOCKED_REWARDS,
-  STAKED_WITHOUT_REWARDS,
+  SCHEDULED,
+  ACTIVE,
+  EXPIRED,
 }

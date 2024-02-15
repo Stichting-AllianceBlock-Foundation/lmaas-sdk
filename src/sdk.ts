@@ -43,7 +43,19 @@ export class StakerSDK {
   infiniteStakingWrapper: InfiniteStakingWrapper;
   protocol: NetworkEnum;
 
-  static constructorV2({
+  /**
+   * @deprecated Use contructor instead
+   */
+  static constructorV2(config: {
+    provider: PublicClient;
+    chainId: number;
+    projectConfig: BlockchainConfig;
+    coingeckoConfig: CoinGeckoConfig;
+  }): StakerSDK {
+    return new StakerSDK(config);
+  }
+
+  constructor({
     provider,
     chainId,
     projectConfig,
@@ -53,19 +65,7 @@ export class StakerSDK {
     chainId: number;
     projectConfig: BlockchainConfig;
     coingeckoConfig: CoinGeckoConfig;
-  }): StakerSDK {
-    return new StakerSDK(provider, chainId, projectConfig, coingeckoConfig);
-  }
-
-  /**
-   * @deprecated Use contructorV2 instead
-   */
-  constructor(
-    provider: PublicClient,
-    chainId: number, /// @deprecated
-    config: BlockchainConfig,
-    coingeckoConfig: CoinGeckoConfig,
-  ) {
+  }) {
     if (chainId === 11155111) {
       dexByNetworkMapping.eth.dexes.uniswap.routerAddress =
         '0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008';
@@ -77,7 +77,11 @@ export class StakerSDK {
 
     this.lmcStaker = new StakerLM(this.provider, this.protocol);
     this.albStaker = new ALBStaker(this.provider, this.protocol);
-    this.infiniteStaker = new InfiniteStaker(this.provider, this.protocol);
+    this.infiniteStaker = new InfiniteStaker(
+      this.provider,
+      this.protocol,
+      getTokensConfig(projectConfig.tokens.filter(item => item.network === this.protocol)),
+    );
     this.soloNonCompStaker = new StakerSolo(this.provider, this.protocol);
 
     this.soloStakerWrapper = new SoloStakerWrapper(
@@ -85,27 +89,27 @@ export class StakerSDK {
       this.soloNonCompStaker,
       this.coingecko,
       this.protocol,
-      getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
+      getTokensConfig(projectConfig.tokens.filter(item => item.network === this.protocol)),
     );
     this.campaignWrapper = new CampaignWrapper(
       this.provider,
       this.lmcStaker,
       this.albStaker,
       this.coingecko,
-      getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
+      getTokensConfig(projectConfig.tokens.filter(item => item.network === this.protocol)),
       this.protocol,
     );
     this.dexWrapper = new DexWrapper(
       this.provider,
       this.protocol,
-      getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
+      getTokensConfig(projectConfig.tokens.filter(item => item.network === this.protocol)),
     );
     this.infiniteStakingWrapper = new InfiniteStakingWrapper(
       this.provider,
       this.infiniteStaker,
       this.coingecko,
       this.protocol,
-      getTokensConfig(config.tokens.filter(item => item.network === this.protocol)),
+      getTokensConfig(projectConfig.tokens.filter(item => item.network === this.protocol)),
     );
   }
 }

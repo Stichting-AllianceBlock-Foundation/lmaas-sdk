@@ -1,13 +1,17 @@
+import Decimal from 'decimal.js';
 import { getContract, PublicClient, WalletClient } from 'viem';
 
-import { accuracy, getAddressFromWallet, getTokenDecimals, PoolVersion } from '..';
-import { NonCompoundingRewardsPoolInfiniteABI } from '../abi/NonCompoundingRewardsPoolInfinite';
 import {
-  InfiniteCampaignData,
-  InfiniteCampaingStatusData,
-  NetworkEnum,
-  UserDataIStaking,
-} from '../entities';
+  accuracy,
+  getAddressFromWallet,
+  getTokenDecimals,
+  InfiniteCampaignBaseStatusData,
+  InfiniteStakingState,
+  PoolVersion,
+  TokenConfigs,
+} from '..';
+import { NonCompoundingRewardsPoolInfiniteABI } from '../abi/NonCompoundingRewardsPoolInfinite';
+import { InfiniteCampaignData, NetworkEnum, UserDataIStaking } from '../entities';
 import { checkMaxStakingLimit, parseToken } from '../utils';
 
 /**
@@ -21,12 +25,13 @@ import { checkMaxStakingLimit, parseToken } from '../utils';
 export class InfiniteStaker {
   protected protocol: NetworkEnum;
   protected provider: PublicClient;
+  protected tokenConfigs: TokenConfigs;
 
-  constructor(provider: PublicClient, protocol: NetworkEnum) {
+  constructor(provider: PublicClient, protocol: NetworkEnum, tokenConfigs: TokenConfigs) {
     this.provider = provider;
     this.protocol = protocol;
+    this.tokenConfigs = tokenConfigs;
   }
-
   /**
    * Get campaign data
    * @public
@@ -53,6 +58,7 @@ export class InfiniteStaker {
       stakeLimit: stakeLimitPR,
       getRewardTokensCount: getRewardTokensCountPR,
       name: namePR,
+      locked: lockedPR,
     } = campaignContract.read;
 
     const [
@@ -65,6 +71,7 @@ export class InfiniteStaker {
       walletStakeLimit,
       rewardsCount,
       name,
+      locked,
     ] = await Promise.all([
       totalStakedPR(),
       startTimestampPR(),
@@ -75,6 +82,7 @@ export class InfiniteStaker {
       stakeLimitPR(),
       getRewardTokensCountPR(),
       namePR(),
+      lockedPR(),
     ]);
 
     // Get deltas in seconds
@@ -83,7 +91,9 @@ export class InfiniteStaker {
     const campaignRewards = [];
 
     let rewardsDistributing = rewardsCount > 0n && hasCampaignStarted;
-    if (hasCampaignStarted) {
+    const upcoming = campaignStartTimestamp > now;
+
+    if (hasCampaignStarted || upcoming) {
       // Get rewards info
       for (let i = 0n; i < rewardsCount; i++) {
         const tokenAddress = await campaignContract.read.rewardsTokens([i]);
@@ -120,55 +130,91 @@ export class InfiniteStaker {
       rewardsCount,
       rewardsDistributing,
       name,
+      locked,
     };
+  }
+
+  async getState(campaignAddress: string): Promise<InfiniteStakingState> {
+    const baseStatus = await this.getCampaignStatus(campaignAddress);
+
+    return this._getState(baseStatus);
+  }
+
+  protected _getState(statusData: InfiniteCampaignBaseStatusData): InfiniteStakingState {
+    const { distributableFunds, endTimestamp, epochDuration, startTimestamp } = statusData;
+
+    const now = Date.now() / 1000;
+
+    // Unscheduled
+    if (startTimestamp === 0) return InfiniteStakingState.NOT_STARTED;
+
+    // Upcoming campaigns
+    if (startTimestamp > now) return InfiniteStakingState.SCHEDULED;
+
+    // Active campaigns
+    if (now > startTimestamp) {
+      if (now < endTimestamp) return InfiniteStakingState.ACTIVE;
+
+      if (now < endTimestamp + epochDuration && distributableFunds)
+        return InfiniteStakingState.ACTIVE;
+    }
+
+    return InfiniteStakingState.EXPIRED;
   }
 
   /**
    * Get campaign data
    * @public
    * @param {string} contractAddress - Address of the campaign contract
-   * @return {CampaingStatusData} CampaingStatusData object
+   * @return {InfiniteCampaignBaseStatusData} CampaingStatusData object
    */
-  public async getCampaignStatus(campaignAddress: string): Promise<InfiniteCampaingStatusData> {
+  public async getCampaignStatus(campaignAddress: string): Promise<InfiniteCampaignBaseStatusData> {
     const campaignContract = getContract({
       abi: NonCompoundingRewardsPoolInfiniteABI,
       address: campaignAddress as `0x${string}`,
       publicClient: this.provider,
     });
 
-    // Get now in seconds and convert to BN
-    const now = BigInt(Math.floor(Date.now() / 1000));
-
-    // Get raw contract data
-    const campaignEndTimestamp = await campaignContract.read.endTimestamp();
+    const campaignEndTimestamp = Number(await campaignContract.read.endTimestamp());
     const hasCampaignStarted = await campaignContract.read.hasStakingStarted();
-
-    const currentEpochAssigned = campaignEndTimestamp > now;
+    const campaignStartTimestamp = Number(await campaignContract.read.startTimestamp());
+    const epochDuration = new Decimal(campaignEndTimestamp - campaignStartTimestamp);
+    const now = Math.floor(Date.now() / 1000);
 
     const tokensCount = await campaignContract.read.getRewardTokensCount();
-    const epochDuration = await campaignContract.read.epochDuration();
 
-    const rewardsCanDistribute = tokensCount > 0n && hasCampaignStarted && currentEpochAssigned;
-    let rewardsDistributing = false;
-    let unlockedRewards = false;
-
+    let distributableFunds = false;
     if (hasCampaignStarted) {
       for (let i = 0n; i < tokensCount; i++) {
-        const rewardsPerSecond = await campaignContract.read.rewardPerSecond([i]);
+        const availableBalanceBN = await campaignContract.read.getAvailableBalance([i]);
+        const availableBalance = new Decimal(availableBalanceBN.toString());
 
-        rewardsDistributing = rewardsCanDistribute || rewardsPerSecond > 0n;
+        const tokenAddress = (await campaignContract.read.rewardsTokens([i])).toLowerCase();
+        const token = Object.values(this.tokenConfigs).find(item => item.address === tokenAddress);
 
-        const availableBalance = await campaignContract.read.getAvailableBalance([i]);
+        if (!token) {
+          console.error('token not found, fallback to 18 decimals', tokenAddress);
 
-        unlockedRewards = unlockedRewards || availableBalance / epochDuration > 0n;
+          distributableFunds =
+            distributableFunds || availableBalance.gt(new Decimal(10).pow(18).div(epochDuration));
+
+          continue;
+        }
+
+        const tokenDecimals = new Decimal(token.decimals);
+
+        distributableFunds =
+          distributableFunds ||
+          availableBalance.gt(new Decimal(10).pow(tokenDecimals).div(epochDuration));
       }
     }
 
     return {
-      hasCampaignStarted,
-      currentEpochAssigned,
-      rewardsDistributing,
-      unlockedRewards,
+      distributableFunds,
+      endTimestamp: campaignEndTimestamp,
+      epochDuration: campaignEndTimestamp - campaignStartTimestamp,
+      startTimestamp: campaignStartTimestamp,
+      upcoming: campaignStartTimestamp > now,
     };
   }
 
